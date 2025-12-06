@@ -6,7 +6,6 @@ import { AdminService } from "./admin.services";
 const createAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
-    console.log(data);
     const result = await AdminService.createAdmin(data);
 
     sendResponse(res, {
@@ -33,7 +32,7 @@ const updateActorProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
     const actorId = req.params.id;
-    const result = await AdminService.updateActorProfile(data,actorId);
+    const result = await AdminService.updateActorProfile(data, actorId);
     sendResponse(res, {
       statusCode: 201,
       success: true,
@@ -53,10 +52,24 @@ const getAdmin = catchAsync(
     });
   }
 );
+const addActor = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const file = req.file;
+    const data = req.body;
+    const result = await AdminService.addActor(file, data);
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor added successfully",
+      data: result,
+    });
+  }
+);
 
 export const AdminController = {
   createAdmin,
   getAdmin,
   readNotificaton,
   updateActorProfile,
+  addActor,
 };

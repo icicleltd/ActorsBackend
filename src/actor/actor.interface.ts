@@ -8,7 +8,7 @@ export interface IActor extends Document {
   motherName?: string;
   fatherName?: string;
   presentAddress?: string;
-  dob?:  string;
+  dob?: string;
   bloodGroup?: string;
   occupation?: string;
 
@@ -45,7 +45,7 @@ export interface IActor extends Document {
     right?: string;
     front?: string;
   }[];
-
+  photo?: string;
   characterPhoto?: string[];
   youtubeLink?: string[];
   category?: "A" | "b";

@@ -1,4 +1,3 @@
-import App from "next/app";
 import { AppError } from "../middleware/error";
 import Notification from "./notification.schema";
 
@@ -25,7 +24,6 @@ const getAdminNotification = async (adminId: string) => {
   return notification;
 };
 const readNotification = async (notificatinId: string) => {
-  console.log(notificatinId)
   if (!notificatinId) {
     throw new AppError(400, "No notification id provided");
   }

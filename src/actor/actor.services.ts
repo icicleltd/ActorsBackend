@@ -1,4 +1,3 @@
-import { b } from "framer-motion/dist/types.d-BJcRxCew";
 import { fileUploader } from "../helper/fileUpload";
 import Actor from "./actor.schema";
 import { AppError } from "../middleware/error";
@@ -6,7 +5,6 @@ import { Admin } from "../admin/admin.schema";
 import Notification from "../notification/notification.schema";
 
 const createActor = async (files: any, data: any) => {
-  console.log(data);
 
   const uploadArray = async (fileArr: any[]) => {
     if (!fileArr || fileArr.length === 0) return [];
@@ -71,30 +69,86 @@ const getSingleActor = async (actorId: string) => {
   }
   return actor;
 };
-const getAllActor = async () => {
-  const actor = await Actor.find();
-  if (actor.length === 0) {
-    throw new Error("Actor not found");
+
+
+const getAllActor = async (
+  search: string,
+  page: number,
+  limit: number,
+  skip: number,
+  category: string
+) => {
+  let filter: any = {};
+  const fields = ["fullName", "idNo", "presentAddress", "phoneNumber"];
+  if (search) {
+    filter.$or = fields.map((field) => ({
+      [field]: { $regex: search.trim(), $options: "i" },
+    }));
   }
-  return actor;
+  if (category === "A" || category === "B") {
+    filter.category = category;
+  }
+  const actor = await Actor.find(filter)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+    const [totalActor, categoryACount, categoryBCount] = await Promise.all(
+      [
+        Actor.countDocuments(),
+        Actor.countDocuments({ category: "A" }),
+        Actor.countDocuments({ category: "B" })
+      ]
+    )
+
+    const totalPage = Math.ceil((category === "A" ? categoryACount : (category === "B" ? categoryBCount : totalActor)) / limit)
+  if (actor.length === 0) {
+    return { actor: [], totalActor, categoryACount, categoryBCount, totalPage };
+  }
+
+  return { actor, totalActor, categoryACount, categoryBCount, totalPage };
 };
+
+// const getAllActor = async (query: ActorQuery) => {
+//   const { page = 1, limit = 10, category = "A" } = query;
+
+//   const filter: any = {};
+
+//   // ⭐ Filter by category
+//   if (category) {
+//     filter.category = category;
+//   }
+
+//   const skip = (page - 1) * limit;
+
+//   const actors = await Actor.find(filter)
+//     .skip(skip)
+//     .limit(limit)
+//     .sort({ createdAt: -1 }); // newest first
+
+//   const total = await Actor.countDocuments(filter);
+
+//   return {
+//     total,
+//     page,
+//     limit,
+//     totalPages: Math.ceil(total / limit),
+//     data: actors,
+//   };
+// };
 const filterByRank = async (rank: string) => {
   if (!rank) {
     throw new Error("No rank provided");
   }
   const actor = await Actor.find({ rank: rank });
-  console.log("actor", actor);
   if (actor.length === 0) {
     throw new Error("Actor not found");
   }
   return actor;
 };
-
 
 export const ActorService = {
   createActor,
   getSingleActor,
   getAllActor,
   filterByRank,
-  
 };

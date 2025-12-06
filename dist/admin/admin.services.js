@@ -1,0 +1,94 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdminService = void 0;
+const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
+const fileUpload_1 = require("../helper/fileUpload");
+const error_1 = require("../middleware/error");
+const admin_schema_1 = require("./admin.schema");
+const createAdmin = async (payload) => {
+    if (!payload) {
+        throw new error_1.AppError(400, "No data provided");
+    }
+    const newAdmin = await admin_schema_1.Admin.create(payload);
+    if (!newAdmin) {
+        throw new error_1.AppError(501, "Failed to create admin");
+    }
+    return {
+        adminInfo: newAdmin,
+    };
+};
+const getAdmin = async () => {
+    return {
+        msg: "Admin fetched",
+    };
+};
+const readAdmin = async () => {
+    return {
+        msg: "Admin read",
+    };
+};
+const updateActorProfile = async (actorData, actorId) => {
+    if (!actorData) {
+        throw new error_1.AppError(400, "No actor data provided");
+    }
+    if (!actorId) {
+        throw new error_1.AppError(400, "No actor id provided");
+    }
+    const actorProfile = {
+        phoneNumber: actorData.phoneNumber,
+        presentAddress: actorData.presentAddress,
+        dateOfBirth: new Date(actorData.dateOfBirth),
+        bloodGroup: actorData.bloodGroup,
+        idNo: actorData.idNo,
+        fullName: actorData.fullName,
+        category: actorData.category,
+        status: actorData.status,
+    };
+    const result = await actor_schema_1.default.findByIdAndUpdate(actorId, actorProfile, {
+        new: true,
+    });
+    if (!result) {
+        throw new Error("Failed to fill up actor profile");
+    }
+    return result;
+};
+const addActor = async (file, actorData) => {
+    if (!file) {
+        throw new error_1.AppError(400, "No file provided");
+    }
+    const uploaded = await fileUpload_1.fileUploader.CloudinaryUpload(file);
+    if (!uploaded) {
+        throw new error_1.AppError(500, "Failed to upload file");
+    }
+    const actorProfile = {
+        phoneNumber: actorData.phoneNumber,
+        presentAddress: actorData.presentAddress,
+        dob: actorData.dob.toString(),
+        bloodGroup: actorData.bloodGroup,
+        idNo: actorData.idNo,
+        fullName: actorData.fullName,
+        category: actorData.category,
+        status: actorData.status,
+        photo: uploaded.secure_url,
+        fromActive: actorData.fromActive,
+    };
+    try {
+        const actor = await actor_schema_1.default.create(actorProfile);
+        if (!actor) {
+            throw new error_1.AppError(500, "Failed to create actor");
+        }
+        return actor;
+    }
+    catch (error) {
+    }
+};
+exports.AdminService = {
+    createAdmin,
+    addActor,
+    getAdmin,
+    readAdmin,
+    updateActorProfile,
+};

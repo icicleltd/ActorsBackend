@@ -1,4 +1,5 @@
 import Actor from "../actor/actor.schema";
+import { fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
 import sendResponse from "../shared/sendResponse";
 import { Admin } from "./admin.schema";
@@ -42,7 +43,6 @@ const updateActorProfile = async (actorData: any, actorId: string) => {
     category: actorData.category,
     status: actorData.status,
   };
-  console.log(actorData);
   const result = await Actor.findByIdAndUpdate(actorId, actorProfile, {
     new: true,
   });
@@ -51,9 +51,40 @@ const updateActorProfile = async (actorData: any, actorId: string) => {
   }
   return result;
 };
+const addActor = async (file: any, actorData: any) => {
+  if (!file) {
+    throw new AppError(400, "No file provided");
+  }
 
+  const uploaded = await fileUploader.CloudinaryUpload(file);
+  if (!uploaded) {
+    throw new AppError(500, "Failed to upload file");
+  }
+  const actorProfile = {
+    phoneNumber: actorData.phoneNumber,
+    presentAddress: actorData.presentAddress,
+    dob: actorData.dob.toString(),
+    bloodGroup: actorData.bloodGroup,
+    idNo: actorData.idNo,
+    fullName: actorData.fullName,
+    category: actorData.category,
+    status: actorData.status,
+    photo: uploaded.secure_url,
+    fromActive: actorData.fromActive,
+  };
+
+  try {
+    const actor = await Actor.create(actorProfile);
+    if (!actor) {
+      throw new AppError(500, "Failed to create actor");
+    }
+    return actor;
+  } catch (error) {
+  }
+};
 export const AdminService = {
   createAdmin,
+  addActor,
   getAdmin,
   readAdmin,
   updateActorProfile,

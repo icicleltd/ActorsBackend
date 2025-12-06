@@ -9,9 +9,6 @@ const createActor = catchAsync(
       [fieldname: string]: Express.Multer.File[];
     };
     const data = req.body;
-    // console.log("Body =>", req.body);
-    // console.log("Files =>", files);
-
     const result = await ActorService.createActor(files, data);
 
     sendResponse(res, {
@@ -37,7 +34,20 @@ const getSingleActor = catchAsync(
 );
 const getAllActor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const result = await ActorService.getAllActor();
+    const search = req.query.search as string;
+
+    const limit = parseInt(req.query?.limit as string) || 10;
+    const page = parseInt(req.query?.page as string) || 1;
+    const skip = (page - 1) * limit;
+    const category = req.query.category as string;
+
+    const result = await ActorService.getAllActor(
+      search,
+      page,
+      limit,
+      skip,
+      category
+    );
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -49,7 +59,6 @@ const getAllActor = catchAsync(
 const filterByRank = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const rank = req.params.rank;
-    console.log("rank",rank)
     const result = await ActorService.filterByRank(rank);
     sendResponse(res, {
       statusCode: 200,
@@ -59,8 +68,6 @@ const filterByRank = catchAsync(
     });
   }
 );
-
-
 
 export const ActorController = {
   createActor,

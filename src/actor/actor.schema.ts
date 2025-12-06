@@ -49,7 +49,7 @@ const actorSchema = new Schema<IActor>(
         front: String,
       },
     ],
-
+    photo: { type: String },
     characterPhoto: [{ type: String }],
     introVideo: {
       url: { type: String },
@@ -63,8 +63,12 @@ const actorSchema = new Schema<IActor>(
       },
     },
     youtubeLink: [{ type: String }],
-    category: { enum: ["A", "b"], type: String },
-    status:{enum:["pending","approved","rejected"],type:String,default:"pending"},
+    category: { enum: ["A", "B"], type: String },
+    status: {
+      enum: ["pending", "approved", "rejected"],
+      type: String,
+      default: "pending",
+    },
   },
   { timestamps: true }
 );

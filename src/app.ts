@@ -8,8 +8,23 @@ import notificationRouter from "./notification/notification.router";
 const app = express();
 
 // Middleware
+const allowedOrigins = ["http://localhost:3000", "https://your-frontend-domain.com"];
+// Middleware
 app.use(express.json());
-app.use(cors())
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
+  credentials: true, // Allow cookies if needed
+}));
+// Set custom headers for CORS
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000"); // Replace with your frontend domain
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/v1/actors',actorRouter)

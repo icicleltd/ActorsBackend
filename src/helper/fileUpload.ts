@@ -1,20 +1,8 @@
 import multer from "multer";
-import path from "path";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(process.cwd(), "uploads"));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const extension = file.originalname.substring(file.originalname.lastIndexOf("."));
-    cb(null, file.fieldname + "-" + uniqueSuffix + extension);
-  },
-});
-
-const upload = multer({ storage });
+// Multer memory storage (required for Vercel)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Cloudinary config
 cloudinary.config({
@@ -23,28 +11,28 @@ cloudinary.config({
   api_secret: "6_MiNGp0BDmahMzIP0V-WDeygVE",
 });
 
-// Single upload
-const CloudinaryUpload = async (filePath: any) => {
-  const uploadResult = await cloudinary.uploader
-    .upload(filePath.path, { public_id: filePath.filename })
-    .catch((error) => {
-      throw new Error(error.message);
-    });
+// Upload single file (buffer)
+const CloudinaryUpload = async (file: Express.Multer.File) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { public_id: file.originalname },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
 
-  if (uploadResult) fs.unlinkSync(filePath.path);
-
-  return uploadResult;
+    stream.end(file.buffer); // send raw buffer
+  });
 };
 
-// Multiple upload
-const CloudinaryUploadMultiple = async (files: any[]) => {
+// Upload multiple
+const CloudinaryUploadMultiple = async (files: Express.Multer.File[]) => {
   const uploaded = [];
-
   for (const file of files) {
     const result = await CloudinaryUpload(file);
     uploaded.push(result);
   }
-
   return uploaded;
 };
 

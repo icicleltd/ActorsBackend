@@ -60,6 +60,7 @@ const addActor = async (file, actorData) => {
         throw new error_1.AppError(400, "No file provided");
     }
     const uploaded = await fileUpload_1.fileUploader.CloudinaryUpload(file);
+    ;
     if (!uploaded) {
         throw new error_1.AppError(500, "Failed to upload file");
     }

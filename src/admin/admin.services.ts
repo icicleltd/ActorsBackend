@@ -1,7 +1,6 @@
 import Actor from "../actor/actor.schema";
 import { fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
-import sendResponse from "../shared/sendResponse";
 import { Admin } from "./admin.schema";
 
 const createAdmin = async (payload: any) => {
@@ -56,7 +55,9 @@ const addActor = async (file: any, actorData: any) => {
     throw new AppError(400, "No file provided");
   }
 
-  const uploaded = await fileUploader.CloudinaryUpload(file);
+  const uploaded = await fileUploader.CloudinaryUpload(file)as {
+    secure_url: string;
+  };;
   if (!uploaded) {
     throw new AppError(500, "Failed to upload file");
   }

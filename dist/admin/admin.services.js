@@ -75,6 +75,7 @@ const addActor = async (file, actorData) => {
         status: actorData.status,
         photo: uploaded.secure_url,
         fromActive: actorData.fromActive,
+        bio: actorData.bio
     };
     try {
         const actor = await actor_schema_1.default.create(actorProfile);

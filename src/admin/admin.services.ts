@@ -72,6 +72,7 @@ const addActor = async (file: any, actorData: any) => {
     status: actorData.status,
     photo: uploaded.secure_url,
     fromActive: actorData.fromActive,
+    bio: actorData.bio
   };
 
   try {

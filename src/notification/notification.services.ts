@@ -7,9 +7,11 @@ const createNotification = async () => {
   };
 };
 const getNotification = async () => {
-  return {
-    msg: "Notification fetched",
-  };
+  const notification = await Notification.find({});
+  if (!notification) {
+    throw new AppError(204, "not found");
+  }
+  return notification;
 };
 const getAdminNotification = async (adminId: string) => {
   if (!adminId) {
@@ -27,9 +29,13 @@ const readNotification = async (notificatinId: string) => {
   if (!notificatinId) {
     throw new AppError(400, "No notification id provided");
   }
-  const notification = await Notification.findByIdAndUpdate(notificatinId, {
-    isRead: true,
-  }, { new: true });
+  const notification = await Notification.findByIdAndUpdate(
+    notificatinId,
+    {
+      isRead: true,
+    },
+    { new: true }
+  );
   if (!notification) {
     throw new AppError(404, "Notification not found");
   }

@@ -23,7 +23,7 @@ const actorSchema = new Schema<IActor>(
     otherName: { type: String },
     spouse: { type: String },
 
-    bio: { type: [String], default: [] },
+    bio: { type: String, default: "" },
 
     fromActive: { type: String },
     endActive: { type: String, default: null },

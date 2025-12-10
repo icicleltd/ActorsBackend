@@ -21,7 +21,7 @@ app.use((0, cors_1.default)({
 }));
 // Set custom headers for CORS
 app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000"); // Replace with your frontend domain
+    res.setHeader("Access-Control-Allow-Origin", "https://actor-equity.vercel.app/"); // Replace with your frontend domain
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.setHeader("Access-Control-Allow-Credentials", "true");

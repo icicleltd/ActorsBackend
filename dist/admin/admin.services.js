@@ -59,33 +59,33 @@ const addActor = async (file, actorData) => {
     if (!file) {
         throw new error_1.AppError(400, "No file provided");
     }
-    const uploaded = await fileUpload_1.fileUploader.CloudinaryUpload(file);
-    ;
+    const uploaded = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
     if (!uploaded) {
         throw new error_1.AppError(500, "Failed to upload file");
     }
+    const buildIdNo = actorData.category + "-" + actorData.idNo;
     const actorProfile = {
         phoneNumber: actorData.phoneNumber,
         presentAddress: actorData.presentAddress,
         dob: actorData.dob.toString(),
         bloodGroup: actorData.bloodGroup,
-        idNo: actorData.idNo,
+        idNo: buildIdNo,
         fullName: actorData.fullName,
         category: actorData.category,
         status: actorData.status,
         photo: uploaded.secure_url,
         fromActive: actorData.fromActive,
-        bio: actorData.bio
+        bio: actorData.bio,
     };
+    console.log(actorProfile);
     try {
         const actor = await actor_schema_1.default.create(actorProfile);
         if (!actor) {
             throw new error_1.AppError(500, "Failed to create actor");
         }
-        return actor;
+        return "actor";
     }
-    catch (error) {
-    }
+    catch (error) { }
 };
 exports.AdminService = {
     createAdmin,

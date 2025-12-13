@@ -3,70 +3,107 @@ import type { IActor } from "./actor.interface.js";
 
 const actorSchema = new Schema<IActor>(
   {
-    fullName: { type: String, required: true }, // ONLY required field
+    // Required
+    fullName: { type: String, required: true },
 
-    idNo: { type: String },
-    rank: { type: String },
+    // Basic Info
     motherName: { type: String },
     fatherName: { type: String },
+    birthPlace: { type: String },
     presentAddress: { type: String },
+    permanentAddress: { type: String },
+    nationality: { type: String },
+    religion: { type: String },
     dob: { type: String },
     bloodGroup: { type: String },
-    occupation: { type: String },
 
+    // Contact
     email: { type: String },
-    phoneNumber: { type: String },
-    NID: { type: String },
+    phoneNumber: { type: String,unique:true },
+    whatsApp: { type: String },
+    nid: { type: String },
     passport: { type: String },
 
+    // Social Media
+    facebookLink: { type: String },
+    instagramLink: { type: String },
+    tiktokLink: { type: String },
+    youtubeLink: { type: String }, // main youtube profile link
+
+    // YouTube video links
+    youtubeVideos: [{ type: String }],
+
+    // Drama / Film Acted Details
+    actedDramaAndFilmDetails: [
+      {
+        filmAndDramaName: { type: String },
+        characterName: { type: String },
+        directorName: { type: String },
+        broadcastMedium: { type: String },
+      },
+    ],
+
+    educationQualification: { type: String },
+    emergencyNumber: { type: String },
+    stageAndFilmAdditionalSkills: { type: String },
+
+    // Actor Reference
+    actorReference: [
+      {
+        actorId: { type: Schema.Types.ObjectId, ref: "Actor", required: true },
+        name: { type: String },
+        idNo: { type: String },
+      },
+    ],
+
+    // Admin Added Member Info
+    idNo: { type: String , unique: true},
+    rank: { type: String },
+    occupation: { type: String },
     actorName: { type: String },
     otherName: { type: String },
     spouse: { type: String },
-
     bio: { type: String, default: "" },
 
     fromActive: { type: String },
     endActive: { type: String, default: null },
     presentActive: { type: String, default: null },
 
-    facebookLink: { type: String },
-    instagramLink: { type: String },
-    tiktokLink: { type: String },
-
+    // Physical Info
     height: { type: String },
     weight: { type: String },
 
+    // Work/Personal Info
     workExperience: { type: String },
     workSocialMediaInfo: { type: String },
     educationInfo: { type: String },
     personalInfo: { type: String },
     basicInfo: { type: String },
 
+    // Photos
     profilePhoto: [
       {
-        left: String,
-        right: String,
-        front: String,
+        left: { type: String },
+        right: { type: String },
+        front: { type: String },
       },
     ],
+
     photo: { type: String },
     characterPhoto: [{ type: String }],
+
+    // Intro Video
     introVideo: {
       url: { type: String },
-      duration: {
-        type: Number,
-        max: 30, // must be <= 30 seconds
-      },
-      sizeMB: {
-        type: Number,
-        max: 100, // must be <= 100 MB
-      },
+      duration: { type: Number, max: 30 },
+      sizeMB: { type: Number, max: 100 },
     },
-    youtubeLink: [{ type: String }],
-    category: { enum: ["A", "B"], type: String },
+
+    // Category & Status
+    category: { type: String, enum: ["A", "B"] },
     status: {
-      enum: ["pending", "approved", "rejected"],
       type: String,
+      enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
   },

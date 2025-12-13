@@ -70,7 +70,7 @@ const getSingleActor = async (actorId) => {
     }
     return actor;
 };
-const getAllActor = async (search, page, limit, skip, category) => {
+const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith) => {
     let filter = {};
     const fields = ["fullName", "idNo", "presentAddress", "phoneNumber"];
     if (search) {
@@ -82,15 +82,19 @@ const getAllActor = async (search, page, limit, skip, category) => {
         filter.category = category;
     }
     const actor = await actor_schema_1.default.find(filter)
-        .sort({ createdAt: -1 })
+        .sort({ [sortBy]: sortWith })
         .skip(skip)
         .limit(limit);
     const [totalActor, categoryACount, categoryBCount] = await Promise.all([
         actor_schema_1.default.countDocuments(),
         actor_schema_1.default.countDocuments({ category: "A" }),
-        actor_schema_1.default.countDocuments({ category: "B" })
+        actor_schema_1.default.countDocuments({ category: "B" }),
     ]);
-    const totalPage = Math.ceil((category === "A" ? categoryACount : (category === "B" ? categoryBCount : totalActor)) / limit);
+    const totalPage = Math.ceil((category === "A"
+        ? categoryACount
+        : category === "B"
+            ? categoryBCount
+            : totalActor) / limit);
     if (actor.length === 0) {
         return { actor: [], totalActor, categoryACount, categoryBCount, totalPage };
     }

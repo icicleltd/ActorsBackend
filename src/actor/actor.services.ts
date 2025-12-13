@@ -3,9 +3,9 @@ import Actor from "./actor.schema";
 import { AppError } from "../middleware/error";
 import { Admin } from "../admin/admin.schema";
 import Notification from "../notification/notification.schema";
+import type { SortOrder } from "mongoose";
 
 const createActor = async (files: any, data: any) => {
-
   const uploadArray = async (fileArr: any[]) => {
     if (!fileArr || fileArr.length === 0) return [];
     const uploaded = await fileUploader.CloudinaryUploadMultiple(fileArr);
@@ -70,13 +70,14 @@ const getSingleActor = async (actorId: string) => {
   return actor;
 };
 
-
 const getAllActor = async (
   search: string,
   page: number,
   limit: number,
   skip: number,
-  category: string
+  category: string,
+  sortBy: string,
+  sortWith: SortOrder
 ) => {
   let filter: any = {};
   const fields = ["fullName", "idNo", "presentAddress", "phoneNumber"];
@@ -88,19 +89,24 @@ const getAllActor = async (
   if (category === "A" || category === "B") {
     filter.category = category;
   }
+
   const actor = await Actor.find(filter)
-    .sort({ createdAt: -1 })
+    .sort({ [sortBy]: sortWith })
     .skip(skip)
     .limit(limit);
-    const [totalActor, categoryACount, categoryBCount] = await Promise.all(
-      [
-        Actor.countDocuments(),
-        Actor.countDocuments({ category: "A" }),
-        Actor.countDocuments({ category: "B" })
-      ]
-    )
+  const [totalActor, categoryACount, categoryBCount] = await Promise.all([
+    Actor.countDocuments(),
+    Actor.countDocuments({ category: "A" }),
+    Actor.countDocuments({ category: "B" }),
+  ]);
 
-    const totalPage = Math.ceil((category === "A" ? categoryACount : (category === "B" ? categoryBCount : totalActor)) / limit)
+  const totalPage = Math.ceil(
+    (category === "A"
+      ? categoryACount
+      : category === "B"
+      ? categoryBCount
+      : totalActor) / limit
+  );
   if (actor.length === 0) {
     return { actor: [], totalActor, categoryACount, categoryBCount, totalPage };
   }

@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import { ActorService } from "./actor.services";
 import catchAsync from "../shared/catchAsync";
+import type { SortOrder } from "mongoose";
 
 const createActor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -40,13 +41,18 @@ const getAllActor = catchAsync(
     const page = parseInt(req.query?.page as string) || 1;
     const skip = (page - 1) * limit;
     const category = req.query.category as string;
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortWith: SortOrder = req.query.sortWith === "asc" ? 1 : -1 || -1;
+    console.log(sortBy, sortWith)
 
     const result = await ActorService.getAllActor(
       search,
       page,
       limit,
       skip,
-      category
+      category,
+      sortBy,
+      sortWith
     );
     sendResponse(res, {
       statusCode: 200,

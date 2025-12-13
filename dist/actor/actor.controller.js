@@ -34,7 +34,10 @@ const getAllActor = (0, catchAsync_1.default)(async (req, res, next) => {
     const page = parseInt(req.query?.page) || 1;
     const skip = (page - 1) * limit;
     const category = req.query.category;
-    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category);
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortWith = req.query.sortWith === "asc" ? 1 : -1 || -1;
+    console.log(sortBy, sortWith);
+    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

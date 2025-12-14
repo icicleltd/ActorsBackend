@@ -87,10 +87,28 @@ const addActor = async (file, actorData) => {
     }
     catch (error) { }
 };
+const promoteMember = async (memberData) => {
+    console.log(memberData, "in serveices");
+    const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
+    if (!id || !fullName || !idNo || !rank) {
+        throw new error_1.AppError(400, "Member data not provided");
+    }
+    const newMember = await actor_schema_1.default.findByIdAndUpdate(id, {
+        rank,
+        rankYear: rankYear,
+        rankYearRange
+    }, { new: true });
+    if (!newMember) {
+        throw new error_1.AppError(500, "Member Not promote");
+    }
+    console.log(memberData);
+    return memberData;
+};
 exports.AdminService = {
     createAdmin,
     addActor,
     getAdmin,
     readAdmin,
     updateActorProfile,
+    promoteMember,
 };

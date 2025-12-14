@@ -43,8 +43,8 @@ const getAllActor = catchAsync(
     const category = req.query.category as string;
     const sortBy = (req.query.sortBy as string) || "createdAt";
     const sortWith: SortOrder = req.query.sortWith === "asc" ? 1 : -1 || -1;
-    console.log(sortBy, sortWith)
-
+    const rankSearch = req.query.rankSearch;
+    console.log(rankSearch);
     const result = await ActorService.getAllActor(
       search,
       page,
@@ -52,7 +52,7 @@ const getAllActor = catchAsync(
       skip,
       category,
       sortBy,
-      sortWith
+      sortWith,
     );
     sendResponse(res, {
       statusCode: 200,

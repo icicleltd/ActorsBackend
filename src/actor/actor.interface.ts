@@ -27,6 +27,12 @@ export interface IActor extends Document {
   whatsApp?: string;
   nid?: string;
   passport?: string;
+  rankYear?: string;
+  rankYearRange?: {
+    yearRange?: { type: String };
+    start?: { type: Number };
+    end?: { type: Number };
+  };
 
   // =========================
   // Social Media

@@ -80,7 +80,7 @@ const getAllActor = async (
   sortWith: SortOrder
 ) => {
   let filter: any = {};
-  const fields = ["fullName", "idNo", "presentAddress", "phoneNumber"];
+  const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
   if (search) {
     filter.$or = fields.map((field) => ({
       [field]: { $regex: search.trim(), $options: "i" },

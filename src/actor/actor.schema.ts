@@ -19,7 +19,7 @@ const actorSchema = new Schema<IActor>(
 
     // Contact
     email: { type: String },
-    phoneNumber: { type: String,unique:true },
+    phoneNumber: { type: String, unique: true },
     whatsApp: { type: String },
     nid: { type: String },
     passport: { type: String },
@@ -57,7 +57,7 @@ const actorSchema = new Schema<IActor>(
     ],
 
     // Admin Added Member Info
-    idNo: { type: String , unique: true},
+    idNo: { type: String, unique: true },
     rank: { type: String },
     occupation: { type: String },
     actorName: { type: String },
@@ -79,6 +79,12 @@ const actorSchema = new Schema<IActor>(
     educationInfo: { type: String },
     personalInfo: { type: String },
     basicInfo: { type: String },
+    rankYearRange: {
+      yearRange: { type: String },
+      start: { type: Number },
+      end: { type: Number },
+    },
+    rankYear:{type: String},
 
     // Photos
     profilePhoto: [

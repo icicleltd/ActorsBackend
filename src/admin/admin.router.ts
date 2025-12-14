@@ -9,6 +9,7 @@ adminRouter.post(
   fileUploader.upload.single("photo"),
   AdminController.addActor
 );
+adminRouter.put("/promote",AdminController.promoteMember)
 adminRouter.put("/:id", AdminController.updateActorProfile);
 adminRouter.get("/", AdminController.getAdmin);
 adminRouter.put("/:id", AdminController.readNotificaton);

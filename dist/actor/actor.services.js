@@ -72,7 +72,7 @@ const getSingleActor = async (actorId) => {
 };
 const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith) => {
     let filter = {};
-    const fields = ["fullName", "idNo", "presentAddress", "phoneNumber"];
+    const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
     if (search) {
         filter.$or = fields.map((field) => ({
             [field]: { $regex: search.trim(), $options: "i" },

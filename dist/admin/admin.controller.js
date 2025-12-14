@@ -57,10 +57,22 @@ const addActor = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const promoteMember = (0, catchAsync_1.default)(async (req, res, next) => {
+    const data = req.body;
+    console.log(data, "in body");
+    const result = await admin_services_1.AdminService.promoteMember(data);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Actor Promoted successfully",
+        data: result,
+    });
+});
 exports.AdminController = {
     createAdmin,
     getAdmin,
     readNotificaton,
     updateActorProfile,
     addActor,
+    promoteMember,
 };

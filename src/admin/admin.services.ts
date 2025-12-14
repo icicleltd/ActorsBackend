@@ -61,7 +61,7 @@ const addActor = async (file: any, actorData: any) => {
   if (!uploaded) {
     throw new AppError(500, "Failed to upload file");
   }
-const buildIdNo = actorData.category + "-" + actorData.idNo;
+  const buildIdNo = actorData.category + "-" + actorData.idNo;
   const actorProfile = {
     phoneNumber: actorData.phoneNumber,
     presentAddress: actorData.presentAddress,
@@ -84,10 +84,33 @@ const buildIdNo = actorData.category + "-" + actorData.idNo;
     return "actor";
   } catch (error) {}
 };
+
+const promoteMember = async (memberData: any) => {
+  console.log(memberData, "in serveices");
+  const { id, fullName, idNo, rank, rankYear, rankYearRange} = memberData;
+  if (!id || !fullName || !idNo || !rank) {
+    throw new AppError(400, "Member data not provided");
+  }
+  const newMember = await Actor.findByIdAndUpdate(
+    id,
+    {
+      rank,
+      rankYear: rankYear,
+      rankYearRange
+    },
+    { new: true }
+  );
+  if (!newMember) {
+    throw new AppError(500, "Member Not promote");
+  }
+  console.log(memberData)
+  return memberData;
+};
 export const AdminService = {
   createAdmin,
   addActor,
   getAdmin,
   readAdmin,
   updateActorProfile,
+  promoteMember,
 };

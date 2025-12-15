@@ -84,18 +84,18 @@ const getAllActor = async (
   let filter: any = {};
   const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
   const roles = [
-    "President",
-    "Vice President",
-    "General Secretary",
-    "Joint Secretary",
-    "Organizing Secretary",
-    "Finance Secretary",
-    "Office Secretary",
-    "Event Secretary",
-    "Law & Welfare Secretary",
-    "Publicity & Publication Secretary",
-    "IT & Technology Secretary",
-    "Executive Member",
+    "president",
+    "vice_president",
+    "general_secretary",
+    "joint_secretary",
+    "organizing_secretary",
+    "finance_secretary",
+    "office_secretary",
+    "event_secretary",
+    "law_welfare_secretary",
+    "publicity_secretary",
+    "it_secretary",
+    "executive_member",
   ];
 
   if (search) {
@@ -106,13 +106,13 @@ const getAllActor = async (
   if (category === "A" || category === "B") {
     filter.category = category;
   }
-  if (rankSearch === "Executive Members") {
+  if (rankSearch === "executive") {
     filter.rank = { $in: roles };
   }
   if (
-    rankSearch === "Advisor Members" ||
-    rankSearch === "Life Time Members" ||
-    rankSearch === "Past Way Members"
+    rankSearch === "advisor" ||
+    rankSearch === "lifeTime" ||
+    rankSearch === "pastWay"
   ) {
     filter.rank = rankSearch;
   }

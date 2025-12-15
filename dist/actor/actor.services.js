@@ -70,46 +70,146 @@ const getSingleActor = async (actorId) => {
     }
     return actor;
 };
+// const getAllActor = async (
+//   search: string,
+//   page: number,
+//   limit: number,
+//   skip: number,
+//   category: string,
+//   sortBy: string,
+//   sortWith: SortOrder,
+//   rankRoleSearch: string,
+//   rankSearch: string
+// ) => {
+//   let filter: any = {};
+//   const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
+//   const roles = [
+//     "president",
+//     "vice_president",
+//     "general_secretary",
+//     "joint_secretary",
+//     "organizing_secretary",
+//     "finance_secretary",
+//     "office_secretary",
+//     "event_secretary",
+//     "law_welfare_secretary",
+//     "publicity_secretary",
+//     "it_secretary",
+//     "executive_member",
+//   ];
+//   if (search) {
+//     filter.$or = fields.map((field) => ({
+//       [field]: { $regex: search.trim(), $options: "i" },
+//     }));
+//   }
+//   if (category === "A" || category === "B") {
+//     filter.category = category;
+//   }
+//   if (rankSearch === "executive") {
+//     filter.rank = { $in: roles };
+//   }
+//   if (
+//     rankSearch === "advisor" ||
+//     rankSearch === "lifeTime" ||
+//     rankSearch === "pastWay"
+//   ) {
+//     filter.rank = rankSearch;
+//   }
+//   if (rankRoleSearch) {
+//     filter.rank = rankRoleSearch;
+//   }
+//   const actor = await Actor.find(filter)
+//     .sort({ [sortBy]: sortWith })
+//     .skip(skip)
+//     .limit(limit);
+//   const [totalActor, categoryACount, categoryBCount] = await Promise.all([
+//     Actor.countDocuments(),
+//     Actor.countDocuments({ category: "A" }),
+//     Actor.countDocuments({ category: "B" }),
+//   ]);
+//   const totalPage = Math.ceil(
+//     (category === "A"
+//       ? categoryACount
+//       : category === "B"
+//       ? categoryBCount
+//       : totalActor) / limit
+//   );
+//   if (actor.length === 0) {
+//     return { actor: [], totalActor, categoryACount, categoryBCount, totalPage };
+//   }
+//   return { actor, totalActor, categoryACount, categoryBCount, totalPage };
+// };
+const ROLE_ORDER = [
+    "president",
+    "vice_president",
+    "general_secretary",
+    "joint_secretary",
+    "organizing_secretary",
+    "finance_secretary",
+    "office_secretary",
+    "event_secretary",
+    "law_welfare_secretary",
+    "publicity_secretary",
+    "it_secretary",
+    "executive_member",
+];
 const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith, rankRoleSearch, rankSearch) => {
     let filter = {};
     const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
-    const roles = [
-        "president",
-        "vice_president",
-        "general_secretary",
-        "joint_secretary",
-        "organizing_secretary",
-        "finance_secretary",
-        "office_secretary",
-        "event_secretary",
-        "law_welfare_secretary",
-        "publicity_secretary",
-        "it_secretary",
-        "executive_member",
-    ];
+    /* ---------------- SEARCH ---------------- */
     if (search) {
         filter.$or = fields.map((field) => ({
             [field]: { $regex: search.trim(), $options: "i" },
         }));
     }
+    /* ---------------- CATEGORY ---------------- */
     if (category === "A" || category === "B") {
         filter.category = category;
     }
-    if (rankSearch === "executive") {
-        filter.rank = { $in: roles };
+    /* ---------------- RANK FILTER ---------------- */
+    if (rankRoleSearch) {
+        // specific role like "president"
+        filter.rank = rankRoleSearch;
     }
-    if (rankSearch === "advisor" ||
+    else if (rankSearch === "executive") {
+        // executive group
+        filter.rank = { $in: ROLE_ORDER };
+    }
+    else if (rankSearch === "advisor" ||
         rankSearch === "lifeTime" ||
         rankSearch === "pastWay") {
         filter.rank = rankSearch;
     }
-    if (rankRoleSearch) {
-        filter.rank = rankRoleSearch;
+    /* ---------------- DATA QUERY ---------------- */
+    let actor = [];
+    // 🔥 EXECUTIVE → CUSTOM ROLE ORDER
+    if (rankSearch === "executive") {
+        actor = await actor_schema_1.default.aggregate([
+            { $match: filter },
+            {
+                $addFields: {
+                    roleOrder: {
+                        $cond: {
+                            if: { $in: ["$rank", ROLE_ORDER] },
+                            then: { $indexOfArray: [ROLE_ORDER, "$rank"] },
+                            else: 999,
+                        },
+                    },
+                },
+            },
+            { $sort: { roleOrder: 1 } },
+            { $skip: skip },
+            { $limit: limit },
+        ]);
     }
-    const actor = await actor_schema_1.default.find(filter)
-        .sort({ [sortBy]: sortWith })
-        .skip(skip)
-        .limit(limit);
+    else {
+        // normal sorting
+        actor = await actor_schema_1.default.find(filter)
+            .sort({ [sortBy]: sortWith })
+            .skip(skip)
+            .limit(limit);
+    }
+    /* ---------------- COUNTS ---------------- */
     const [totalActor, categoryACount, categoryBCount] = await Promise.all([
         actor_schema_1.default.countDocuments(),
         actor_schema_1.default.countDocuments({ category: "A" }),
@@ -120,32 +220,15 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         : category === "B"
             ? categoryBCount
             : totalActor) / limit);
-    if (actor.length === 0) {
-        return { actor: [], totalActor, categoryACount, categoryBCount, totalPage };
-    }
-    return { actor, totalActor, categoryACount, categoryBCount, totalPage };
+    /* ---------------- RESPONSE ---------------- */
+    return {
+        actor,
+        totalActor,
+        categoryACount,
+        categoryBCount,
+        totalPage,
+    };
 };
-// const getAllActor = async (query: ActorQuery) => {
-//   const { page = 1, limit = 10, category = "A" } = query;
-//   const filter: any = {};
-//   // ⭐ Filter by category
-//   if (category) {
-//     filter.category = category;
-//   }
-//   const skip = (page - 1) * limit;
-//   const actors = await Actor.find(filter)
-//     .skip(skip)
-//     .limit(limit)
-//     .sort({ createdAt: -1 }); // newest first
-//   const total = await Actor.countDocuments(filter);
-//   return {
-//     total,
-//     page,
-//     limit,
-//     totalPages: Math.ceil(total / limit),
-//     data: actors,
-//   };
-// };
 const filterByRank = async (rank) => {
     if (!rank) {
         throw new Error("No rank provided");

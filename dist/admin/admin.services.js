@@ -78,14 +78,11 @@ const addActor = async (file, actorData) => {
         bio: actorData.bio,
     };
     console.log(actorProfile);
-    try {
-        const actor = await actor_schema_1.default.create(actorProfile);
-        if (!actor) {
-            throw new error_1.AppError(500, "Failed to create actor");
-        }
-        return "actor";
+    const actor = await actor_schema_1.default.create(actorProfile);
+    if (!actor) {
+        throw new error_1.AppError(500, "Failed to create actor");
     }
-    catch (error) { }
+    return actor;
 };
 const promoteMember = async (memberData) => {
     console.log(memberData, "in serveices");
@@ -96,13 +93,27 @@ const promoteMember = async (memberData) => {
     const newMember = await actor_schema_1.default.findByIdAndUpdate(id, {
         rank,
         rankYear: rankYear,
-        rankYearRange
+        rankYearRange,
     }, { new: true });
     if (!newMember) {
         throw new error_1.AppError(500, "Member Not promote");
     }
     console.log(memberData);
     return memberData;
+};
+const deleteMember = async (id) => {
+    if (!id) {
+        throw new error_1.AppError(400, "Member id Not found");
+    }
+    const responce = await actor_schema_1.default.findByIdAndDelete(id);
+    console.log(responce);
+    if (!responce) {
+        throw new error_1.AppError(40, "Member not delete");
+    }
+    return responce;
+};
+const test = async () => {
+    return;
 };
 exports.AdminService = {
     createAdmin,
@@ -111,4 +122,6 @@ exports.AdminService = {
     readAdmin,
     updateActorProfile,
     promoteMember,
+    test,
+    deleteMember,
 };

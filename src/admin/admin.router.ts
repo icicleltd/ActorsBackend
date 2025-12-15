@@ -11,6 +11,7 @@ adminRouter.post(
 );
 adminRouter.put("/promote",AdminController.promoteMember)
 adminRouter.put("/:id", AdminController.updateActorProfile);
+adminRouter.delete("/delete-member/:id", AdminController.deleteMember);
 adminRouter.get("/", AdminController.getAdmin);
 adminRouter.put("/:id", AdminController.readNotificaton);
 adminRouter.delete("/delete-all", async (req, res) => {

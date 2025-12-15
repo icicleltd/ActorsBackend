@@ -7,6 +7,26 @@ const globalErrorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  if (error.code === 11000) {
+    const field = Object.keys(error.keyValue)[0];
+    const value = error.keyValue[field];
+
+    error = new AppError(
+      409,
+      `${field} "${value}" already exists. Please use a different one.`
+    );
+  }
+  // 🔴 Mongoose validation error
+  if (error.name === "ValidationError") {
+    const messages = Object.values(error.errors).map((err: any) => err.message);
+
+    error = new AppError(400, messages.join(", "));
+  }
+
+  // 🔴 CastError (invalid ObjectId)
+  if (error.name === "CastError") {
+    error = new AppError(400, `Invalid ${error.path}: ${error.value}`);
+  }
   // Check if error is an AppError
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({

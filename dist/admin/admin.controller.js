@@ -68,6 +68,25 @@ const promoteMember = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const deleteMember = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    const result = await admin_services_1.AdminService.deleteMember(id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Actor deleted successfully",
+        data: result,
+    });
+});
+const test = (0, catchAsync_1.default)(async (req, res, next) => {
+    const result = await admin_services_1.AdminService.test();
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Actor Promoted successfully",
+        data: result,
+    });
+});
 exports.AdminController = {
     createAdmin,
     getAdmin,
@@ -75,4 +94,6 @@ exports.AdminController = {
     updateActorProfile,
     addActor,
     promoteMember,
+    test,
+    deleteMember
 };

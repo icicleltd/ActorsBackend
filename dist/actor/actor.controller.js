@@ -36,9 +36,12 @@ const getAllActor = (0, catchAsync_1.default)(async (req, res, next) => {
     const category = req.query.category;
     const sortBy = req.query.sortBy || "createdAt";
     const sortWith = req.query.sortWith === "asc" ? 1 : -1 || -1;
+    const rankRoleSearch = req.query.rankRoleSearch;
     const rankSearch = req.query.rankSearch;
-    console.log(rankSearch);
-    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith);
+    console.log(rankRoleSearch, "rank");
+    console.log(rankSearch, "rankSearch");
+    console.log(search, "search");
+    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith, rankRoleSearch, rankSearch);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

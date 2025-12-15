@@ -77,10 +77,27 @@ const getAllActor = async (
   skip: number,
   category: string,
   sortBy: string,
-  sortWith: SortOrder
+  sortWith: SortOrder,
+  rankRoleSearch: string,
+  rankSearch: string
 ) => {
   let filter: any = {};
   const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
+  const roles = [
+    "President",
+    "Vice President",
+    "General Secretary",
+    "Joint Secretary",
+    "Organizing Secretary",
+    "Finance Secretary",
+    "Office Secretary",
+    "Event Secretary",
+    "Law & Welfare Secretary",
+    "Publicity & Publication Secretary",
+    "IT & Technology Secretary",
+    "Executive Member",
+  ];
+
   if (search) {
     filter.$or = fields.map((field) => ({
       [field]: { $regex: search.trim(), $options: "i" },
@@ -88,6 +105,19 @@ const getAllActor = async (
   }
   if (category === "A" || category === "B") {
     filter.category = category;
+  }
+  if (rankSearch === "Executive Members") {
+    filter.rank = { $in: roles };
+  }
+  if (
+    rankSearch === "Advisor Members" ||
+    rankSearch === "Life Time Members" ||
+    rankSearch === "Past Way Members"
+  ) {
+    filter.rank = rankSearch;
+  }
+  if (rankRoleSearch) {
+    filter.rank = rankRoleSearch;
   }
 
   const actor = await Actor.find(filter)

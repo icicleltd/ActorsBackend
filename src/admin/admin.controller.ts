@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { AdminService } from "./admin.services";
+import { callbackify } from "util";
 
 const createAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -68,7 +69,7 @@ const addActor = catchAsync(
 const promoteMember = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
-    console.log(data,"in body")
+    console.log(data, "in body");
     const result = await AdminService.promoteMember(data);
     sendResponse(res, {
       statusCode: 201,
@@ -78,7 +79,29 @@ const promoteMember = catchAsync(
     });
   }
 );
-
+const deleteMember = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id
+    const result = await AdminService.deleteMember(id);
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Actor deleted successfully",
+      data: result,
+    });
+  }
+);
+const test = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AdminService.test();
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  }
+);
 export const AdminController = {
   createAdmin,
   getAdmin,
@@ -86,4 +109,6 @@ export const AdminController = {
   updateActorProfile,
   addActor,
   promoteMember,
+  test,
+  deleteMember
 };

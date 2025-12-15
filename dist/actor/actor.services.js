@@ -70,9 +70,23 @@ const getSingleActor = async (actorId) => {
     }
     return actor;
 };
-const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith) => {
+const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith, rankRoleSearch, rankSearch) => {
     let filter = {};
     const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
+    const roles = [
+        "President",
+        "Vice President",
+        "General Secretary",
+        "Joint Secretary",
+        "Organizing Secretary",
+        "Finance Secretary",
+        "Office Secretary",
+        "Event Secretary",
+        "Law & Welfare Secretary",
+        "Publicity & Publication Secretary",
+        "IT & Technology Secretary",
+        "Executive Member",
+    ];
     if (search) {
         filter.$or = fields.map((field) => ({
             [field]: { $regex: search.trim(), $options: "i" },
@@ -80,6 +94,17 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     }
     if (category === "A" || category === "B") {
         filter.category = category;
+    }
+    if (rankSearch === "Executive Members") {
+        filter.rank = { $in: roles };
+    }
+    if (rankSearch === "Advisor Members" ||
+        rankSearch === "Life Time Members" ||
+        rankSearch === "Past Way Members") {
+        filter.rank = rankSearch;
+    }
+    if (rankRoleSearch) {
+        filter.rank = rankRoleSearch;
     }
     const actor = await actor_schema_1.default.find(filter)
         .sort({ [sortBy]: sortWith })

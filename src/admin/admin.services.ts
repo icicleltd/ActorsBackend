@@ -76,18 +76,16 @@ const addActor = async (file: any, actorData: any) => {
     bio: actorData.bio,
   };
   console.log(actorProfile);
-  try {
-    const actor = await Actor.create(actorProfile);
-    if (!actor) {
-      throw new AppError(500, "Failed to create actor");
-    }
-    return "actor";
-  } catch (error) {}
+  const actor = await Actor.create(actorProfile);
+  if (!actor) {
+    throw new AppError(500, "Failed to create actor");
+  }
+  return actor;
 };
 
 const promoteMember = async (memberData: any) => {
   console.log(memberData, "in serveices");
-  const { id, fullName, idNo, rank, rankYear, rankYearRange} = memberData;
+  const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
   if (!id || !fullName || !idNo || !rank) {
     throw new AppError(400, "Member data not provided");
   }
@@ -96,15 +94,29 @@ const promoteMember = async (memberData: any) => {
     {
       rank,
       rankYear: rankYear,
-      rankYearRange
+      rankYearRange,
     },
     { new: true }
   );
   if (!newMember) {
     throw new AppError(500, "Member Not promote");
   }
-  console.log(memberData)
+  console.log(memberData);
   return memberData;
+};
+const deleteMember = async (id: string) => {
+  if (!id) {
+    throw new AppError(400, "Member id Not found");
+  }
+  const responce = await Actor.findByIdAndDelete(id);
+  console.log(responce);
+  if (!responce) {
+    throw new AppError(40, "Member not delete");
+  }
+  return responce;
+};
+const test = async () => {
+  return;
 };
 export const AdminService = {
   createAdmin,
@@ -113,4 +125,6 @@ export const AdminService = {
   readAdmin,
   updateActorProfile,
   promoteMember,
+  test,
+  deleteMember,
 };

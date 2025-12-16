@@ -9,38 +9,25 @@ const app = express();
 
 // Middleware
 const allowedOrigins = [
+  "*",
   "http://localhost:3000",
   "https://your-frontend-domain.com",
 ];
 // Middleware
 app.use(express.json());
-// app.use(cors({
-//   origin: "*",
-//   methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
-//   credentials: true, // Allow cookies if needed
-// }));
-// // Set custom headers for CORS
-// app.use((req, res, next) => {
-//   res.setHeader("Access-Control-Allow-Origin", "*"); // Replace with your frontend domain
-//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//   res.setHeader("Access-Control-Allow-Credentials", "true");
-//   next();
-// });
-
-// CORS configuration
-const corsOptions = {
-  origin: "*", // Allow all origins
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false, // Remove credentials if not needed
-};
-
-// Use CORS middleware
-app.use(cors(corsOptions));
-
-// Handle preflight OPTIONS requests
-app.options("*", cors(corsOptions));
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
+  credentials: true, // Allow cookies if needed
+}));
+// Set custom headers for CORS
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Replace with your frontend domain
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  next();
+});
 
 
 // // CORS configuration

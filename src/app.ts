@@ -12,7 +12,7 @@ const allowedOrigins = ["http://localhost:3000", "https://your-frontend-domain.c
 // Middleware
 app.use(express.json());
 app.use(cors({
-  origin: allowedOrigins,
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
   credentials: true, // Allow cookies if needed
 }));
@@ -24,6 +24,8 @@ app.use(cors({
 //   res.setHeader("Access-Control-Allow-Credentials", "true");
 //   next();
 // });
+// Handle preflight requests
+app.options("*", cors());
 app.use((req, res, next) => {
   console.log("CORS middleware triggered");
   console.log("Request method:", req.method);

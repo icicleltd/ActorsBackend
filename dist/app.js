@@ -4,54 +4,57 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
 const globalErrorHandler_1 = __importDefault(require("./middleware/globalErrorHandler"));
 const actor_router_1 = __importDefault(require("./actor/actor.router"));
 const admin_router_1 = __importDefault(require("./admin/admin.router"));
 const notification_router_1 = __importDefault(require("./notification/notification.router"));
 const app = (0, express_1.default)();
 // Middleware
-const allowedOrigins = [
-    "*",
-    "http://localhost:3000",
-    "https://your-frontend-domain.com",
-];
-// Middleware
 app.use(express_1.default.json());
-app.use((0, cors_1.default)({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
-    credentials: true, // Allow cookies if needed
-}));
-// Set custom headers for CORS
+app.use(express_1.default.urlencoded({ extended: true }));
+//cors----------------
+// const allowedOrigins = [
+//   "*",
+//   "http://localhost:3000",
+//   "https://your-frontend-domain.com",
+// ];
+// Middleware
+// app.use(cors({
+//   origin: allowedOrigins,
+//   methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
+//   credentials: true, // Allow cookies if needed
+// }));
+// // Set custom headers for CORS
+// app.use((req, res, next) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*"); // Replace with your frontend domain
+//   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+//   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+//   res.setHeader("Access-Control-Allow-Credentials", "true");
+//   next();
+// });
 app.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "*"); // Replace with your frontend domain
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+    const allowedOrigins = [
+        "http://localhost:3000", // Local development
+        "https://actors-equity-vfxp.vercel.app", // Deployed frontend
+    ];
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader("Access-Control-Allow-Origin", origin); // Dynamically set the origin
+        res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+    }
+    else {
+        res.setHeader("Access-Control-Allow-Origin", "null"); // Reject unauthorized origins
+    }
+    // Handle preflight OPTIONS requests
+    if (req.method === "OPTIONS") {
+        return res.status(200).end();
+    }
     next();
 });
-// // CORS configuration
-// const corsOptions = {
-//   origin: function (origin, callback) {
-//     const allowedOrigins = [
-//       "http://localhost:3000", // Local development
-//       "https://actors-equity-vfxp.vercel.app", // Deployed frontend
-//     ];
-//     // Allow requests with no origin (e.g., Postman or server-to-server)
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true); // Allow the request
-//     } else {
-//       callback(new Error("Not allowed by CORS")); // Reject the request
-//     }
-//   },
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Allowed methods
-//   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-//   credentials: false, // Set to false since no credentials are used
-// };
-// // Use CORS middleware
-// app.use(cors(corsOptions));
-app.use(express_1.default.urlencoded({ extended: true }));
+//-----------cors----------------
+//---------router-------------
 app.use("/api/v1/actors", actor_router_1.default);
 app.use("/api/v1/admin", admin_router_1.default);
 app.use("/api/v1/notification", notification_router_1.default);

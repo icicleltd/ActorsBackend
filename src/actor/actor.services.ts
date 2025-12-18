@@ -169,7 +169,8 @@ const getAllActor = async (
   sortBy: string,
   sortWith: SortOrder,
   rankRoleSearch: string,
-  rankSearch: string
+  rankSearch: string,
+  searchYearRange: string
 ) => {
   let filter: any = {};
   const fields = ["fullName", "idNo", "presentAddress", "phoneNumber", "rank"];
@@ -186,9 +187,22 @@ const getAllActor = async (
     filter.category = category;
   }
 
+  
+  /* ---------------- YEAR RANGE FILTER ---------------- */
+  if(rankSearch === "executive"){
+
+    if (searchYearRange) {
+      const [startYear, endYear] = searchYearRange.split("-").map(Number);
+  
+      // Ensure rankYearRange.start and rankYearRange.end exactly match startYear and endYear
+      filter["rankYearRange.start"] = startYear; // Exact match for start year
+      filter["rankYearRange.end"] = endYear; // Exact match for end year
+    }
+  }
   /* ---------------- RANK FILTER ---------------- */
   if (rankRoleSearch) {
     // specific role like "president"
+    console.log("rankRoleSearch",rankRoleSearch)
     filter.rank = rankRoleSearch;
   } else if (rankSearch === "executive") {
     // executive group
@@ -200,6 +214,39 @@ const getAllActor = async (
   ) {
     filter.rank = rankSearch;
   }
+  else if(rankSearch === "primeryB"){
+    filter.category = "B";
+  }
+  else if(rankSearch === "child"){
+    console.log("child")
+    // Filter actors who are exactly 25 years old
+   // Filter actors who are exactly 25 years old
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed in JavaScript
+    const currentDay = currentDate.getDate();
+
+    // Calculate the range for actors who are exactly 25 years old
+    const startDate = new Date(currentYear - 25, currentMonth - 1, currentDay); // 25 years ago from today
+    const endDate = new Date(currentYear - 24, currentMonth - 1, currentDay); // 24 years ago from today
+
+    // Convert the `startDate` and `endDate` to strings in the format "YYYY-MM-DD"
+    const startDateString = `${startDate.getFullYear()}-${String(
+      startDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(startDate.getDate()).padStart(2, "0")}`;
+    const endDateString = `${endDate.getFullYear()}-${String(
+      endDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+    // Filter for actors whose `dob` is between startDateString and endDateString
+    filter.dob = { $gte: startDateString, $lt: endDateString };
+  } else if (rankRoleSearch === "specificDob") {
+    // Filter for a specific dob
+    const specificDob = "1959-12-05"; // The specific dob to filter
+    filter.dob = specificDob; // Match the exact dob string
+  }
+
+  
 
   /* ---------------- DATA QUERY ---------------- */
   let actor: any[] = [];

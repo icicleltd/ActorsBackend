@@ -45,9 +45,18 @@ const getAllActor = catchAsync(
     const sortWith: SortOrder = req.query.sortWith === "asc" ? 1 : -1 || -1;
     const rankRoleSearch = req.query.rankRoleSearch as string;
     const rankSearch = req.query.rankSearch as string;
+        // Dynamically calculate the latest year range (e.g., 2025-2028)
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - (currentYear % 3); // Find the nearest previous multiple of 3 (e.g., 2025, 2022, etc.)
+    const endYear = startYear + 3; // Add 3 years to get the end year
+    const defaultYearRange = `${startYear}-${endYear}`;
+
+    // Use the dynamic year range if searchYearRange is not provided
+    const searchYearRange = req.query.searchYearRange as string || defaultYearRange;
     console.log(rankRoleSearch,"rank");
     console.log(rankSearch,"rankSearch");
     console.log(search,"search");
+    console.log(searchYearRange,"searchYearRange");
     const result = await ActorService.getAllActor(
       search,
       page,
@@ -57,7 +66,8 @@ const getAllActor = catchAsync(
       sortBy,
       sortWith,
       rankRoleSearch,
-      rankSearch
+      rankSearch,
+      searchYearRange
     );
     sendResponse(res, {
       statusCode: 200,

@@ -55,15 +55,48 @@ const updateActorProfile = async (actorData, actorId) => {
     }
     return result;
 };
+// const addActor = async (file: any, actorData: any) => {
+//   if (!file) {
+//     throw new AppError(400, "No file provided");
+//   }
+//   const uploaded = (await fileUploader.CloudinaryUpload(file)) as {
+//     secure_url: string;
+//   };
+//   if (!uploaded) {
+//     throw new AppError(500, "Failed to upload file");
+//   }
+//   const buildIdNo = actorData.category + "-" + actorData.idNo;
+//   const actorProfile = {
+//     phoneNumber: actorData.phoneNumber,
+//     presentAddress: actorData.presentAddress,
+//     dob: actorData.dob.toString(),
+//     bloodGroup: actorData.bloodGroup,
+//     idNo: buildIdNo,
+//     fullName: actorData.fullName,
+//     category: actorData.category,
+//     status: actorData.status,
+//     photo: uploaded.secure_url,
+//     fromActive: actorData.fromActive,
+//     bio: actorData.bio,
+//   };
+//   console.log(actorProfile);
+//   const actor = await Actor.create(actorProfile);
+//   if (!actor) {
+//     throw new AppError(500, "Failed to create actor");
+//   }
+//   return actor;
+// };
 const addActor = async (file, actorData) => {
-    if (!file) {
-        throw new error_1.AppError(400, "No file provided");
+    let uploadedUrl;
+    // Check if a file is provided
+    if (file) {
+        const uploaded = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
+        if (!uploaded) {
+            throw new error_1.AppError(500, "Failed to upload file");
+        }
+        uploadedUrl = uploaded.secure_url; // If file uploaded successfully, store the URL
     }
-    const uploaded = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
-    if (!uploaded) {
-        throw new error_1.AppError(500, "Failed to upload file");
-    }
-    const buildIdNo = actorData.category + "-" + actorData.idNo;
+    const buildIdNo = `${actorData.category}-${actorData.idNo}`;
     const actorProfile = {
         phoneNumber: actorData.phoneNumber,
         presentAddress: actorData.presentAddress,
@@ -73,11 +106,12 @@ const addActor = async (file, actorData) => {
         fullName: actorData.fullName,
         category: actorData.category,
         status: actorData.status,
-        photo: uploaded.secure_url,
+        photo: uploadedUrl, // Use the uploaded URL if file exists, otherwise Mongoose will use the default value
         fromActive: actorData.fromActive,
         bio: actorData.bio,
     };
     console.log(actorProfile);
+    // Create the actor in the database
     const actor = await actor_schema_1.default.create(actorProfile);
     if (!actor) {
         throw new error_1.AppError(500, "Failed to create actor");

@@ -114,7 +114,7 @@ const actorSchema = new mongoose_1.Schema({
             front: { type: String },
         },
     ],
-    photo: { type: String },
+    photo: { type: String, default: "https://ibb.co.com/mFRb3V6g" },
     characterPhoto: [{ type: String }],
     // Intro Video
     introVideo: {

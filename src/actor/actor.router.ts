@@ -12,6 +12,15 @@ actorRouter.post(
   ]),
   ActorController.createActor
 );
+actorRouter.put(
+  "/:id",
+  fileUploader.upload.fields([
+    { name: "coverImages", maxCount: 10 }, // Multiple cover images
+    { name: "photo", maxCount: 1 },        // Single profile photo
+  ]),
+  ActorController.updateActor
+);
+
 actorRouter.get('/',ActorController.getAllActor);
 actorRouter.get('/:id',ActorController.getSingleActor)
 actorRouter.get('/rank/:rank',ActorController.filterByRank)

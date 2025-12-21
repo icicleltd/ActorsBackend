@@ -129,6 +129,16 @@ export interface IActor extends Document {
   // =========================
   category?: "A" | "B";
   status: "pending" | "approved" | "rejected";
+  coverImages?: string[];
+  activity?: {
+    all?: string[];
+    drama?: string[];
+    tv?: string[];
+    series?: string[];
+    tvc?: string[];
+    movies?: string[];
+    telefilms?: string[];
+  };
 
   // =========================
   // Timestamps (from schema)

@@ -144,7 +144,6 @@ const getSingleActor = async (actorId: string) => {
 //   return { actor, totalActor, categoryACount, categoryBCount, totalPage };
 // };
 
-
 const ROLE_ORDER = [
   "president",
   "vice_president",
@@ -187,13 +186,11 @@ const getAllActor = async (
     filter.category = category;
   }
 
-  
   /* ---------------- YEAR RANGE FILTER ---------------- */
-  if(rankSearch === "executive"){
-
+  if (rankSearch === "executive") {
     if (searchYearRange) {
       const [startYear, endYear] = searchYearRange.split("-").map(Number);
-  
+
       // Ensure rankYearRange.start and rankYearRange.end exactly match startYear and endYear
       filter["rankYearRange.start"] = startYear; // Exact match for start year
       filter["rankYearRange.end"] = endYear; // Exact match for end year
@@ -202,7 +199,7 @@ const getAllActor = async (
   /* ---------------- RANK FILTER ---------------- */
   if (rankRoleSearch) {
     // specific role like "president"
-    console.log("rankRoleSearch",rankRoleSearch)
+    console.log("rankRoleSearch", rankRoleSearch);
     filter.rank = rankRoleSearch;
   } else if (rankSearch === "executive") {
     // executive group
@@ -213,14 +210,12 @@ const getAllActor = async (
     rankSearch === "pastWay"
   ) {
     filter.rank = rankSearch;
-  }
-  else if(rankSearch === "primeryB"){
+  } else if (rankSearch === "primeryB") {
     filter.category = "B";
-  }
-  else if(rankSearch === "child"){
-    console.log("child")
+  } else if (rankSearch === "child") {
+    console.log("child");
     // Filter actors who are exactly 25 years old
-   // Filter actors who are exactly 25 years old
+    // Filter actors who are exactly 25 years old
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed in JavaScript
@@ -245,8 +240,6 @@ const getAllActor = async (
     const specificDob = "1959-12-05"; // The specific dob to filter
     filter.dob = specificDob; // Match the exact dob string
   }
-
-  
 
   /* ---------------- DATA QUERY ---------------- */
   let actor: any[] = [];
@@ -316,9 +309,121 @@ const filterByRank = async (rank: string) => {
   return actor;
 };
 
+// const updateActor = async (
+//   payload: any,
+//   files: { [fieldname: string]: Express.Multer.File[] },
+//   id: string
+// ) => {
+//   if (!id) {
+//     throw new AppError(400, "Actor ID is required");
+//   }
+
+//   if (!payload && !files) {
+//     throw new AppError(400, "No data provided for update");
+//   }
+//   // Prepare update data
+//   const updateData: any = {};
+
+//   // Handle uploaded cover images
+//   if (files?.coverImages) {
+//     const coverImages = await fileUploader.CloudinaryUploadMultiple(
+//       files.coverImages
+//     );
+//     updateData.coverImages = coverImages.map((img: any) => img.secure_url);
+//   }
+//   // Handle uploaded profile photo
+//   if (files?.photo) {
+//     const profilePhoto = await fileUploader.CloudinaryUpload(files.photo[0]);
+//     updateData.photo = profilePhoto?.secure_url as any;
+//   }
+
+//   // Handle other fields from the payload
+//   if (payload.name) updateData.fullName = payload.name;
+//   if (payload.biography) updateData.bio = payload.biography;
+//   if (payload.otherNames) updateData.otherName = payload.otherNames;
+//   if (payload.occupation) updateData.occupation = payload.occupation;
+//   if (payload.dob) updateData.dob = payload.dob;
+//   // Ensure there is something to update
+//   if (Object.keys(updateData).length === 0) {
+//     throw new AppError(400, "No data provided for update");
+//   }
+
+//   // Update the actor in the database
+//   const updatedActor = await Actor.findByIdAndUpdate(
+//     id,
+//     { $set: updateData },
+//     { new: true }
+//   );
+
+//   return updatedActor;
+// };
+const updateActor = async (
+  payload: any,
+  files: { [fieldname: string]: Express.Multer.File[] },
+  id: string
+) => {
+  if (!id) {
+    throw new AppError(400, "Actor ID is required");
+  }
+
+  if (!payload && !files) {
+    throw new AppError(400, "No data provided for update");
+  }
+  console.log(id)
+  console.log(payload)
+
+  // Prepare update data
+  const updateData: any = {};
+
+  // Handle uploaded profile photo
+  if (files?.photo) {
+    const uploaded = (await fileUploader.CloudinaryUpload(files.photo[0])) as {
+      secure_url: string;
+    };
+    updateData.photo = uploaded.secure_url;
+  }
+
+  // Handle uploaded cover images
+  if (files?.coverImages) {
+    const coverImages = await fileUploader.CloudinaryUploadMultiple(
+      files.coverImages
+    );
+    updateData.coverImages = coverImages.map((img) => {
+      const uploaded = img as { secure_url: string };
+      return uploaded.secure_url;
+    });
+  }
+
+  // Handle other fields from the payload
+  if (payload.name) updateData.fullName = payload.name;
+  if (payload.biography) updateData.bio = payload.biography;
+  if (payload.otherNames) updateData.otherName = payload.otherNames;
+  if (payload.occupation) updateData.occupation = payload.occupation;
+  if (payload.dob) updateData.dob = payload.dob;
+
+  // Ensure there is something to update
+  if (Object.keys(updateData).length === 0) {
+    throw new AppError(400, "No data provided for update");
+  }
+console.log(updateData)
+  // Update the actor in the database
+  const updatedActor = await Actor.findByIdAndUpdate(
+    id,
+    { $set: updateData },
+    { new: true }
+  );
+
+  return updatedActor;
+};
+
+export default {
+  updateActor,
+};
+
 export const ActorService = {
   createActor,
   getSingleActor,
   getAllActor,
   filterByRank,
+  updateActor,
 };

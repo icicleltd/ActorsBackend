@@ -264,15 +264,21 @@ const getAllActor = async (
       { $sort: { roleOrder: 1 } },
       { $skip: skip },
       { $limit: limit },
+      {
+        $project: {
+          password: 0,
+        },
+      },
     ]);
   } else {
     // normal sorting
     actor = await Actor.find(filter)
+      .select("-password")
       .sort({ [sortBy]: sortWith })
       .skip(skip)
       .limit(limit);
   }
-
+  console.log(actor);
   /* ---------------- COUNTS ---------------- */
   const [totalActor, categoryACount, categoryBCount] = await Promise.all([
     Actor.countDocuments(),
@@ -369,8 +375,8 @@ const updateActor = async (
   if (!payload && !files) {
     throw new AppError(400, "No data provided for update");
   }
-  console.log(id)
-  console.log(payload)
+  console.log(id);
+  console.log(payload);
 
   // Prepare update data
   const updateData: any = {};
@@ -405,7 +411,7 @@ const updateActor = async (
   if (Object.keys(updateData).length === 0) {
     throw new AppError(400, "No data provided for update");
   }
-console.log(updateData)
+  console.log(updateData);
   // Update the actor in the database
   const updatedActor = await Actor.findByIdAndUpdate(
     id,

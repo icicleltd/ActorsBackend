@@ -235,15 +235,22 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             { $sort: { roleOrder: 1 } },
             { $skip: skip },
             { $limit: limit },
+            {
+                $project: {
+                    password: 0,
+                },
+            },
         ]);
     }
     else {
         // normal sorting
         actor = await actor_schema_1.default.find(filter)
+            .select("-password")
             .sort({ [sortBy]: sortWith })
             .skip(skip)
             .limit(limit);
     }
+    console.log(actor);
     /* ---------------- COUNTS ---------------- */
     const [totalActor, categoryACount, categoryBCount] = await Promise.all([
         actor_schema_1.default.countDocuments(),

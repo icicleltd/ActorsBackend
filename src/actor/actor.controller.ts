@@ -55,7 +55,7 @@ const getAllActor = catchAsync(
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange =
       (req.query.searchYearRange as string) || defaultYearRange;
-    console.log(rankRoleSearch, "rank");
+    console.log(rankRoleSearch, "rankRoleSearch");
     console.log(rankSearch, "rankSearch");
     console.log(search, "search");
     console.log(searchYearRange, "searchYearRange");

@@ -32,8 +32,12 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const actorSchema = new mongoose_1.Schema({
     // Required
     fullName: { type: String, required: true },
@@ -49,6 +53,11 @@ const actorSchema = new mongoose_1.Schema({
     bloodGroup: { type: String },
     // Contact
     email: { type: String },
+    password: {
+        type: String,
+        minlength: 6,
+        select: false, // 🔐 do not return password by default
+    },
     phoneNumber: { type: String, unique: true },
     whatsApp: { type: String },
     nid: { type: String },
@@ -57,10 +66,8 @@ const actorSchema = new mongoose_1.Schema({
     facebookLink: { type: String },
     instagramLink: { type: String },
     tiktokLink: { type: String },
-    youtubeLink: { type: String }, // main youtube profile link
-    // YouTube video links
+    youtubeLink: { type: String },
     youtubeVideos: [{ type: String }],
-    // Drama / Film Acted Details
     actedDramaAndFilmDetails: [
         {
             filmAndDramaName: { type: String },
@@ -72,7 +79,6 @@ const actorSchema = new mongoose_1.Schema({
     educationQualification: { type: String },
     emergencyNumber: { type: String },
     stageAndFilmAdditionalSkills: { type: String },
-    // Actor Reference
     actorReference: [
         {
             actorId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Actor", required: true },
@@ -80,18 +86,7 @@ const actorSchema = new mongoose_1.Schema({
             idNo: { type: String },
         },
     ],
-    // update actor
     coverImages: [{ type: String }],
-    // activity: {
-    //   all: [{ type: String }],
-    //   drama: [{ type: String }],
-    //   tv: [{ type: String }],
-    //   series: [{ type: String }],
-    //   tvc: [{ type: String }],
-    //   movies: [{ type: String }],
-    //   telefilms: [{ type: String }],
-    // },
-    // Admin Added Member Info
     idNo: { type: String, unique: true },
     rank: { type: String },
     occupation: { type: String },
@@ -102,10 +97,8 @@ const actorSchema = new mongoose_1.Schema({
     fromActive: { type: String },
     endActive: { type: String, default: null },
     presentActive: { type: String, default: null },
-    // Physical Info
     height: { type: String },
     weight: { type: String },
-    // Work/Personal Info
     workExperience: { type: String },
     workSocialMediaInfo: { type: String },
     educationInfo: { type: String },
@@ -117,7 +110,6 @@ const actorSchema = new mongoose_1.Schema({
         end: { type: Number },
     },
     rankYear: { type: String },
-    // Photos
     profilePhoto: [
         {
             left: { type: String },
@@ -127,13 +119,11 @@ const actorSchema = new mongoose_1.Schema({
     ],
     photo: { type: String, default: "https://ibb.co.com/mFRb3V6g" },
     characterPhoto: [{ type: String }],
-    // Intro Video
     introVideo: {
         url: { type: String },
         duration: { type: Number, max: 30 },
         sizeMB: { type: Number, max: 100 },
     },
-    // Category & Status
     category: { type: String, enum: ["A", "B"] },
     status: {
         type: String,
@@ -141,5 +131,20 @@ const actorSchema = new mongoose_1.Schema({
         default: "pending",
     },
 }, { timestamps: true });
+/* ======================================================
+   🔐 PASSWORD HASHING (PRE SAVE)
+====================================================== */
+actorSchema.pre("save", async function () {
+    if (!this.isModified("password") || !this.password)
+        return;
+    const salt = await bcrypt_1.default.genSalt(10);
+    this.password = await bcrypt_1.default.hash(this.password, salt);
+});
+/* ======================================================
+   🔐 PASSWORD COMPARE METHOD
+====================================================== */
+actorSchema.methods.comparePassword = async function (plainPassword) {
+    return bcrypt_1.default.compare(plainPassword, this.password);
+};
 const Actor = mongoose_1.default.model("Actor", actorSchema);
 exports.default = Actor;

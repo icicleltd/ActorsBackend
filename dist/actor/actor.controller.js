@@ -7,6 +7,7 @@ exports.ActorController = void 0;
 const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const actor_services_1 = require("./actor.services");
 const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
+const error_1 = require("../middleware/error");
 const createActor = (0, catchAsync_1.default)(async (req, res, next) => {
     const files = req.files;
     const data = req.body;
@@ -67,9 +68,44 @@ const filterByRank = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const updateActor = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    console.log(id);
+    console.log("id");
+    const files = req.files; // Uploaded files
+    const payload = req.body;
+    console.log(files);
+    if (!id) {
+        throw new error_1.AppError(400, "Actor ID is required");
+    }
+    const updatedActor = await actor_services_1.ActorService.updateActor(payload, files, id);
+    // if (!updatedActor) {
+    //   throw new AppError(404, "Actor not found");
+    // }
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Actor updated successfully",
+        data: updatedActor,
+    });
+});
+// const test = catchAsync(
+//   async (req: Request, res: Response, next: NextFunction) => {
+//     let a: any;
+//     const b = "abc";
+//     const result = await ActorService.updateActor(a, b);
+//     sendResponse(res, {
+//       statusCode: 201,
+//       success: true,
+//       message: "Actor Promoted successfully",
+//       data: result,
+//     });
+//   }
+// );
 exports.ActorController = {
     createActor,
     getSingleActor,
     getAllActor,
     filterByRank,
+    updateActor,
 };

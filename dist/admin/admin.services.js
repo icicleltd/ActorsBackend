@@ -31,6 +31,8 @@ const readAdmin = async () => {
     };
 };
 const updateActorProfile = async (actorData, actorId) => {
+    console.log(actorData);
+    console.log(actorId);
     if (!actorData) {
         throw new error_1.AppError(400, "No actor data provided");
     }
@@ -47,9 +49,12 @@ const updateActorProfile = async (actorData, actorId) => {
         category: actorData.category,
         status: actorData.status,
     };
-    const result = await actor_schema_1.default.findByIdAndUpdate(actorId, actorProfile, {
-        new: true,
-    });
+    console.log(actorData);
+    console.log(actorProfile);
+    const result = "22rer";
+    // const result = await Actor.findByIdAndUpdate(actorId, actorProfile, {
+    //   new: true,
+    // });
     if (!result) {
         throw new Error("Failed to fill up actor profile");
     }

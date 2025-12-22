@@ -35,7 +35,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     const allowedOrigins = [
         "*",
-        "http://localhost:3001", // Local development
+        "http://localhost:3000", // Local development
         "https://actors-equity-vfxp.vercel.app", // Deployed frontend
     ];
     const origin = req.headers.origin;

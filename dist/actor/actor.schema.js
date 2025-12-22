@@ -45,7 +45,7 @@ const actorSchema = new mongoose_1.Schema({
     permanentAddress: { type: String },
     nationality: { type: String },
     religion: { type: String },
-    dob: { type: String },
+    dob: { type: Date },
     bloodGroup: { type: String },
     // Contact
     email: { type: String },
@@ -80,6 +80,17 @@ const actorSchema = new mongoose_1.Schema({
             idNo: { type: String },
         },
     ],
+    // update actor
+    coverImages: [{ type: String }],
+    // activity: {
+    //   all: [{ type: String }],
+    //   drama: [{ type: String }],
+    //   tv: [{ type: String }],
+    //   series: [{ type: String }],
+    //   tvc: [{ type: String }],
+    //   movies: [{ type: String }],
+    //   telefilms: [{ type: String }],
+    // },
     // Admin Added Member Info
     idNo: { type: String, unique: true },
     rank: { type: String },

@@ -274,9 +274,100 @@ const filterByRank = async (rank) => {
     }
     return actor;
 };
+// const updateActor = async (
+//   payload: any,
+//   files: { [fieldname: string]: Express.Multer.File[] },
+//   id: string
+// ) => {
+//   if (!id) {
+//     throw new AppError(400, "Actor ID is required");
+//   }
+//   if (!payload && !files) {
+//     throw new AppError(400, "No data provided for update");
+//   }
+//   // Prepare update data
+//   const updateData: any = {};
+//   // Handle uploaded cover images
+//   if (files?.coverImages) {
+//     const coverImages = await fileUploader.CloudinaryUploadMultiple(
+//       files.coverImages
+//     );
+//     updateData.coverImages = coverImages.map((img: any) => img.secure_url);
+//   }
+//   // Handle uploaded profile photo
+//   if (files?.photo) {
+//     const profilePhoto = await fileUploader.CloudinaryUpload(files.photo[0]);
+//     updateData.photo = profilePhoto?.secure_url as any;
+//   }
+//   // Handle other fields from the payload
+//   if (payload.name) updateData.fullName = payload.name;
+//   if (payload.biography) updateData.bio = payload.biography;
+//   if (payload.otherNames) updateData.otherName = payload.otherNames;
+//   if (payload.occupation) updateData.occupation = payload.occupation;
+//   if (payload.dob) updateData.dob = payload.dob;
+//   // Ensure there is something to update
+//   if (Object.keys(updateData).length === 0) {
+//     throw new AppError(400, "No data provided for update");
+//   }
+//   // Update the actor in the database
+//   const updatedActor = await Actor.findByIdAndUpdate(
+//     id,
+//     { $set: updateData },
+//     { new: true }
+//   );
+//   return updatedActor;
+// };
+const updateActor = async (payload, files, id) => {
+    if (!id) {
+        throw new error_1.AppError(400, "Actor ID is required");
+    }
+    if (!payload && !files) {
+        throw new error_1.AppError(400, "No data provided for update");
+    }
+    console.log(id);
+    console.log(payload);
+    // Prepare update data
+    const updateData = {};
+    // Handle uploaded profile photo
+    if (files?.photo) {
+        const uploaded = (await fileUpload_1.fileUploader.CloudinaryUpload(files.photo[0]));
+        updateData.photo = uploaded.secure_url;
+    }
+    // Handle uploaded cover images
+    if (files?.coverImages) {
+        const coverImages = await fileUpload_1.fileUploader.CloudinaryUploadMultiple(files.coverImages);
+        updateData.coverImages = coverImages.map((img) => {
+            const uploaded = img;
+            return uploaded.secure_url;
+        });
+    }
+    // Handle other fields from the payload
+    if (payload.name)
+        updateData.fullName = payload.name;
+    if (payload.biography)
+        updateData.bio = payload.biography;
+    if (payload.otherNames)
+        updateData.otherName = payload.otherNames;
+    if (payload.occupation)
+        updateData.occupation = payload.occupation;
+    if (payload.dob)
+        updateData.dob = payload.dob;
+    // Ensure there is something to update
+    if (Object.keys(updateData).length === 0) {
+        throw new error_1.AppError(400, "No data provided for update");
+    }
+    console.log(updateData);
+    // Update the actor in the database
+    const updatedActor = await actor_schema_1.default.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+    return updatedActor;
+};
+exports.default = {
+    updateActor,
+};
 exports.ActorService = {
     createActor,
     getSingleActor,
     getAllActor,
     filterByRank,
+    updateActor,
 };

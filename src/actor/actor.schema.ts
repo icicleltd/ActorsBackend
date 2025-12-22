@@ -14,7 +14,7 @@ const actorSchema = new Schema<IActor>(
     permanentAddress: { type: String },
     nationality: { type: String },
     religion: { type: String },
-    dob: { type: String },
+    dob: { type: Date },
     bloodGroup: { type: String },
 
     // Contact
@@ -56,6 +56,18 @@ const actorSchema = new Schema<IActor>(
       },
     ],
 
+    // update actor
+    coverImages: [{ type: String }],
+    // activity: {
+    //   all: [{ type: String }],
+    //   drama: [{ type: String }],
+    //   tv: [{ type: String }],
+    //   series: [{ type: String }],
+    //   tvc: [{ type: String }],
+    //   movies: [{ type: String }],
+    //   telefilms: [{ type: String }],
+    // },
+    
     // Admin Added Member Info
     idNo: { type: String, unique: true },
     rank: { type: String },
@@ -84,7 +96,7 @@ const actorSchema = new Schema<IActor>(
       start: { type: Number },
       end: { type: Number },
     },
-    rankYear:{type: String},
+    rankYear: { type: String },
 
     // Photos
     profilePhoto: [
@@ -95,7 +107,7 @@ const actorSchema = new Schema<IActor>(
       },
     ],
 
-    photo: { type: String ,default:"https://ibb.co.com/mFRb3V6g"},
+    photo: { type: String, default: "https://ibb.co.com/mFRb3V6g" },
     characterPhoto: [{ type: String }],
 
     // Intro Video

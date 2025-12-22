@@ -109,6 +109,8 @@ const addActor = async (file, actorData) => {
         photo: uploadedUrl, // Use the uploaded URL if file exists, otherwise Mongoose will use the default value
         fromActive: actorData.fromActive,
         bio: actorData.bio,
+        email: actorData.email,
+        password: actorData.password,
     };
     console.log(actorProfile);
     // Create the actor in the database
@@ -116,6 +118,7 @@ const addActor = async (file, actorData) => {
     if (!actor) {
         throw new error_1.AppError(500, "Failed to create actor");
     }
+    console.log(actor);
     return actor;
 };
 const promoteMember = async (memberData) => {

@@ -36,7 +36,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const allowedOrigins: string[] = [
     "*",
     "http://localhost:3000", // Local development
-    "https://actors-equity-ywpl.vercel.app", // Deployed frontend
+    "https://actors-equity.vercel.app", // Deployed frontend
   ];
   const origin = req.headers.origin;
 

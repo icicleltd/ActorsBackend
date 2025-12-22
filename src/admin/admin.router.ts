@@ -10,7 +10,7 @@ adminRouter.post(
   AdminController.addActor
 );
 adminRouter.put("/promote",AdminController.promoteMember)
-adminRouter.put("/:id", AdminController.updateActorProfile);
+adminRouter.put("/update-actor/:id", fileUploader.upload.single("photo"), AdminController.updateActorProfile);
 adminRouter.delete("/deletemember/:id", AdminController.deleteMember);
 adminRouter.get("/", AdminController.getAdmin);
 adminRouter.put("/:id", AdminController.readNotificaton);

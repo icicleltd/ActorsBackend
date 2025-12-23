@@ -250,7 +250,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             .skip(skip)
             .limit(limit);
     }
-    console.log(actor);
+    // console.log(actor);
     /* ---------------- COUNTS ---------------- */
     const [totalActor, categoryACount, categoryBCount] = await Promise.all([
         actor_schema_1.default.countDocuments(),

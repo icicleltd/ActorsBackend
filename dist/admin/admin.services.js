@@ -62,7 +62,7 @@ const updateActorProfile = async (actorData, actorId, file) => {
         password: actorData.password,
     };
     const result = await actor_schema_1.default.findByIdAndUpdate(actorId, actorProfile, {
-        new: true
+        new: true,
     }).select("-password");
     if (!result) {
         throw new Error("Failed to fill up actor profile");

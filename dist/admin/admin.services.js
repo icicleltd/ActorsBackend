@@ -22,7 +22,7 @@ const createAdmin = async (payload) => {
 };
 const getAdmin = async () => {
     return {
-        msg: "Admin fetched",
+        msg: "Admin fetcheddddddddddd",
     };
 };
 const readAdmin = async () => {
@@ -30,31 +30,40 @@ const readAdmin = async () => {
         msg: "Admin read",
     };
 };
-const updateActorProfile = async (actorData, actorId) => {
-    console.log(actorData);
-    console.log(actorId);
+const updateActorProfile = async (actorData, actorId, file) => {
     if (!actorData) {
         throw new error_1.AppError(400, "No actor data provided");
     }
     if (!actorId) {
         throw new error_1.AppError(400, "No actor id provided");
     }
+    let uploadedUrl;
+    if (file) {
+        const upload = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
+        if (!upload) {
+            throw new error_1.AppError(500, "Failed to upload file");
+        }
+        uploadedUrl = upload.secure_url;
+    }
+    // const buildIdNo = `${actorData.category}-${actorData.idNo}`;
     const actorProfile = {
         phoneNumber: actorData.phoneNumber,
         presentAddress: actorData.presentAddress,
-        dateOfBirth: new Date(actorData.dateOfBirth),
+        dob: new Date(actorData.dob),
         bloodGroup: actorData.bloodGroup,
         idNo: actorData.idNo,
         fullName: actorData.fullName,
         category: actorData.category,
         status: actorData.status,
+        photo: uploadedUrl,
+        fromActive: actorData.fromActive,
+        bio: actorData.bio,
+        email: actorData.email,
+        password: actorData.password,
     };
-    console.log(actorData);
-    console.log(actorProfile);
-    const result = "22rer";
-    // const result = await Actor.findByIdAndUpdate(actorId, actorProfile, {
-    //   new: true,
-    // });
+    const result = await actor_schema_1.default.findByIdAndUpdate(actorId, actorProfile, {
+        new: true
+    }).select("-password");
     if (!result) {
         throw new Error("Failed to fill up actor profile");
     }
@@ -101,17 +110,17 @@ const addActor = async (file, actorData) => {
         }
         uploadedUrl = uploaded.secure_url; // If file uploaded successfully, store the URL
     }
-    const buildIdNo = `${actorData.category}-${actorData.idNo}`;
+    // const buildIdNo = `${actorData.category}-${actorData.idNo}`;
     const actorProfile = {
         phoneNumber: actorData.phoneNumber,
         presentAddress: actorData.presentAddress,
         dob: actorData.dob.toString(),
         bloodGroup: actorData.bloodGroup,
-        idNo: buildIdNo,
+        idNo: actorData.idNo,
         fullName: actorData.fullName,
         category: actorData.category,
         status: actorData.status,
-        photo: uploadedUrl, // Use the uploaded URL if file exists, otherwise Mongoose will use the default value
+        photo: uploadedUrl,
         fromActive: actorData.fromActive,
         bio: actorData.bio,
         email: actorData.email,

@@ -97,7 +97,7 @@ const actorSchema = new Schema<IActor>(
       },
     ],
 
-    photo: { type: String, default: "https://ibb.co.com/mFRb3V6g" },
+    photo: { type: String, default: "https://res.cloudinary.com/dk4ltobvb/image/upload/v1766485148/Actors.png.png" },
     characterPhoto: [{ type: String }],
 
     introVideo: {

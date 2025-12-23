@@ -4,6 +4,7 @@ import globalErrorHandler from "./middleware/globalErrorHandler";
 import actorRouter from "./actor/actor.router";
 import adminRouter from "./admin/admin.router";
 import notificationRouter from "./notification/notification.router";
+import eventRouter from "./event/event.router";
 
 const app = express();
 // Middleware
@@ -67,6 +68,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api/v1/actors", actorRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/notification", notificationRouter);
+app.use("/api/v1/event", eventRouter);
 app.use(globalErrorHandler);
 
 // Test route

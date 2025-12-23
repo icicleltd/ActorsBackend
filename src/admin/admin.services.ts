@@ -63,7 +63,7 @@ const updateActorProfile = async (
     password: actorData.password,
   };
   const result = await Actor.findByIdAndUpdate(actorId, actorProfile, {
-    new: true
+    new: true,
   }).select("-password");
   if (!result) {
     throw new Error("Failed to fill up actor profile");
@@ -118,7 +118,6 @@ const addActor = async (file: any, actorData: any) => {
 
     uploadedUrl = uploaded.secure_url; // If file uploaded successfully, store the URL
   }
-
   // const buildIdNo = `${actorData.category}-${actorData.idNo}`;
   const actorProfile = {
     phoneNumber: actorData.phoneNumber,

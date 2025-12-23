@@ -32,8 +32,10 @@ const readNotificaton = catchAsync(
 const updateActorProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
+    const file = req.file;
     const actorId = req.params.id;
-    const result = await AdminService.updateActorProfile(data, actorId);
+    // console.log(data, file, actorId);
+    const result = await AdminService.updateActorProfile(data, actorId, file);
     sendResponse(res, {
       statusCode: 201,
       success: true,
@@ -81,7 +83,7 @@ const promoteMember = catchAsync(
 );
 const deleteMember = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const id = req.params.id
+    const id = req.params.id;
     const result = await AdminService.deleteMember(id);
     sendResponse(res, {
       statusCode: 200,
@@ -110,5 +112,5 @@ export const AdminController = {
   addActor,
   promoteMember,
   test,
-  deleteMember
+  deleteMember,
 };

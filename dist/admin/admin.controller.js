@@ -28,8 +28,10 @@ const readNotificaton = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 const updateActorProfile = (0, catchAsync_1.default)(async (req, res, next) => {
     const data = req.body;
+    const file = req.file;
     const actorId = req.params.id;
-    const result = await admin_services_1.AdminService.updateActorProfile(data, actorId);
+    // console.log(data, file, actorId);
+    const result = await admin_services_1.AdminService.updateActorProfile(data, actorId, file);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
@@ -95,5 +97,5 @@ exports.AdminController = {
     addActor,
     promoteMember,
     test,
-    deleteMember
+    deleteMember,
 };

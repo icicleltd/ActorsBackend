@@ -14,21 +14,58 @@ adminRouter.put("/promote", admin_controller_1.AdminController.promoteMember);
 adminRouter.put("/update-actor/:id", fileUpload_1.fileUploader.upload.single("photo"), admin_controller_1.AdminController.updateActorProfile);
 adminRouter.delete("/deletemember/:id", admin_controller_1.AdminController.deleteMember);
 adminRouter.get("/", admin_controller_1.AdminController.getAdmin);
-adminRouter.put("/:id", admin_controller_1.AdminController.readNotificaton);
-adminRouter.delete("/delete-all", async (req, res) => {
-    const text = req.body.text;
-    console.log(text);
+adminRouter.put("/update-idno", async (req, res) => {
+    const { text } = req.body;
     try {
-        if (text === "delete all") {
-            await actor_schema_1.default.deleteMany({});
-            res.json({ success: true, message: "All actors deleted" });
+        if (text !== "idNo") {
+            return res.send("no idNo");
         }
-        else {
-            res.send("no  deleted");
+        const actors = await actor_schema_1.default.find({
+            idNo: { $regex: /^[A-Z]-/ },
+        });
+        console.log(`Found ${actors.length} actors to migrate`);
+        let updatedCount = 0;
+        for (const actor of actors) {
+            // ✅ TYPE GUARD
+            if (!actor.idNo || typeof actor.idNo !== "string")
+                continue;
+            const parts = actor.idNo.split("-");
+            if (parts.length !== 2)
+                continue;
+            const [category, rawId] = parts;
+            // actor.category = category;
+            actor.idNo = rawId;
+            await actor.save(); // ✅ IMPORTANT
+            console.log(rawId);
+            updatedCount++;
+            console.log(`✔ Fixed actor ${actor.fullName}`);
         }
+        return res.json({
+            success: true,
+            message: "Migration completed",
+            updated: updatedCount,
+        });
     }
     catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        return res.status(500).json({
+            success: false,
+            error: err.message,
+        });
     }
 });
+adminRouter.put("/:id", admin_controller_1.AdminController.readNotificaton);
+// adminRouter.delete("/delete-all", async (req, res) => {
+//   const text = req.body.text;
+//   console.log(text);
+//   try {
+//     if (text === "delete all") {
+//       await Actor.deleteMany({});
+//       res.json({ success: true, message: "All actors deleted" });
+//     } else {
+//       res.send("no  deleted");
+//     }
+//   } catch (err: any) {
+//     res.status(500).json({ success: false, error: err.message });
+//   }
+// });
 exports.default = adminRouter;

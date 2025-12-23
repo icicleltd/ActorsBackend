@@ -278,7 +278,7 @@ const getAllActor = async (
       .skip(skip)
       .limit(limit);
   }
-  console.log(actor);
+  // console.log(actor);
   /* ---------------- COUNTS ---------------- */
   const [totalActor, categoryACount, categoryBCount] = await Promise.all([
     Actor.countDocuments(),

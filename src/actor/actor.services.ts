@@ -185,7 +185,7 @@ const getAllActor = async (
   if (category === "A" || category === "B" || category === "C") {
     filter.category = category;
   }
-  
+
   /* ---------------- YEAR RANGE FILTER ---------------- */
   if (rankSearch === "executive") {
     if (searchYearRange) {
@@ -213,7 +213,6 @@ const getAllActor = async (
   } else if (rankSearch === "primeryB") {
     filter.category = "B";
   } else if (rankSearch === "child") {
-    
     filter.category = "C";
   }
 
@@ -256,26 +255,31 @@ const getAllActor = async (
   }
   // console.log(actor);
   /* ---------------- COUNTS ---------------- */
-  const [totalActor, categoryACount, categoryBCount] = await Promise.all([
-    Actor.countDocuments(),
-    Actor.countDocuments({ category: "A" }),
-    Actor.countDocuments({ category: "B" }),
-  ]);
+  const [totalActor, categoryACount, categoryBCount, categoryCCount] =
+    await Promise.all([
+      Actor.countDocuments(),
+      Actor.countDocuments({ category: "A" }),
+      Actor.countDocuments({ category: "B" }),
+      Actor.countDocuments({ category: "C" }),
+    ]);
 
   const totalPage = Math.ceil(
     (category === "A"
       ? categoryACount
       : category === "B"
       ? categoryBCount
+      : category === "C"
+      ? categoryCCount
       : totalActor) / limit
   );
-
+console.log(categoryCCount)
   /* ---------------- RESPONSE ---------------- */
   return {
     actor,
     totalActor,
     categoryACount,
     categoryBCount,
+    categoryCCount,
     totalPage,
   };
 };

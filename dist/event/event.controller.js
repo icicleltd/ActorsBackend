@@ -8,7 +8,10 @@ const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const event_services_1 = require("./event.services");
 const createEvent = (0, catchAsync_1.default)(async (req, res, next) => {
-    const result = await event_services_1.EventService.createEvent();
+    const payload = req.body;
+    const files = req.files;
+    // const adminId = req.user?.id;
+    const result = await event_services_1.EventService.createEvent(payload, files);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,

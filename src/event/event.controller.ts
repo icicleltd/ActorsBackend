@@ -2,10 +2,16 @@ import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { EventService } from "./event.services";
+import { CreateEventDto } from "./event.interface";
 
 const createEvent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const result = await EventService.createEvent();
+    const payload: CreateEventDto = req.body;
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+    // const adminId = req.user?.id;
+    const result = await EventService.createEvent(payload, files);
 
     sendResponse(res, {
       statusCode: 201,

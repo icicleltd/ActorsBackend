@@ -37,7 +37,7 @@ app.use((req, res, next) => {
     const allowedOrigins = [
         "*",
         "http://localhost:3000", // Local development
-        "https://actors-equity.vercel.app", // Deployed frontend
+        "https://actors-backend-mr7t.vercel.app", // Deployed frontend
     ];
     const origin = req.headers.origin;
     if (origin && allowedOrigins.includes(origin)) {
@@ -60,7 +60,7 @@ app.use((req, res, next) => {
 app.use("/api/v1/actors", actor_router_1.default);
 app.use("/api/v1/admin", admin_router_1.default);
 app.use("/api/v1/notification", notification_router_1.default);
-app.use("/api/v1/event", event_router_1.default);
+app.use("/api/v1/events", event_router_1.default);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

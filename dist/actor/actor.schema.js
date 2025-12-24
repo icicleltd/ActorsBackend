@@ -124,7 +124,7 @@ const actorSchema = new mongoose_1.Schema({
         duration: { type: Number, max: 30 },
         sizeMB: { type: Number, max: 100 },
     },
-    category: { type: String, enum: ["A", "B"] },
+    category: { type: String, enum: ["A", "B", "C"] },
     status: {
         type: String,
         enum: ["pending", "approved", "rejected"],

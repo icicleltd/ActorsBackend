@@ -233,22 +233,27 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     }
     // console.log(actor);
     /* ---------------- COUNTS ---------------- */
-    const [totalActor, categoryACount, categoryBCount] = await Promise.all([
+    const [totalActor, categoryACount, categoryBCount, categoryCCount] = await Promise.all([
         actor_schema_1.default.countDocuments(),
         actor_schema_1.default.countDocuments({ category: "A" }),
         actor_schema_1.default.countDocuments({ category: "B" }),
+        actor_schema_1.default.countDocuments({ category: "C" }),
     ]);
     const totalPage = Math.ceil((category === "A"
         ? categoryACount
         : category === "B"
             ? categoryBCount
-            : totalActor) / limit);
+            : category === "C"
+                ? categoryCCount
+                : totalActor) / limit);
+    console.log(categoryCCount);
     /* ---------------- RESPONSE ---------------- */
     return {
         actor,
         totalActor,
         categoryACount,
         categoryBCount,
+        categoryCCount,
         totalPage,
     };
 };

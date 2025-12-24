@@ -37,7 +37,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const allowedOrigins: string[] = [
     "*",
     "http://localhost:3000", // Local development
-    "https://actors-equity.vercel.app", // Deployed frontend
+    "https://actors-backend-mr7t.vercel.app", // Deployed frontend
   ];
   const origin = req.headers.origin;
 
@@ -68,7 +68,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use("/api/v1/actors", actorRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/notification", notificationRouter);
-app.use("/api/v1/event", eventRouter);
+app.use("/api/v1/events", eventRouter);
 app.use(globalErrorHandler);
 
 // Test route

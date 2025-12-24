@@ -24,3 +24,10 @@ export interface IEvent {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface CreateEventDto {
+  title: string;
+  description: string;
+  eventDate: Date;
+  isBookingOpen: boolean;
+}

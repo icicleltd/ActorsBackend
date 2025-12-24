@@ -30,7 +30,7 @@ const updateActorProfile = (0, catchAsync_1.default)(async (req, res, next) => {
     const data = req.body;
     const file = req.file;
     const actorId = req.params.id;
-    // console.log(data, file, actorId);
+    console.log(file);
     const result = await admin_services_1.AdminService.updateActorProfile(data, actorId, file);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,

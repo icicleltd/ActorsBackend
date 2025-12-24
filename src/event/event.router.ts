@@ -1,9 +1,19 @@
 import express from "express";
 import { EventController } from "./event.controller";
+import { fileUploader } from "../helper/fileUpload";
 
 const router = express.Router();
 
-router.post("/", EventController.createEvent);
+// router.post("/upcomming", EventController.createEvent);
+router.post(
+  "/",
+  fileUploader.upload.fields([
+    { name: "banner", maxCount: 1 },
+    { name: "logo", maxCount: 1 },
+    { name: "images", maxCount: 20 },
+  ]),
+  EventController.createEvent
+);
 router.get("/", EventController.getEvents);
 router.get("/:id", EventController.getAdminEvents);
 router.put("/:id/read", EventController.readEvent);

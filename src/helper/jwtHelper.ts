@@ -1,5 +1,5 @@
 import jwt, { Secret } from "jsonwebtoken";
-import { TokenPayload } from "../auth/auth.interface";
+import { DecodedToken, TokenPayload } from "../auth/auth.interface";
 import { AppError } from "../middleware/error";
 const generateToken = (
   payload: TokenPayload,
@@ -18,7 +18,7 @@ const generateToken = (
 
 const verifyToken = (token: string, secret: Secret) => {
   try {
-    return jwt.verify(token, secret);
+    return jwt.verify(token, secret) as DecodedToken;
   } catch (error) {
     throw new AppError(401, "Unauthorized access: Invalid or expired token");
   }

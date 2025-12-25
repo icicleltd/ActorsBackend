@@ -8,6 +8,7 @@ import setCookie from "../helper/cookieHelper";
 const createAuth = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: IPayload = req.body;
+    console.log(payload);
     const result = await AuthService.createAuth(payload);
     // console.log(process.env.ACCESS_COOKIE_EXPIRE_IN)
     setCookie(
@@ -27,8 +28,10 @@ const createAuth = catchAsync(
 );
 
 const getAuths = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const result = await AuthService.getAuths();
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const user = req.user;
+    console.log(user)
+    const result = await AuthService.getAuths(user);
 
     sendResponse(res, {
       statusCode: 200,

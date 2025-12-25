@@ -24,7 +24,7 @@ export interface IActor extends Document {
   // =========================
   email?: string;
   password?: string,
-  comparePassword?(plainPassword: string): Promise<boolean>;
+  comparePassword(plainPassword: string): Promise<boolean>;
   phoneNumber?: string;
   whatsApp?: string;
   nid?: string;

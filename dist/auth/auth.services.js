@@ -8,14 +8,17 @@ const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const jwtHelper_1 = require("../helper/jwtHelper");
 const error_1 = require("../middleware/error");
 const createAuth = async (payload) => {
-    const { password, identifier } = payload;
+    const { password, identifier, role } = payload;
     const filter = {};
     const fields = ["email", "idNo", "phoneNumber"];
     if (!password.trim()) {
-        throw new error_1.AppError(400, "Password required");
+        throw new error_1.AppError(400, "Password is required");
     }
     if (!identifier.trim()) {
-        throw new error_1.AppError(400, "Identifier required");
+        throw new error_1.AppError(400, "Identifier is required");
+    }
+    if (!role.trim()) {
+        throw new error_1.AppError(400, "Role is required");
     }
     const trimmedIdentifier = identifier.trim().toLowerCase();
     filter.$or = fields.map((field) => ({
@@ -34,7 +37,7 @@ const createAuth = async (payload) => {
     const data = {
         _id: existingUser._id,
         email: existingUser.email,
-        role: "actor",
+        role,
         fullName: existingUser.fullName,
     };
     const accessToken = await jwtHelper_1.jwtHelper.generateToken(data, process.env.ACCESS_TOKEN_SECRET_KEY, process.env.ACCESS_TOKEN_EXPIRE_IN);
@@ -48,8 +51,13 @@ const createAuth = async (payload) => {
         accessToken,
     };
 };
-const getAuths = async () => {
-    return;
+const getAuths = async (payload) => {
+    const { _id, email, fullName, role } = payload;
+    if (!_id) {
+        throw new error_1.AppError(401, "Unathorize");
+    }
+    const user = await actor_schema_1.default.findById(_id).select("_id fullName dob bloodGroup phoneNumber idNo photo").lean(false);
+    return user;
 };
 const getAdminAuths = async (adminId) => {
     return;

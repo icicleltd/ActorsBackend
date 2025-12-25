@@ -2,17 +2,20 @@ import { Secret } from "jsonwebtoken";
 import Actor from "../actor/actor.schema";
 import { jwtHelper } from "../helper/jwtHelper";
 import { AppError } from "../middleware/error";
-import { IPayload, TokenPayload } from "./auth.interface";
+import { DecodedToken, IPayload, TokenPayload } from "./auth.interface";
 
 const createAuth = async (payload: IPayload) => {
-  const { password, identifier } = payload;
+  const { password, identifier, role } = payload;
   const filter: any = {};
   const fields = ["email", "idNo", "phoneNumber"];
   if (!password.trim()) {
-    throw new AppError(400, "Password required");
+    throw new AppError(400, "Password is required");
   }
   if (!identifier.trim()) {
-    throw new AppError(400, "Identifier required");
+    throw new AppError(400, "Identifier is required");
+  }
+  if (!role.trim()) {
+    throw new AppError(400, "Role is required");
   }
   const trimmedIdentifier = identifier.trim().toLowerCase();
   filter.$or = fields.map((field) => ({
@@ -32,7 +35,7 @@ const createAuth = async (payload: IPayload) => {
   const data: TokenPayload = {
     _id: existingUser._id,
     email: existingUser.email,
-    role: "actor",
+    role,
     fullName: existingUser.fullName,
   };
   const accessToken = await jwtHelper.generateToken(
@@ -52,8 +55,13 @@ const createAuth = async (payload: IPayload) => {
   };
 };
 
-const getAuths = async () => {
-  return;
+const getAuths = async (payload: DecodedToken) => {
+  const { _id, email, fullName, role } = payload;
+  if (!_id) {
+    throw new AppError(401, "Unathorize");
+  }
+  const user = await Actor.findById(_id).select("_id fullName dob bloodGroup phoneNumber idNo photo").lean(false)
+  return user;
 };
 
 const getAdminAuths = async (adminId: string) => {

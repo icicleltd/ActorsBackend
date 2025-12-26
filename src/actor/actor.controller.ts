@@ -55,10 +55,6 @@ const getAllActor = catchAsync(
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange =
       (req.query.searchYearRange as string) || defaultYearRange;
-    // console.log(rankRoleSearch, "rankRoleSearch");
-    // console.log(rankSearch, "rankSearch");
-    // console.log(search, "search");
-    // console.log(searchYearRange, "searchYearRange");
     const result = await ActorService.getAllActor(
       search,
       page,
@@ -95,11 +91,8 @@ const filterByRank = catchAsync(
 const updateActor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id;
-    console.log(id)
-    console.log("id")
     const files = req.files as { [fieldname: string]: Express.Multer.File[] }; // Uploaded files
     const payload = req.body;
-    console.log(files)
     if (!id) {
       throw new AppError(400, "Actor ID is required");
     }

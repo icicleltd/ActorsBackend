@@ -9,7 +9,7 @@ export const VerifyLogin = async (
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer")) {
     return res.status(401).json({
-      megs: "NO token provided",
+      megs: "No token provided",
     });
   }
   const accessToken = authHeader.split(" ")[1];

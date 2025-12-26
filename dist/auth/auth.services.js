@@ -56,7 +56,7 @@ const getAuths = async (payload) => {
     if (!_id) {
         throw new error_1.AppError(401, "Unathorize");
     }
-    const user = await actor_schema_1.default.findById(_id).select("_id fullName dob bloodGroup phoneNumber idNo photo category").lean(false);
+    const user = await actor_schema_1.default.findById(_id);
     return user;
 };
 const getAdminAuths = async (adminId) => {

@@ -34,7 +34,6 @@ const updateActorProfile = catchAsync(
     const data = req.body;
     const file = req.file;
     const actorId = req.params.id;
-    console.log(file);
     const result = await AdminService.updateActorProfile(data, actorId, file);
     sendResponse(res, {
       statusCode: 201,
@@ -71,7 +70,6 @@ const addActor = catchAsync(
 const promoteMember = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const data = req.body;
-    console.log(data, "in body");
     const result = await AdminService.promoteMember(data);
     sendResponse(res, {
       statusCode: 201,

@@ -30,7 +30,6 @@ const updateActorProfile = (0, catchAsync_1.default)(async (req, res, next) => {
     const data = req.body;
     const file = req.file;
     const actorId = req.params.id;
-    console.log(file);
     const result = await admin_services_1.AdminService.updateActorProfile(data, actorId, file);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
@@ -61,7 +60,6 @@ const addActor = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 const promoteMember = (0, catchAsync_1.default)(async (req, res, next) => {
     const data = req.body;
-    console.log(data, "in body");
     const result = await admin_services_1.AdminService.promoteMember(data);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,

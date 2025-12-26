@@ -178,7 +178,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     /* ---------------- RANK FILTER ---------------- */
     if (rankRoleSearch) {
         // specific role like "president"
-        console.log("rankRoleSearch", rankRoleSearch);
         filter.rank = rankRoleSearch;
     }
     else if (rankSearch === "executive") {
@@ -231,7 +230,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             .skip(skip)
             .limit(limit);
     }
-    // console.log(actor);
     /* ---------------- COUNTS ---------------- */
     const [totalActor, categoryACount, categoryBCount, categoryCCount] = await Promise.all([
         actor_schema_1.default.countDocuments(),
@@ -246,7 +244,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             : category === "C"
                 ? categoryCCount
                 : totalActor) / limit);
-    console.log(categoryCCount);
     /* ---------------- RESPONSE ---------------- */
     return {
         actor,
@@ -317,8 +314,6 @@ const updateActor = async (payload, files, id) => {
     if (!payload && !files) {
         throw new error_1.AppError(400, "No data provided for update");
     }
-    console.log(id);
-    console.log(payload);
     // Prepare update data
     const updateData = {};
     // Handle uploaded profile photo
@@ -349,10 +344,9 @@ const updateActor = async (payload, files, id) => {
     if (Object.keys(updateData).length === 0) {
         throw new error_1.AppError(400, "No data provided for update");
     }
-    console.log(updateData);
     // Update the actor in the database
-    const updatedActor = await actor_schema_1.default.findByIdAndUpdate(id, { $set: updateData }, { new: true });
-    return updatedActor;
+    const newActor = await actor_schema_1.default.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+    return newActor;
 };
 exports.default = {
     updateActor,

@@ -60,7 +60,7 @@ const getAuths = async (payload: DecodedToken) => {
   if (!_id) {
     throw new AppError(401, "Unathorize");
   }
-  const user = await Actor.findById(_id).select("_id fullName dob bloodGroup phoneNumber idNo photo category").lean(false)
+  const user = await Actor.findById(_id)
   return user;
 };
 

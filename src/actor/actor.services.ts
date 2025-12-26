@@ -199,7 +199,6 @@ const getAllActor = async (
   /* ---------------- RANK FILTER ---------------- */
   if (rankRoleSearch) {
     // specific role like "president"
-    console.log("rankRoleSearch", rankRoleSearch);
     filter.rank = rankRoleSearch;
   } else if (rankSearch === "executive") {
     // executive group
@@ -253,7 +252,6 @@ const getAllActor = async (
       .skip(skip)
       .limit(limit);
   }
-  // console.log(actor);
   /* ---------------- COUNTS ---------------- */
   const [totalActor, categoryACount, categoryBCount, categoryCCount] =
     await Promise.all([
@@ -272,7 +270,6 @@ const getAllActor = async (
       ? categoryCCount
       : totalActor) / limit
   );
-console.log(categoryCCount)
   /* ---------------- RESPONSE ---------------- */
   return {
     actor,
@@ -355,9 +352,6 @@ const updateActor = async (
   if (!payload && !files) {
     throw new AppError(400, "No data provided for update");
   }
-  console.log(id);
-  console.log(payload);
-
   // Prepare update data
   const updateData: any = {};
 
@@ -391,15 +385,13 @@ const updateActor = async (
   if (Object.keys(updateData).length === 0) {
     throw new AppError(400, "No data provided for update");
   }
-  console.log(updateData);
   // Update the actor in the database
-  const updatedActor = await Actor.findByIdAndUpdate(
-    id,
-    { $set: updateData },
-    { new: true }
-  );
-
-  return updatedActor;
+   const newActor = await Actor.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    );
+    return newActor;
 };
 
 export default {

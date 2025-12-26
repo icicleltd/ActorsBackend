@@ -23,7 +23,6 @@ adminRouter.put("/update-idno", async (req, res) => {
         const actors = await actor_schema_1.default.find({
             idNo: { $regex: /^[A-Z]-/ },
         });
-        console.log(`Found ${actors.length} actors to migrate`);
         let updatedCount = 0;
         for (const actor of actors) {
             // ✅ TYPE GUARD
@@ -36,9 +35,7 @@ adminRouter.put("/update-idno", async (req, res) => {
             // actor.category = category;
             actor.idNo = rawId;
             await actor.save(); // ✅ IMPORTANT
-            console.log(rawId);
             updatedCount++;
-            console.log(`✔ Fixed actor ${actor.fullName}`);
         }
         return res.json({
             success: true,

@@ -95,7 +95,6 @@ const updateActorProfile = async (
 //     fromActive: actorData.fromActive,
 //     bio: actorData.bio,
 //   };
-//   console.log(actorProfile);
 //   const actor = await Actor.create(actorProfile);
 //   if (!actor) {
 //     throw new AppError(500, "Failed to create actor");
@@ -135,7 +134,6 @@ const addActor = async (file: any, actorData: any) => {
     password: actorData.password,
   };
 
-  console.log(actorProfile);
 
   // Create the actor in the database
   const actor = await Actor.create(actorProfile);
@@ -143,12 +141,10 @@ const addActor = async (file: any, actorData: any) => {
   if (!actor) {
     throw new AppError(500, "Failed to create actor");
   }
-  console.log(actor);
   return actor;
 };
 
 const promoteMember = async (memberData: any) => {
-  console.log(memberData, "in serveices");
   const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
   if (!id || !fullName || !idNo || !rank) {
     throw new AppError(400, "Member data not provided");
@@ -165,7 +161,6 @@ const promoteMember = async (memberData: any) => {
   if (!newMember) {
     throw new AppError(500, "Member Not promote");
   }
-  console.log(memberData);
   return memberData;
 };
 const deleteMember = async (id: string) => {
@@ -173,7 +168,6 @@ const deleteMember = async (id: string) => {
     throw new AppError(400, "Member id Not found");
   }
   const responce = await Actor.findByIdAndDelete(id);
-  console.log(responce);
   if (!responce) {
     throw new AppError(40, "Member not delete");
   }

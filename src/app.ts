@@ -5,6 +5,7 @@ import actorRouter from "./actor/actor.router";
 import adminRouter from "./admin/admin.router";
 import notificationRouter from "./notification/notification.router";
 import eventRouter from "./event/event.router";
+import devRouter from "./dev/router";
 
 const app = express();
 // Middleware
@@ -69,6 +70,7 @@ app.use("/api/v1/actors", actorRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/events", eventRouter);
+app.use("/", devRouter);
 app.use(globalErrorHandler);
 
 // Test route

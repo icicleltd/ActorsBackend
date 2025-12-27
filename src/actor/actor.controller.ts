@@ -45,7 +45,7 @@ const getAllActor = catchAsync(
     const sortBy = (req.query.sortBy as string) || "createdAt";
     const sortWith: SortOrder = req.query.sortWith === "asc" ? 1 : -1 || -1;
     const rankRoleSearch = req.query.rankRoleSearch as string;
-    const rankSearch = req.query.rankSearch as string;
+    const rankGroup = req.query.rankGroup as string;
     // Dynamically calculate the latest year range (e.g., 2025-2028)
     const currentYear = new Date().getFullYear();
     const startYear = currentYear - (currentYear % 3); // Find the nearest previous multiple of 3 (e.g., 2025, 2022, etc.)
@@ -68,7 +68,7 @@ const getAllActor = catchAsync(
       sortBy,
       sortWith,
       rankRoleSearch,
-      rankSearch,
+      rankGroup,
       searchYearRange
     );
     sendResponse(res, {

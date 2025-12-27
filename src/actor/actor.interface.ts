@@ -23,7 +23,7 @@ export interface IActor extends Document {
   // Contact
   // =========================
   email?: string;
-  password?: string,
+  password?: string;
   comparePassword?(plainPassword: string): Promise<boolean>;
   phoneNumber?: string;
   whatsApp?: string;
@@ -80,6 +80,14 @@ export interface IActor extends Document {
   // =========================
   idNo?: string;
   rank?: string;
+  rankHistory?: [
+    {
+      rank: String;
+      yearRange: String;
+      start: Number;
+      end: Number;
+    }
+  ];
   occupation?: string;
   actorName?: string;
   otherName?: string;

@@ -150,15 +150,20 @@ const addActor = async (file: any, actorData: any) => {
 const promoteMember = async (memberData: any) => {
   console.log(memberData, "in serveices");
   const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
+  console.log(memberData);
   if (!id || !fullName || !idNo || !rank) {
     throw new AppError(400, "Member data not provided");
   }
   const newMember = await Actor.findByIdAndUpdate(
     id,
     {
-      rank,
-      rankYear: rankYear,
-      rankYearRange,
+      rankHistory: {
+        rank,
+        yearRange: rankYearRange.yearRange,
+        start:rankYearRange.start,
+        end:rankYearRange.end,
+
+      },
     },
     { new: true }
   );
@@ -166,7 +171,8 @@ const promoteMember = async (memberData: any) => {
     throw new AppError(500, "Member Not promote");
   }
   console.log(memberData);
-  return memberData;
+  console.log(newMember);
+  return newMember;
 };
 const deleteMember = async (id: string) => {
   if (!id) {

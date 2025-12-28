@@ -3,6 +3,7 @@ import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { AdminService } from "./admin.services";
 import { callbackify } from "util";
+import { PayloadLoign } from "./admin.interface";
 
 const createAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -91,6 +92,18 @@ const deleteMember = catchAsync(
     });
   }
 );
+const login = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload: PayloadLoign = req.body;
+    const result = await AdminService.login(payload);
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  }
+);
 const test = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const result = await AdminService.test();
@@ -111,4 +124,5 @@ export const AdminController = {
   promoteMember,
   test,
   deleteMember,
+  login
 };

@@ -167,7 +167,7 @@ const getAllActor = async (
   category: string,
   sortBy: string,
   sortWith: SortOrder,
-  rankRoleSearch: string,
+  executiveRank: string,
   rankGroup: string,
   searchYearRange: string
 ) => {
@@ -182,52 +182,63 @@ const getAllActor = async (
   }
 
   /* ---------------- CATEGORY ---------------- */
-  if (["A","B","C"].includes(category)) {
-    console.log(category)
+  if (["A", "B", "C"].includes(category)) {
+    console.log(category);
     filter.category = category;
   }
 
   /* ---------------- RANK Group filter ---------------- */
-
+  let yearFilter: any = {};
   if (rankGroup === "executive") {
     console.log(rankGroup);
-    filter.rankHistory ={
-      $elemMatch:{
-        rank:{$in: ROLE_ORDER}
-      }
-    }
-    // if (searchYearRange) {
-    //   const [startYear, endYear] = searchYearRange.split("-").map(Number);
-
-    //   // Ensure rankYearRange.start and rankYearRange.end exactly match startYear and endYear
-    //   filter["rankYearRange.start"] = startYear; // Exact match for start year
-    //   filter["rankYearRange.end"] = endYear; // Exact match for end year
-    // }
-  }
-  /* ---------------- executive role ---------------- */
-  if (rankRoleSearch) {
-    // specific role like "president"
-    console.log("rankRoleSearch", rankRoleSearch);
     filter.rankHistory = {
       $elemMatch: {
-        rank: rankRoleSearch,
+        rank: { $in: ROLE_ORDER },
       },
     };
-  } 
-  // else if (rankSearch === "executive") {
-  //   // executive group
-  //   filter.rank = { $in: ROLE_ORDER };
-  // } 
-  // else if (
-  //   rankSearch === "advisor" ||
-  //   rankSearch === "lifeTime" ||
-  //   rankSearch === "pastWay"
-  // ) {
-  //   filter.rank = rankSearch;
-  // } else if (rankSearch === "primeryB") {
-  //   filter.category = "B";
-  // } else if (rankSearch === "child") {
-  //   filter.category = "C";
+  }
+
+  if (searchYearRange) {
+    console.log(searchYearRange);
+    const [startYear, endYear] = searchYearRange.split("-").map(Number);
+    yearFilter = {
+      "rankHistory.start": startYear,
+      "rankHistory.end": endYear,
+    };
+  }
+
+  /* ---------------- executive role ---------------- */
+  if (executiveRank) {
+    // specific role like "president"
+    console.log("executiveRank", executiveRank);
+    filter.rankHistory = {
+      $elemMatch: {
+        rank: executiveRank,
+      },
+    };
+  } else if (
+    rankGroup === "advisor" ||
+    rankGroup === "lifeTime" ||
+    rankGroup === "pastWay"
+  ) {
+    filter.rankHistory = {
+      $elemMatch: {
+        rank: rankGroup,
+      },
+    };
+  } else if (rankGroup === "primeryB") {
+    filter.category = "B";
+  } else if (rankGroup === "child") {
+    filter.category = "C";
+  }
+
+  // if (rankGroup === "executive" && searchYearRange) {
+  //   filter.rankHistory = {
+  //     $elemMatch: {
+  //       rank: { $in: ROLE_ORDER },
+  //       // ...yearFilter
+  //     },
+  //   };
   // }
 
   /* ---------------- DATA QUERY ---------------- */
@@ -237,20 +248,27 @@ const getAllActor = async (
   if (rankGroup === "executive") {
     actor = await Actor.aggregate([
       { $match: filter },
+      { $unwind: "$rankHistory" },
+      {
+        $match: {
+          "rankHistory.rank": { $in: ROLE_ORDER },
+          ...yearFilter,
+        },
+      },
 
       {
         $addFields: {
           roleOrder: {
             $cond: {
-              if: { $in: ["$rank", ROLE_ORDER] },
-              then: { $indexOfArray: [ROLE_ORDER, "$rank"] },
+              if: { $in: ["$rankHistory.rank", ROLE_ORDER] },
+              then: { $indexOfArray: [ROLE_ORDER, "$rankHistory.rank"] },
               else: 999,
             },
           },
         },
       },
 
-      { $sort: { roleOrder: 1 } },
+      { $sort: { "rankHistory.end": -1, roleOrder: 1 } },
       { $skip: skip },
       { $limit: limit },
       {
@@ -267,8 +285,7 @@ const getAllActor = async (
       .skip(skip)
       .limit(limit);
   }
-  console.log(actor);
-  // console.log(actor);
+
   /* ---------------- COUNTS ---------------- */
   const [totalActor, categoryACount, categoryBCount, categoryCCount] =
     await Promise.all([
@@ -277,6 +294,7 @@ const getAllActor = async (
       Actor.countDocuments({ category: "B" }),
       Actor.countDocuments({ category: "C" }),
     ]);
+  const filteredCount = await Actor.countDocuments(filter);
 
   const totalPage = Math.ceil(
     (category === "A"

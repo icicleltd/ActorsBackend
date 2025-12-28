@@ -169,6 +169,9 @@ const promoteMember = async (memberData: any) => {
       $set: {
         rankYear,
       },
+      $set:{
+        rankYear
+      }
     },
     { new: true }
   );

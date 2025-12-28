@@ -1,19 +1,20 @@
 import Actor from "../actor/actor.schema";
 import { fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
+import { PayloadAdmin, PayloadLoign } from "./admin.interface";
 import { Admin } from "./admin.schema";
 
-const createAdmin = async (payload: any) => {
+const createAdmin = async (payload: PayloadAdmin) => {
   if (!payload) {
     throw new AppError(400, "No data provided");
   }
+  const { fullName, email, password, phone, avatar, role } = payload;
   const newAdmin = await Admin.create(payload);
   if (!newAdmin) {
     throw new AppError(501, "Failed to create admin");
   }
-  return {
-    adminInfo: newAdmin,
-  };
+
+  return newAdmin;
 };
 const getAdmin = async () => {
   return {
@@ -95,6 +96,7 @@ const updateActorProfile = async (
 //     fromActive: actorData.fromActive,
 //     bio: actorData.bio,
 //   };
+//   console.log(actorProfile);
 //   const actor = await Actor.create(actorProfile);
 //   if (!actor) {
 //     throw new AppError(500, "Failed to create actor");
@@ -134,6 +136,7 @@ const addActor = async (file: any, actorData: any) => {
     password: actorData.password,
   };
 
+  console.log(actorProfile);
 
   // Create the actor in the database
   const actor = await Actor.create(actorProfile);
@@ -141,37 +144,71 @@ const addActor = async (file: any, actorData: any) => {
   if (!actor) {
     throw new AppError(500, "Failed to create actor");
   }
+  console.log(actor);
   return actor;
 };
 
 const promoteMember = async (memberData: any) => {
+  console.log(memberData, "in serveices");
   const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
+  console.log(memberData);
   if (!id || !fullName || !idNo || !rank) {
     throw new AppError(400, "Member data not provided");
   }
   const newMember = await Actor.findByIdAndUpdate(
     id,
     {
-      rank,
-      rankYear: rankYear,
-      rankYearRange,
+      $push: {
+        rankHistory: {
+          rank,
+          yearRange: rankYearRange.yearRange,
+          start: rankYearRange.start,
+          end: rankYearRange.end,
+        },
+      },
+      $set: {
+        rankYear,
+      },
     },
     { new: true }
   );
   if (!newMember) {
     throw new AppError(500, "Member Not promote");
   }
-  return memberData;
+  console.log(memberData);
+  console.log(newMember);
+  return newMember;
 };
 const deleteMember = async (id: string) => {
   if (!id) {
     throw new AppError(400, "Member id Not found");
   }
   const responce = await Actor.findByIdAndDelete(id);
+  console.log(responce);
   if (!responce) {
     throw new AppError(40, "Member not delete");
   }
   return responce;
+};
+const login = async (payload: PayloadLoign) => {
+  const { email, password, role } = payload;
+  const existing = await Admin.findOne({ email })
+    .select("+password _id email")
+    .lean(false);
+  if (!existing) {
+    throw new AppError(401, "Unauthorized");
+  }
+  const isMatch = await existing.comparePassword(password);
+  if (!isMatch) {
+    throw new AppError(401, "Invalid credentials");
+  }
+  const data: any = {
+    _id: existing._id,
+    email: existing.email,
+    role,
+    fullName: existing.fullName,
+  };
+  return;
 };
 const test = async () => {
   return;
@@ -185,4 +222,5 @@ export const AdminService = {
   promoteMember,
   test,
   deleteMember,
+  login,
 };

@@ -167,8 +167,8 @@ const getAllActor = async (
   category: string,
   sortBy: string,
   sortWith: SortOrder,
-  rankRoleSearch: string,
-  rankSearch: string,
+  executiveRank: string,
+  rankGroup: string,
   searchYearRange: string
 ) => {
   let filter: any = {};
@@ -176,66 +176,103 @@ const getAllActor = async (
 
   /* ---------------- SEARCH ---------------- */
   if (search) {
-    filter.$or = fields.map((field) => ({
-      [field]: { $regex: search.trim(), $options: "i" },
+    const words = search.trim().split(/\s+/);
+
+    filter.$and = words.map((word) => ({
+      $or: fields.map((field) => ({
+        [field]: { $regex: word, $options: "i" },
+      })),
     }));
   }
 
   /* ---------------- CATEGORY ---------------- */
-  if (category === "A" || category === "B" || category === "C") {
+  if (["A", "B", "C"].includes(category)) {
+    console.log(category);
     filter.category = category;
   }
 
-  /* ---------------- YEAR RANGE FILTER ---------------- */
-  if (rankSearch === "executive") {
-    if (searchYearRange) {
-      const [startYear, endYear] = searchYearRange.split("-").map(Number);
-
-      // Ensure rankYearRange.start and rankYearRange.end exactly match startYear and endYear
-      filter["rankYearRange.start"] = startYear; // Exact match for start year
-      filter["rankYearRange.end"] = endYear; // Exact match for end year
-    }
+  /* ---------------- RANK Group filter ---------------- */
+  let yearFilter: any = {};
+  if (rankGroup === "executive") {
+    console.log(rankGroup);
+    filter.rankHistory = {
+      $elemMatch: {
+        rank: { $in: ROLE_ORDER },
+      },
+    };
   }
-  /* ---------------- RANK FILTER ---------------- */
-  if (rankRoleSearch) {
+
+  if (searchYearRange) {
+    console.log(searchYearRange);
+    const [startYear, endYear] = searchYearRange.split("-").map(Number);
+    yearFilter = {
+      "rankHistory.start": startYear,
+      "rankHistory.end": endYear,
+    };
+  }
+
+  /* ---------------- executive role ---------------- */
+  if (executiveRank) {
     // specific role like "president"
-    filter.rank = rankRoleSearch;
-  } else if (rankSearch === "executive") {
-    // executive group
-    filter.rank = { $in: ROLE_ORDER };
+    console.log("executiveRank", executiveRank);
+    filter.rankHistory = {
+      $elemMatch: {
+        rank: executiveRank,
+      },
+    };
   } else if (
-    rankSearch === "advisor" ||
-    rankSearch === "lifeTime" ||
-    rankSearch === "pastWay"
+    rankGroup === "advisor" ||
+    rankGroup === "lifeTime" ||
+    rankGroup === "pastWay"
   ) {
-    filter.rank = rankSearch;
-  } else if (rankSearch === "primeryB") {
+    filter.rankHistory = {
+      $elemMatch: {
+        rank: rankGroup,
+      },
+    };
+  } else if (rankGroup === "primeryB") {
     filter.category = "B";
-  } else if (rankSearch === "child") {
+  } else if (rankGroup === "child") {
     filter.category = "C";
   }
+
+  // if (rankGroup === "executive" && searchYearRange) {
+  //   filter.rankHistory = {
+  //     $elemMatch: {
+  //       rank: { $in: ROLE_ORDER },
+  //       // ...yearFilter
+  //     },
+  //   };
+  // }
 
   /* ---------------- DATA QUERY ---------------- */
   let actor: any[] = [];
 
-  // 🔥 EXECUTIVE → CUSTOM ROLE ORDER
-  if (rankSearch === "executive") {
+  // CUSTOM ROLE ORDER
+  if (rankGroup === "executive") {
     actor = await Actor.aggregate([
       { $match: filter },
+      { $unwind: "$rankHistory" },
+      {
+        $match: {
+          "rankHistory.rank": { $in: ROLE_ORDER },
+          ...yearFilter,
+        },
+      },
 
       {
         $addFields: {
           roleOrder: {
             $cond: {
-              if: { $in: ["$rank", ROLE_ORDER] },
-              then: { $indexOfArray: [ROLE_ORDER, "$rank"] },
+              if: { $in: ["$rankHistory.rank", ROLE_ORDER] },
+              then: { $indexOfArray: [ROLE_ORDER, "$rankHistory.rank"] },
               else: 999,
             },
           },
         },
       },
 
-      { $sort: { roleOrder: 1 } },
+      { $sort: { "rankHistory.end": -1, roleOrder: 1 } },
       { $skip: skip },
       { $limit: limit },
       {
@@ -252,6 +289,7 @@ const getAllActor = async (
       .skip(skip)
       .limit(limit);
   }
+
   /* ---------------- COUNTS ---------------- */
   const [totalActor, categoryACount, categoryBCount, categoryCCount] =
     await Promise.all([
@@ -260,6 +298,7 @@ const getAllActor = async (
       Actor.countDocuments({ category: "B" }),
       Actor.countDocuments({ category: "C" }),
     ]);
+  const filteredCount = await Actor.countDocuments(filter);
 
   const totalPage = Math.ceil(
     (category === "A"
@@ -282,10 +321,19 @@ const getAllActor = async (
 };
 
 const filterByRank = async (rank: string) => {
+  console.log(rank);
   if (!rank) {
     throw new Error("No rank provided");
   }
-  const actor = await Actor.find({ rank: rank });
+  // const actor = await Actor.find({ rank: rank });
+  const actor = await Actor.aggregate([
+    { $unwind: "$rankHistory" },
+    {
+      $match: {
+        $rank: rank,
+      },
+    },
+  ]);
   if (actor.length === 0) {
     throw new Error("Actor not found");
   }
@@ -386,12 +434,12 @@ const updateActor = async (
     throw new AppError(400, "No data provided for update");
   }
   // Update the actor in the database
-   const newActor = await Actor.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true }
-    );
-    return newActor;
+  const newActor = await Actor.findByIdAndUpdate(
+    id,
+    { $set: updateData },
+    { new: true }
+  );
+  return newActor;
 };
 
 export default {

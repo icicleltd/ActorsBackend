@@ -12,13 +12,12 @@ const createAdmin = async (payload) => {
     if (!payload) {
         throw new error_1.AppError(400, "No data provided");
     }
+    const { fullName, email, password, phone, avatar, role } = payload;
     const newAdmin = await admin_schema_1.Admin.create(payload);
     if (!newAdmin) {
         throw new error_1.AppError(501, "Failed to create admin");
     }
-    return {
-        adminInfo: newAdmin,
-    };
+    return newAdmin;
 };
 const getAdmin = async () => {
     return {
@@ -93,6 +92,7 @@ const updateActorProfile = async (actorData, actorId, file) => {
 //     fromActive: actorData.fromActive,
 //     bio: actorData.bio,
 //   };
+//   console.log(actorProfile);
 //   const actor = await Actor.create(actorProfile);
 //   if (!actor) {
 //     throw new AppError(500, "Failed to create actor");
@@ -125,37 +125,72 @@ const addActor = async (file, actorData) => {
         email: actorData.email,
         password: actorData.password,
     };
+    console.log(actorProfile);
     // Create the actor in the database
     const actor = await actor_schema_1.default.create(actorProfile);
     if (!actor) {
         throw new error_1.AppError(500, "Failed to create actor");
     }
+    console.log(actor);
     return actor;
 };
 const promoteMember = async (memberData) => {
+    console.log(memberData, "in serveices");
     const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
+    console.log(memberData);
     if (!id || !fullName || !idNo || !rank) {
         throw new error_1.AppError(400, "Member data not provided");
     }
     const newMember = await actor_schema_1.default.findByIdAndUpdate(id, {
-        rank,
-        rankYear: rankYear,
-        rankYearRange,
+        $push: {
+            rankHistory: {
+                rank,
+                yearRange: rankYearRange.yearRange,
+                start: rankYearRange.start,
+                end: rankYearRange.end,
+            },
+        },
+        $set: {
+            rankYear,
+        },
     }, { new: true });
     if (!newMember) {
         throw new error_1.AppError(500, "Member Not promote");
     }
-    return memberData;
+    console.log(memberData);
+    console.log(newMember);
+    return newMember;
 };
 const deleteMember = async (id) => {
     if (!id) {
         throw new error_1.AppError(400, "Member id Not found");
     }
     const responce = await actor_schema_1.default.findByIdAndDelete(id);
+    console.log(responce);
     if (!responce) {
         throw new error_1.AppError(40, "Member not delete");
     }
     return responce;
+};
+const login = async (payload) => {
+    const { email, password, role } = payload;
+    const existing = await admin_schema_1.Admin.findOne({ email })
+        .select("+password _id email")
+        .lean(false);
+    if (!existing) {
+        throw new error_1.AppError(401, "Unauthorized");
+    }
+    const isMatch = await existing.comparePassword(password);
+    if (!isMatch) {
+        throw new error_1.AppError(401, "Invalid credentials");
+    }
+    const data = {
+        _id: existing._id,
+        email: existing.email,
+        role,
+        fullName: existing.fullName,
+    };
+    return;
 };
 const test = async () => {
     return;
@@ -169,4 +204,5 @@ exports.AdminService = {
     promoteMember,
     test,
     deleteMember,
+    login,
 };

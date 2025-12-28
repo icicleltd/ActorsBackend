@@ -9,6 +9,8 @@ adminRouter.post(
   fileUploader.upload.single("photo"),
   AdminController.addActor
 );
+adminRouter.post("/login", AdminController.login);
+
 adminRouter.put("/promote", AdminController.promoteMember);
 adminRouter.put(
   "/update-actor/:id",

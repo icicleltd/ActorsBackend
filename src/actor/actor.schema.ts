@@ -63,6 +63,14 @@ const actorSchema = new Schema<IActor>(
 
     idNo: { type: String, unique: true },
     rank: { type: String },
+    rankHistory: [
+      {
+        rank: { type: String },
+        yearRange: { type: String },
+        start: { type: Number },
+        end: { type: Number },
+      },
+    ],
     occupation: { type: String },
     actorName: { type: String },
     otherName: { type: String },
@@ -97,7 +105,11 @@ const actorSchema = new Schema<IActor>(
       },
     ],
 
-    photo: { type: String, default: "https://res.cloudinary.com/dk4ltobvb/image/upload/v1766485148/Actors.png.png" },
+    photo: {
+      type: String,
+      default:
+        "https://res.cloudinary.com/dk4ltobvb/image/upload/v1766485148/Actors.png.png",
+    },
     characterPhoto: [{ type: String }],
 
     introVideo: {

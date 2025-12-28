@@ -5,7 +5,9 @@ import actorRouter from "./actor/actor.router";
 import adminRouter from "./admin/admin.router";
 import notificationRouter from "./notification/notification.router";
 import eventRouter from "./event/event.router";
-import  authRouter from "./auth/auth.router";
+import authRouter from "./auth/auth.router";
+import devRouter from "./dev/router";
+import mediaDirectoryRouter from "./mediaDirectory/mediaDirectory.router";
 
 const app = express();
 // Middleware
@@ -70,7 +72,9 @@ app.use("/api/v1/actors", actorRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/events", eventRouter);
+app.use("/", devRouter);
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/media-directory", mediaDirectoryRouter);
 app.use(globalErrorHandler);
 
 // Test route

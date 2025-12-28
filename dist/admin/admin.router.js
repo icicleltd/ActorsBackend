@@ -10,6 +10,7 @@ const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const adminRouter = express_1.default.Router();
 adminRouter.post("/", admin_controller_1.AdminController.createAdmin);
 adminRouter.post("/add-actor", fileUpload_1.fileUploader.upload.single("photo"), admin_controller_1.AdminController.addActor);
+adminRouter.post("/login", admin_controller_1.AdminController.login);
 adminRouter.put("/promote", admin_controller_1.AdminController.promoteMember);
 adminRouter.put("/update-actor/:id", fileUpload_1.fileUploader.upload.single("photo"), admin_controller_1.AdminController.updateActorProfile);
 adminRouter.delete("/deletemember/:id", admin_controller_1.AdminController.deleteMember);

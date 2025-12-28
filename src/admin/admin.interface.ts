@@ -1,14 +1,29 @@
 import { Document, Types } from "mongoose";
 
 export interface IAdmin extends Document {
-  name: string;
+  fullName: string;
   email: string;
   password: string;
   phone?: string;
   avatar?: string;
   role: "admin" | "moderator" | "superadmin";
-  // permissions: string[];
+  comparePassword(plainPassword: string): Promise<boolean>;
+  permissions?: string[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PayloadAdmin {
+  fullName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  avatar?: string;
+  role: "admin" | "moderator" | "superadmin";
+}
+export interface PayloadLoign {
+  email: string;
+  password: string;
+  role?: "admin" | "moderator" | "superadmin";
 }

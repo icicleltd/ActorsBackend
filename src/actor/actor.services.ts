@@ -176,8 +176,12 @@ const getAllActor = async (
 
   /* ---------------- SEARCH ---------------- */
   if (search) {
-    filter.$or = fields.map((field) => ({
-      [field]: { $regex: search.trim(), $options: "i" },
+    const words = search.trim().split(/\s+/);
+
+    filter.$and = words.map((word) => ({
+      $or: fields.map((field) => ({
+        [field]: { $regex: word, $options: "i" },
+      })),
     }));
   }
 
@@ -430,12 +434,12 @@ const updateActor = async (
     throw new AppError(400, "No data provided for update");
   }
   // Update the actor in the database
-   const newActor = await Actor.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true }
-    );
-    return newActor;
+  const newActor = await Actor.findByIdAndUpdate(
+    id,
+    { $set: updateData },
+    { new: true }
+  );
+  return newActor;
 };
 
 export default {

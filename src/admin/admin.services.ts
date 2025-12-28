@@ -157,13 +157,17 @@ const promoteMember = async (memberData: any) => {
   const newMember = await Actor.findByIdAndUpdate(
     id,
     {
-      rankHistory: {
-        rank,
-        yearRange: rankYearRange.yearRange,
-        start:rankYearRange.start,
-        end:rankYearRange.end,
-
+      $push: {
+        rankHistory: {
+          rank,
+          yearRange: rankYearRange.yearRange,
+          start: rankYearRange.start,
+          end: rankYearRange.end,
+        },
       },
+      $set:{
+        rankYear
+      }
     },
     { new: true }
   );

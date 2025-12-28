@@ -80,6 +80,14 @@ export interface IActor extends Document {
   // =========================
   idNo?: string;
   rank?: string;
+  rankHistory?: [
+    {
+      rank: String;
+      yearRange: String;
+      start: Number;
+      end: Number;
+    }
+  ];
   occupation?: string;
   actorName?: string;
   otherName?: string;

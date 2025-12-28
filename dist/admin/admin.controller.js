@@ -78,6 +78,16 @@ const deleteMember = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const login = (0, catchAsync_1.default)(async (req, res, next) => {
+    const payload = req.body;
+    const result = await admin_services_1.AdminService.login(payload);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Actor Promoted successfully",
+        data: result,
+    });
+});
 const test = (0, catchAsync_1.default)(async (req, res, next) => {
     const result = await admin_services_1.AdminService.test();
     (0, sendResponse_1.default)(res, {
@@ -96,4 +106,5 @@ exports.AdminController = {
     promoteMember,
     test,
     deleteMember,
+    login
 };

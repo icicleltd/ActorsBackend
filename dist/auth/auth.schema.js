@@ -1,59 +1,40 @@
 "use strict";
-// import { Schema, model, Types } from "mongoose";
-// import { IEvent } from "./auth.interface";
-// const eventSchema = new Schema<IEvent>(
+// import mongoose, { Schema } from "mongoose";
+// const authSchema = new Schema(
 //   {
-//     title: {
+//     fullName: {
 //       type: String,
-//       // required: true,
+//       required: true,
 //       trim: true,
 //     },
-//     description: {
+//     email: {
 //       type: String,
 //       required: true,
+//       unique: true,
+//       lowercase: true,
+//       trim: true,
 //     },
-//     logo: String,
-//     banner: String,
-//     images: {
-//       type: [String],
-//       default: [],
-//     },
-//     eventDate: {
-//       type: Date,
+//     password: {
+//       type: String,
 //       required: true,
+//       select: false, // important for security
 //     },
-//     isBookingOpen: {
+//     role: {
+//       type: String,
+//       enum: Object.values(UserRole),
+//       default: UserRole.USER,
+//     },
+//     isActive: {
+//       type: Boolean,
+//       default: true,
+//     },
+//     isEmailVerified: {
 //       type: Boolean,
 //       default: false,
-//     },
-//     // ONLY COUNT
-//     registrationCount: {
-//       type: Number,
-//       default: 0,
-//       min: 0,
-//     },
-//     createdBy: {
-//       type: Types.ObjectId,
-//       ref: "Admin",
-//       // required: true,
 //     },
 //   },
 //   {
 //     timestamps: true,
-//     toJSON: { virtuals: true },
-//     toObject: { virtuals: true },
 //   }
 // );
-// eventSchema.virtual("remainingDays").get(function () {
-//   if (!this.eventDate) return null;
-//   const today = new Date();
-//   today.setHours(0, 0, 0, 0);
-//   const eventDate = new Date(this.eventDate);
-//   eventDate.setHours(0, 0, 0, 0);
-//   const diffTime = eventDate.getTime() - today.getTime();
-//   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-// });
-// eventSchema.virtual("eventType").get(function () {
-//   return this.eventDate > new Date() ? "UPCOMING" : "PAST";
-// });
-// export const Event = model<IEvent>("Event", eventSchema);
+// export const UserModel = mongoose.model("User", authSchema);

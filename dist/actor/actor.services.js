@@ -271,13 +271,16 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         actor_schema_1.default.countDocuments({ category: "C" }),
     ]);
     const filteredCount = await actor_schema_1.default.countDocuments(filter);
-    const totalPage = Math.ceil((category === "A"
-        ? categoryACount
-        : category === "B"
-            ? categoryBCount
-            : category === "C"
-                ? categoryCCount
-                : totalActor) / limit);
+    const totalPage = filteredCount / limit;
+    // const totalPage = Math.ceil(
+    //   (category === "A"
+    //     ? categoryACount
+    //     : category === "B"
+    //     ? categoryBCount
+    //     : category === "C"
+    //     ? categoryCCount
+    //     : totalActor) / limit
+    // );
     /* ---------------- RESPONSE ---------------- */
     return {
         actor,

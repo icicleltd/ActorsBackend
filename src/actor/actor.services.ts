@@ -299,16 +299,17 @@ const getAllActor = async (
       Actor.countDocuments({ category: "C" }),
     ]);
   const filteredCount = await Actor.countDocuments(filter);
+  const totalPage = filteredCount / limit;
 
-  const totalPage = Math.ceil(
-    (category === "A"
-      ? categoryACount
-      : category === "B"
-      ? categoryBCount
-      : category === "C"
-      ? categoryCCount
-      : totalActor) / limit
-  );
+  // const totalPage = Math.ceil(
+  //   (category === "A"
+  //     ? categoryACount
+  //     : category === "B"
+  //     ? categoryBCount
+  //     : category === "C"
+  //     ? categoryCCount
+  //     : totalActor) / limit
+  // );
   /* ---------------- RESPONSE ---------------- */
   return {
     actor,

@@ -166,7 +166,7 @@ const getAllActor = async (
   skip: number,
   category: string,
   sortBy: string,
-  sortWith: -1,
+  sortWith: 1 | -1,
   executiveRank: string,
   rankGroup: string,
   searchYearRange: string
@@ -197,7 +197,7 @@ const getAllActor = async (
     });
   }
   /* rank filter*/
-  if (rankGroup || executiveRank || searchYearRange) {
+  if ((rankGroup && rankGroup !== "all")  || executiveRank || searchYearRange) {
     pipeline.push({
       $unwind: "$rankHistory",
     });
@@ -217,7 +217,7 @@ const getAllActor = async (
       rankFilter["rankHistory.end"] = endYear;
     }
 
-    pipeline.push(rankFilter);
+    pipeline.push({ $match: rankFilter });
   }
   /*execute rank orderby role*/
   if (rankGroup === "executive") {

@@ -169,7 +169,8 @@ const getAllActor = async (
   sortWith: 1 | -1,
   executiveRank: string,
   rankGroup: string,
-  searchYearRange: string
+  searchYearRange: string,
+  advisorYearRange: string
 ) => {
   const pipeline: PipelineStage[] = [];
   // const [startYear, endYear] = searchYearRange.split("-").map(Number);
@@ -293,6 +294,11 @@ const getAllActor = async (
 
     if (searchYearRange) {
       const [startYear, endYear] = searchYearRange.split("-").map(Number);
+      rankFilter["rankHistory.start"] = startYear;
+      rankFilter["rankHistory.end"] = endYear;
+    }
+    if (advisorYearRange) {
+      const [startYear, endYear] = advisorYearRange.split("-").map(Number);
       rankFilter["rankHistory.start"] = startYear;
       rankFilter["rankHistory.end"] = endYear;
     }

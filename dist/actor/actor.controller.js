@@ -36,7 +36,7 @@ const getAllActor = (0, catchAsync_1.default)(async (req, res, next) => {
     const skip = (page - 1) * limit;
     const category = req.query.category;
     const sortBy = req.query.sortBy || "createdAt";
-    const sortWith = req.query.sortWith === "asc" ? 1 : -1 || -1;
+    const sortWith = req.query.sortWith === "asc" ? 1 : -1;
     const executiveRank = req.query.executiveRank;
     const rankGroup = req.query.rankGroup;
     // Dynamically calculate the latest year range (e.g., 2025-2028)

@@ -46,12 +46,13 @@ const getAllActor = (0, catchAsync_1.default)(async (req, res, next) => {
     const defaultYearRange = `${startYear}-${endYear}`;
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange = req.query.searchYearRange;
+    const advisorYearRange = req.query.advisorYearRange;
     console.log(executiveRank, "executiveRank");
     console.log(searchYearRange, "in controller");
     // console.log(rankSearch, "rankSearch");
     // console.log(search, "search");
     // console.log(searchYearRange, "searchYearRange");
-    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange);
+    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange, advisorYearRange);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

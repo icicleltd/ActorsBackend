@@ -61,6 +61,43 @@ adminRouter.put("/update-idno", async (req, res) => {
     });
   }
 });
+// adminRouter.put("/advisor", async (req, res) => {
+//   const { text } = req.body;
+
+//   try {
+//     if (text !== "adviso") {
+//       return res.status(400).json({ message: "no adviso" });
+//     }
+
+//     const actorId = "694bcf30f87bce917c8cf0c5";
+
+//     const updatedActor = await Actor.findByIdAndUpdate(
+//       actorId,
+//       {
+//         $set: {
+//           "rankHistory.$[item].yearRange": "2025-2028",
+//           "rankHistory.$[item].start": 2025,
+//           "rankHistory.$[item].end": 2028,
+//         },
+//       },
+//       {
+//         new: true,
+//         arrayFilters: [{ "item.rank": "advisor" }],
+//       }
+//     );
+
+//     return res.json({
+//       success: true,
+//       message: "Rank history updated successfully",
+//       updated: updatedActor,
+//     });
+//   } catch (err: any) {
+//     return res.status(500).json({
+//       success: false,
+//       error: err.message,
+//     });
+//   }
+// });
 
 adminRouter.put("/:id", AdminController.readNotificaton);
 // adminRouter.delete("/delete-all", async (req, res) => {

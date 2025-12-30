@@ -43,7 +43,7 @@ const getAllActor = catchAsync(
     const skip = (page - 1) * limit;
     const category = req.query.category as string;
     const sortBy = (req.query.sortBy as string) || "createdAt";
-    const sortWith: SortOrder = req.query.sortWith === "asc" ? 1 : -1 || -1;
+    const sortWith: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
     const executiveRank = req.query.executiveRank as string;
     const rankGroup = req.query.rankGroup as string;
     // Dynamically calculate the latest year range (e.g., 2025-2028)
@@ -53,10 +53,9 @@ const getAllActor = catchAsync(
     const defaultYearRange = `${startYear}-${endYear}`;
 
     // Use the dynamic year range if searchYearRange is not provided
-    const searchYearRange =
-      (req.query.searchYearRange as string) ;
+    const searchYearRange = req.query.searchYearRange as string ;
     console.log(executiveRank, "executiveRank");
-    console.log(searchYearRange, "in controller")
+    console.log(searchYearRange, "in controller");
     // console.log(rankSearch, "rankSearch");
     // console.log(search, "search");
     // console.log(searchYearRange, "searchYearRange");

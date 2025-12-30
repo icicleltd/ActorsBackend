@@ -54,6 +54,7 @@ const getAllActor = catchAsync(
 
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange = req.query.searchYearRange as string ;
+    const advisorYearRange = req.query.advisorYearRange as string ;
     console.log(executiveRank, "executiveRank");
     console.log(searchYearRange, "in controller");
     // console.log(rankSearch, "rankSearch");
@@ -69,7 +70,8 @@ const getAllActor = catchAsync(
       sortWith,
       executiveRank,
       rankGroup,
-      searchYearRange
+      searchYearRange,
+      advisorYearRange
     );
     sendResponse(res, {
       statusCode: 200,

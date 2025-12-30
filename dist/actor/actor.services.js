@@ -153,7 +153,7 @@ const ROLE_ORDER = [
     "it_secretary",
     "executive_member",
 ];
-const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange) => {
+const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange, advisorYearRange) => {
     const pipeline = [];
     // const [startYear, endYear] = searchYearRange.split("-").map(Number);
     if (search) {
@@ -262,6 +262,11 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         }
         if (searchYearRange) {
             const [startYear, endYear] = searchYearRange.split("-").map(Number);
+            rankFilter["rankHistory.start"] = startYear;
+            rankFilter["rankHistory.end"] = endYear;
+        }
+        if (advisorYearRange) {
+            const [startYear, endYear] = advisorYearRange.split("-").map(Number);
             rankFilter["rankHistory.start"] = startYear;
             rankFilter["rankHistory.end"] = endYear;
         }

@@ -3,8 +3,11 @@ import { AppError } from "../middleware/error";
 import { CreateEventDto } from "./event.interface";
 import { Event } from "./event.schema";
 
-const createEvent = async (payload: CreateEventDto, files: any) => {
-  const { title, description, eventDate, isBookingOpen } = payload;
+const validatePayload = () => {};
+const createEvent = async (payload: CreateEventDto, files: { [fieldname: string]: Express.Multer.File[] }) => {
+  
+  const { title, name, details, description, eventDate, isBookingOpen } =
+    payload;
   if (!files) {
     throw new AppError(400, "File required");
   }
@@ -13,12 +16,15 @@ const createEvent = async (payload: CreateEventDto, files: any) => {
     const uploaded = await fileUploader.CloudinaryUploadMultiple(fileArr);
     return uploaded.map((u: any) => u.secure_url);
   };
-  const logo = (await uploadArray(files.logo))[0] || null;
-  const banner = (await uploadArray(files.banner))[0] || null;
-  const images = (await uploadArray(files.images))[0] || null;
+  const [logo, banner, images] = await Promise.all([
+    (await uploadArray(files.logo))[0] || null,
+    (await uploadArray(files.banner))[0] || null,
+    (await uploadArray(files.images)),
+  ]);
   if (!eventDate || !description) {
     throw new AppError(400, "Description and date are required");
   }
+  console.log(images);
   const eventTime = new Date(eventDate);
   const isUpcomming = eventTime > new Date();
   if (isUpcomming) {
@@ -40,10 +46,14 @@ const createEvent = async (payload: CreateEventDto, files: any) => {
     throw new AppError(400, "Images are required");
   }
   const pastEvent = await Event.create({
+    name,
+    title,
+    details,
     eventDate: eventTime,
     description,
     images,
   });
+  console.log(pastEvent);
   return pastEvent;
 };
 

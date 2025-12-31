@@ -9,6 +9,9 @@ export interface IEvent {
   banner?: string;
   images?: string[];
 
+  name: string;
+  details: string;
+
   // Date
   eventDate: Date;
 
@@ -27,6 +30,8 @@ export interface IEvent {
 
 export interface CreateEventDto {
   title: string;
+  name: string;
+  details?: string;
   description: string;
   eventDate: Date;
   isBookingOpen: boolean;

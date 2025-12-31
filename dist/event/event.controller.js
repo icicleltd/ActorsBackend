@@ -9,7 +9,9 @@ const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const event_services_1 = require("./event.services");
 const createEvent = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
+    console.log(payload);
     const files = req.files;
+    console.log(files);
     // const adminId = req.user?.id;
     const result = await event_services_1.EventService.createEvent(payload, files);
     (0, sendResponse_1.default)(res, {

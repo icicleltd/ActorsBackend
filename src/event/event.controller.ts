@@ -7,9 +7,11 @@ import { CreateEventDto } from "./event.interface";
 const createEvent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: CreateEventDto = req.body;
+    console.log(payload);
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
+    console.log(files)
     // const adminId = req.user?.id;
     const result = await EventService.createEvent(payload, files);
 

@@ -5,12 +5,20 @@ const mongoose_1 = require("mongoose");
 const eventSchema = new mongoose_1.Schema({
     title: {
         type: String,
-        // required: true,
+        required: true,
+        trim: true,
+    },
+    name: {
+        type: String,
+        required: true,
         trim: true,
     },
     description: {
         type: String,
         required: true,
+    },
+    details: {
+        type: String,
     },
     logo: String,
     banner: String,

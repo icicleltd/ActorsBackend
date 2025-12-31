@@ -2,7 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { MediaDirectoryService } from "./mediaDirectory.services";
-import { CreateEventDto, ICreateMediaDirectory } from "./mediaDirectory.interface";
+import {
+  CreateEventDto,
+  ICreateMediaDirectory,
+  MediaDirectoryType,
+} from "./mediaDirectory.interface";
+import { AppError } from "../middleware/error";
 
 const createMediaDirectory = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -19,18 +24,22 @@ const createMediaDirectory = catchAsync(
   }
 );
 
-// const getEvents = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const result = await EventService.getEvents();
+const getMediaDirectory = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { mediaRole } = req.query;
+    if (!mediaRole || typeof mediaRole !== "string") {
+      throw new AppError(400, "mediaRole query is required"); 
+    }
+    const result = await MediaDirectoryService.getMediaDirectory(mediaRole as MediaDirectoryType);
 
-//     sendResponse(res, {
-//       statusCode: 200,
-//       success: true,
-//       message: "Events fetched successfully",
-//       data: result,
-//     });
-//   }
-// );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "MediaDirectory fetched successfully",
+      data: result,
+    });
+  }
+);
 
 // const getAdminEvents = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
@@ -62,4 +71,5 @@ const createMediaDirectory = catchAsync(
 
 export const MediaDirectoryController = {
   createMediaDirectory,
+  getMediaDirectory,
 };

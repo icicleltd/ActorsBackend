@@ -272,6 +272,12 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         }
         pipeline.push({ $match: rankFilter });
     }
+    // if (rankGroup === "advisor") {
+    //   console.log("in advisor if");
+    //   pipeline.push({
+    //     $sort: { },
+    //   });
+    // }
     /*execute rank orderby role*/
     if (rankGroup === "executive") {
         pipeline.push({
@@ -282,6 +288,12 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             },
         });
         pipeline.push({ $sort: { "rankHistory.end": -1, roleOrder: 1 } });
+    }
+    else if (rankGroup === "advisor") {
+        console.log("in advisor if");
+        pipeline.push({
+            $sort: { "rankHistory.end": -1, "idNo": 1 },
+        });
     }
     else {
         pipeline.push({ $sort: { [sortBy]: sortWith } });

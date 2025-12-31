@@ -38,6 +38,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const error_1 = require("../middleware/error");
 const actorSchema = new mongoose_1.Schema({
     // Required
     fullName: { type: String, required: true },
@@ -142,6 +143,60 @@ const actorSchema = new mongoose_1.Schema({
         default: "pending",
     },
 }, { timestamps: true });
+// add gard for rank history duplicate added
+actorSchema.pre("save", async function () {
+    if (!this.rankHistory || this.rankHistory.length < 1) {
+        return;
+    }
+    const seen = new Set();
+    for (const entity of this.rankHistory) {
+        const key = `${entity.rank}-${entity.yearRange}-${entity.start}-${entity.end}`;
+        if (seen.has(key)) {
+            throw new error_1.AppError(400, `Duplicate rankHistory entry: rank "${entity.rank}" with yearRange "${entity.yearRange}" already exists`);
+        }
+        seen.add(key);
+    }
+    return;
+});
+// gard when rankhistory update
+actorSchema.pre("findOneAndUpdate", async function () {
+    const update = this.getUpdate();
+    let rankHistory = null;
+    // Handle $set or direct update (full array replacement)
+    if (update.$set?.rankHistory || update.rankHistory) {
+        rankHistory = update.$set?.rankHistory || update.rankHistory;
+    }
+    // Handle $push (adding single entry)
+    else if (update.$push?.rankHistory) {
+        try {
+            const docToUpdate = await this.model.findOne(this.getQuery());
+            if (docToUpdate && docToUpdate.rankHistory) {
+                const newEntry = update.$push.rankHistory;
+                rankHistory = [...docToUpdate.rankHistory, newEntry];
+            }
+            else {
+                // First entry, no duplicates possible
+                return;
+            }
+        }
+        catch (error) {
+            throw new error_1.AppError(400, `${error}`);
+        }
+    }
+    // No rankHistory update, skip validation
+    if (!rankHistory || !Array.isArray(rankHistory)) {
+        return;
+    }
+    const seen = new Set();
+    for (const entity of rankHistory) {
+        const key = `${entity.rank}-${entity.yearRange}-${entity.start}-${entity.end}`;
+        if (seen.has(key)) {
+            throw new error_1.AppError(400, `Duplicate rankHistory entry: rank "${entity.rank}" with yearRange "${entity.yearRange}" already exists`);
+        }
+        seen.add(key);
+    }
+    return;
+});
 /* ======================================================
    🔐 PASSWORD HASHING (PRE SAVE)
 ====================================================== */

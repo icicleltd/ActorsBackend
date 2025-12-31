@@ -5,7 +5,7 @@ import { fileUploader } from "../helper/fileUpload";
 const router = express.Router();
 // router.post("/upcomming", EventController.createEvent);
 router.post("/", MediaDirectoryController.createMediaDirectory);
-// router.get("/", EventController.getEvents);
+router.get("/", MediaDirectoryController.getMediaDirectory);
 // router.get("/:id", EventController.getAdminEvents);
 // router.put("/:id/read", EventController.readEvent);
 

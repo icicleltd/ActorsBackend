@@ -3,6 +3,7 @@ import { AppError } from "../middleware/error";
 import {
   CreateEventDto,
   ICreateMediaDirectory,
+  MediaDirectoryType,
 } from "./mediaDirectory.interface";
 import { MediaDirectory } from "./mediaDirectory.schema";
 
@@ -31,7 +32,21 @@ const createMediaDirectory = async (payload: ICreateMediaDirectory) => {
   }
   return newMediaDirectory;
 };
+const getMediaDirectory = async (payload: MediaDirectoryType) => {
+  if (!payload) {
+    throw new AppError(400, "MediaDirectory info required");
+  }
+  const result = await MediaDirectory.find({
+    mediaRole: payload,
+  });
+
+  if (!result) {
+    throw new AppError(500, "MediaDirectory not created");
+  }
+  return result;
+};
 
 export const MediaDirectoryService = {
   createMediaDirectory,
+  getMediaDirectory,
 };

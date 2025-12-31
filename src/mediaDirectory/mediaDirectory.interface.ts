@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-type MediaDirectoryType =
+export type MediaDirectoryType =
   | "producer"
   | "director"
   | "script_writer"

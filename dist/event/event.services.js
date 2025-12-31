@@ -4,8 +4,9 @@ exports.EventService = void 0;
 const fileUpload_1 = require("../helper/fileUpload");
 const error_1 = require("../middleware/error");
 const event_schema_1 = require("./event.schema");
+const validatePayload = () => { };
 const createEvent = async (payload, files) => {
-    const { title, description, eventDate, isBookingOpen } = payload;
+    const { title, name, details, description, eventDate, isBookingOpen } = payload;
     if (!files) {
         throw new error_1.AppError(400, "File required");
     }
@@ -15,12 +16,15 @@ const createEvent = async (payload, files) => {
         const uploaded = await fileUpload_1.fileUploader.CloudinaryUploadMultiple(fileArr);
         return uploaded.map((u) => u.secure_url);
     };
-    const logo = (await uploadArray(files.logo))[0] || null;
-    const banner = (await uploadArray(files.banner))[0] || null;
-    const images = (await uploadArray(files.images))[0] || null;
+    const [logo, banner, images] = await Promise.all([
+        (await uploadArray(files.logo))[0] || null,
+        (await uploadArray(files.banner))[0] || null,
+        (await uploadArray(files.images)),
+    ]);
     if (!eventDate || !description) {
         throw new error_1.AppError(400, "Description and date are required");
     }
+    console.log(images);
     const eventTime = new Date(eventDate);
     const isUpcomming = eventTime > new Date();
     if (isUpcomming) {
@@ -41,10 +45,14 @@ const createEvent = async (payload, files) => {
         throw new error_1.AppError(400, "Images are required");
     }
     const pastEvent = await event_schema_1.Event.create({
+        name,
+        title,
+        details,
         eventDate: eventTime,
         description,
         images,
     });
+    console.log(pastEvent);
     return pastEvent;
 };
 const getEvents = async () => {

@@ -5,13 +5,21 @@ const eventSchema = new Schema<IEvent>(
   {
     title: {
       type: String,
-      // required: true,
+      required: true,
+      trim: true,
+    },
+    name: {
+      type: String,
+      required: true,
       trim: true,
     },
 
     description: {
       type: String,
       required: true,
+    },
+    details: {
+      type: String,
     },
 
     logo: String,

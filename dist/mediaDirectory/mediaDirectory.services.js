@@ -28,6 +28,19 @@ const createMediaDirectory = async (payload) => {
     }
     return newMediaDirectory;
 };
+const getMediaDirectory = async (payload) => {
+    if (!payload) {
+        throw new error_1.AppError(400, "MediaDirectory info required");
+    }
+    const result = await mediaDirectory_schema_1.MediaDirectory.find({
+        mediaRole: payload,
+    });
+    if (!result) {
+        throw new error_1.AppError(500, "MediaDirectory not created");
+    }
+    return result;
+};
 exports.MediaDirectoryService = {
     createMediaDirectory,
+    getMediaDirectory,
 };

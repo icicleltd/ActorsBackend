@@ -7,6 +7,7 @@ exports.MediaDirectoryController = void 0;
 const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const mediaDirectory_services_1 = require("./mediaDirectory.services");
+const error_1 = require("../middleware/error");
 const createMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
     // const adminId = req.user?.id;
@@ -18,17 +19,19 @@ const createMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) =>
         data: result,
     });
 });
-// const getEvents = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     const result = await EventService.getEvents();
-//     sendResponse(res, {
-//       statusCode: 200,
-//       success: true,
-//       message: "Events fetched successfully",
-//       data: result,
-//     });
-//   }
-// );
+const getMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { mediaRole } = req.query;
+    if (!mediaRole || typeof mediaRole !== "string") {
+        throw new error_1.AppError(400, "mediaRole query is required");
+    }
+    const result = await mediaDirectory_services_1.MediaDirectoryService.getMediaDirectory(mediaRole);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "MediaDirectory fetched successfully",
+        data: result,
+    });
+});
 // const getAdminEvents = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
 //     const adminId = req.params.id;
@@ -55,4 +58,5 @@ const createMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) =>
 // );
 exports.MediaDirectoryController = {
     createMediaDirectory,
+    getMediaDirectory,
 };

@@ -8,7 +8,7 @@ const mediaDirectory_controller_1 = require("./mediaDirectory.controller");
 const router = express_1.default.Router();
 // router.post("/upcomming", EventController.createEvent);
 router.post("/", mediaDirectory_controller_1.MediaDirectoryController.createMediaDirectory);
-// router.get("/", EventController.getEvents);
+router.get("/", mediaDirectory_controller_1.MediaDirectoryController.getMediaDirectory);
 // router.get("/:id", EventController.getAdminEvents);
 // router.put("/:id/read", EventController.readEvent);
 exports.default = router;

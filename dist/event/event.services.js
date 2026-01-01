@@ -19,12 +19,11 @@ const createEvent = async (payload, files) => {
     const [logo, banner, images] = await Promise.all([
         (await uploadArray(files.logo))[0] || null,
         (await uploadArray(files.banner))[0] || null,
-        (await uploadArray(files.images)),
+        await uploadArray(files.images),
     ]);
     if (!eventDate || !description) {
         throw new error_1.AppError(400, "Description and date are required");
     }
-    console.log(images);
     const eventTime = new Date(eventDate);
     const isUpcomming = eventTime > new Date();
     if (isUpcomming) {
@@ -55,12 +54,21 @@ const createEvent = async (payload, files) => {
     console.log(pastEvent);
     return pastEvent;
 };
-const getEvents = async () => {
-    const events = await event_schema_1.Event.find({});
-    if (!events.length) {
-        throw new error_1.AppError(204, "No events found");
+const getEvents = async ({ eventType }, sortBy, sortWith) => {
+    const now = new Date();
+    console.log(sortBy, sortWith, "in services");
+    let filter = {};
+    if (eventType === "PAST") {
+        filter.eventDate = { $lt: now };
     }
-    return "events";
+    if (eventType === "UPCOMING") {
+        filter.eventDate = { $gte: now };
+    }
+    const events = await event_schema_1.Event.find(filter).sort({ [sortBy ?? "createdAt"]: sortWith });
+    if (!events.length) {
+        throw new error_1.AppError(400, "Event not found");
+    }
+    return events; // eventType virtual auto included
 };
 const getAdminEvents = async (adminId) => {
     if (!adminId) {
@@ -88,9 +96,20 @@ const readEvent = async (eventId) => {
     // }
     return "event";
 };
+const deleteEvent = async (eventId) => {
+    if (!eventId) {
+        throw new error_1.AppError(400, "No event id provided");
+    }
+    const event = await event_schema_1.Event.findByIdAndDelete(eventId);
+    if (!event) {
+        throw new error_1.AppError(404, "Event not found");
+    }
+    return event;
+};
 exports.EventService = {
     createEvent,
     getEvents,
     getAdminEvents,
     readEvent,
+    deleteEvent,
 };

@@ -17,5 +17,6 @@ router.post(
 router.get("/", EventController.getEvents);
 router.get("/:id", EventController.getAdminEvents);
 router.put("/:id/read", EventController.readEvent);
+router.delete("/:id", EventController.deleteEvent);
 
 export default router;

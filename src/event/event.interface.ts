@@ -36,3 +36,6 @@ export interface CreateEventDto {
   eventDate: Date;
   isBookingOpen: boolean;
 }
+export interface GetEventsDto {
+  eventType?: "PAST" | "UPCOMING";
+}

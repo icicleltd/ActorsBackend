@@ -1,11 +1,13 @@
 import { fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
-import { CreateEventDto } from "./event.interface";
+import { CreateEventDto, GetEventsDto } from "./event.interface";
 import { Event } from "./event.schema";
 
 const validatePayload = () => {};
-const createEvent = async (payload: CreateEventDto, files: { [fieldname: string]: Express.Multer.File[] }) => {
-  
+const createEvent = async (
+  payload: CreateEventDto,
+  files: { [fieldname: string]: Express.Multer.File[] }
+) => {
   const { title, name, details, description, eventDate, isBookingOpen } =
     payload;
   if (!files) {
@@ -19,12 +21,11 @@ const createEvent = async (payload: CreateEventDto, files: { [fieldname: string]
   const [logo, banner, images] = await Promise.all([
     (await uploadArray(files.logo))[0] || null,
     (await uploadArray(files.banner))[0] || null,
-    (await uploadArray(files.images)),
+    await uploadArray(files.images),
   ]);
   if (!eventDate || !description) {
     throw new AppError(400, "Description and date are required");
   }
-  console.log(images);
   const eventTime = new Date(eventDate);
   const isUpcomming = eventTime > new Date();
   if (isUpcomming) {
@@ -57,12 +58,30 @@ const createEvent = async (payload: CreateEventDto, files: { [fieldname: string]
   return pastEvent;
 };
 
-const getEvents = async () => {
-  const events = await Event.find({});
-  if (!events.length) {
-    throw new AppError(204, "No events found");
+const getEvents = async (
+  { eventType }: GetEventsDto,
+  sortBy: string,
+  sortWith: -1 | 1
+) => {
+  const now = new Date();
+  console.log(sortBy, sortWith, "in services");
+  let filter: any = {};
+
+  if (eventType === "PAST") {
+    filter.eventDate = { $lt: now };
   }
-  return "events";
+
+  if (eventType === "UPCOMING") {
+    filter.eventDate = { $gte: now };
+  }
+
+  const events = await Event.find(filter).sort({ [sortBy ?? "createdAt"]: sortWith });
+
+  if (!events.length) {
+    throw new AppError(400, "Event not found");
+  }
+
+  return events; // eventType virtual auto included
 };
 
 const getAdminEvents = async (adminId: string) => {
@@ -98,10 +117,22 @@ const readEvent = async (eventId: string) => {
 
   return "event";
 };
+const deleteEvent = async (eventId: string) => {
+  if (!eventId) {
+    throw new AppError(400, "No event id provided");
+  }
+  const event = await Event.findByIdAndDelete(eventId);
+
+  if (!event) {
+    throw new AppError(404, "Event not found");
+  }
+  return event;
+};
 
 export const EventService = {
   createEvent,
   getEvents,
   getAdminEvents,
   readEvent,
+  deleteEvent,
 };

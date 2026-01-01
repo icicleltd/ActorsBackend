@@ -22,7 +22,15 @@ const createEvent = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 const getEvents = (0, catchAsync_1.default)(async (req, res, next) => {
-    const result = await event_services_1.EventService.getEvents();
+    const eventType = req.query.eventType;
+    const sortBy = req.query.sortBy;
+    const sortWith = req.query.sortWith === "asc" ? 1 : req.query.sortWith === "desc" ? -1 : -1;
+    console.log(sortBy, sortWith);
+    const payload = {};
+    if (eventType === "PAST" || eventType === "UPCOMING") {
+        payload.eventType = eventType;
+    }
+    const result = await event_services_1.EventService.getEvents(payload, sortBy, sortWith);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -50,9 +58,20 @@ const readEvent = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const deleteEvent = (0, catchAsync_1.default)(async (req, res, next) => {
+    const eventId = req.params.id;
+    const result = await event_services_1.EventService.deleteEvent(eventId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Event deleted successfully",
+        data: result,
+    });
+});
 exports.EventController = {
     createEvent,
     getEvents,
     getAdminEvents,
     readEvent,
+    deleteEvent,
 };

@@ -16,4 +16,5 @@ router.post("/", fileUpload_1.fileUploader.upload.fields([
 router.get("/", event_controller_1.EventController.getEvents);
 router.get("/:id", event_controller_1.EventController.getAdminEvents);
 router.put("/:id/read", event_controller_1.EventController.readEvent);
+router.delete("/:id", event_controller_1.EventController.deleteEvent);
 exports.default = router;

@@ -28,13 +28,22 @@ const getEvents = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const eventType = req.query.eventType;
     const sortBy = req.query.sortBy;
-    const sortWith = req.query.sortWith === "asc" ? 1 : req.query.sortWith === "desc" ? -1 : -1;
+    const sortWith =
+      req.query.sortWith === "asc"
+        ? 1
+        : req.query.sortWith === "desc"
+        ? -1
+        : -1;
     console.log(sortBy, sortWith);
     const payload: GetEventsDto = {};
     if (eventType === "PAST" || eventType === "UPCOMING") {
       payload.eventType = eventType;
     }
-    const result = await EventService.getEvents(payload, sortBy as string, sortWith);
+    const result = await EventService.getEvents(
+      payload,
+      sortBy as string,
+      sortWith
+    );
 
     sendResponse(res, {
       statusCode: 200,
@@ -86,10 +95,31 @@ const deleteEvent = catchAsync(
   }
 );
 
+const updateEvent = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+console.log(id)
+    const payload = req.body;
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+
+    const result = await EventService.updateEvent(id, payload, files);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Event updated successfully",
+      data: result,
+    });
+  }
+);
+
 export const EventController = {
   createEvent,
   getEvents,
   getAdminEvents,
   readEvent,
   deleteEvent,
+  updateEvent
 };

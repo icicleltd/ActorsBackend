@@ -16,11 +16,11 @@ const eventSchema = new Schema<IEvent>(
 
     description: {
       type: String,
-      required: true,
+      // required: true,
     },
-    details: {
-      type: String,
-    },
+    // details: {
+    //   type: String,
+    // },
 
     logo: String,
     banner: String,

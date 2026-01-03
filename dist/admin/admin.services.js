@@ -109,13 +109,13 @@ const addActor = async (file, actorData) => {
         }
         uploadedUrl = uploaded.secure_url; // If file uploaded successfully, store the URL
     }
-    // const buildIdNo = `${actorData.category}-${actorData.idNo}`;
+    const buildIdNo = `${actorData.category}-${actorData.idNo}`;
     const actorProfile = {
         phoneNumber: actorData.phoneNumber,
         presentAddress: actorData.presentAddress,
         dob: actorData.dob.toString(),
         bloodGroup: actorData.bloodGroup,
-        idNo: actorData.idNo,
+        idNo: buildIdNo,
         fullName: actorData.fullName,
         category: actorData.category,
         status: actorData.status,

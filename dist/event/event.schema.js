@@ -15,11 +15,11 @@ const eventSchema = new mongoose_1.Schema({
     },
     description: {
         type: String,
-        required: true,
+        // required: true,
     },
-    details: {
-        type: String,
-    },
+    // details: {
+    //   type: String,
+    // },
     logo: String,
     banner: String,
     images: {

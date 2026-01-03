@@ -6,7 +6,7 @@ const error_1 = require("../middleware/error");
 const event_schema_1 = require("./event.schema");
 const validatePayload = () => { };
 const createEvent = async (payload, files) => {
-    const { title, name, details, description, eventDate, isBookingOpen } = payload;
+    const { title, name, description, eventDate, isBookingOpen } = payload;
     if (!files) {
         throw new error_1.AppError(400, "File required");
     }
@@ -46,7 +46,7 @@ const createEvent = async (payload, files) => {
     const pastEvent = await event_schema_1.Event.create({
         name,
         title,
-        details,
+        // details,
         eventDate: eventTime,
         description,
         images,

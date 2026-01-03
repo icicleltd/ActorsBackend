@@ -21,8 +21,8 @@ const createEvent = async (payload, files) => {
         (await uploadArray(files.banner))[0] || null,
         await uploadArray(files.images),
     ]);
-    if (!eventDate || !description) {
-        throw new error_1.AppError(400, "Description and date are required");
+    if (!eventDate || !name) {
+        throw new error_1.AppError(400, "Name and date are required");
     }
     const eventTime = new Date(eventDate);
     const isUpcomming = eventTime > new Date();

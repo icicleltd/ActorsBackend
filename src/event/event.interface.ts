@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 
 export interface IEvent {
   title: string;
-  description: string;
+  description?: string;
 
   // Media
   logo?: string;
@@ -10,7 +10,7 @@ export interface IEvent {
   images?: string[];
 
   name: string;
-  details: string;
+  // details: string;
 
   // Date
   eventDate: Date;
@@ -31,8 +31,8 @@ export interface IEvent {
 export interface CreateEventDto {
   title: string;
   name: string;
-  details?: string;
-  description: string;
+  // details?: string;
+  description?: string;
   eventDate: Date;
   isBookingOpen: boolean;
 }

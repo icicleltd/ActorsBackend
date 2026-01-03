@@ -8,7 +8,7 @@ const createEvent = async (
   payload: CreateEventDto,
   files: { [fieldname: string]: Express.Multer.File[] }
 ) => {
-  const { title, name, details, description, eventDate, isBookingOpen } =
+  const { title, name, description, eventDate, isBookingOpen } =
     payload;
   if (!files) {
     throw new AppError(400, "File required");
@@ -49,7 +49,7 @@ const createEvent = async (
   const pastEvent = await Event.create({
     name,
     title,
-    details,
+    // details,
     eventDate: eventTime,
     description,
     images,

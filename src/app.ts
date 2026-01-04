@@ -8,6 +8,7 @@ import eventRouter from "./event/event.router";
 import authRouter from "./auth/auth.router";
 import devRouter from "./dev/router";
 import mediaDirectoryRouter from "./mediaDirectory/mediaDirectory.router";
+import galaryRouter from "./galary/galary.router";
 
 const app = express();
 // Middleware
@@ -75,6 +76,7 @@ app.use("/api/v1/events", eventRouter);
 app.use("/", devRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/media-directory", mediaDirectoryRouter);
+app.use("/api/v1/galary", galaryRouter);
 app.use(globalErrorHandler);
 
 // Test route

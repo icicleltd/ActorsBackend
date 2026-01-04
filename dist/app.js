@@ -12,6 +12,7 @@ const event_router_1 = __importDefault(require("./event/event.router"));
 const auth_router_1 = __importDefault(require("./auth/auth.router"));
 const router_1 = __importDefault(require("./dev/router"));
 const mediaDirectory_router_1 = __importDefault(require("./mediaDirectory/mediaDirectory.router"));
+const galary_router_1 = __importDefault(require("./galary/galary.router"));
 const app = (0, express_1.default)();
 // Middleware
 app.use(express_1.default.json());
@@ -67,6 +68,7 @@ app.use("/api/v1/events", event_router_1.default);
 app.use("/", router_1.default);
 app.use("/api/v1/auth", auth_router_1.default);
 app.use("/api/v1/media-directory", mediaDirectory_router_1.default);
+app.use("/api/v1/galary", galary_router_1.default);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

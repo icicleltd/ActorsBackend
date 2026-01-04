@@ -36,6 +36,10 @@ const CloudinaryUploadMultiple = async (files: Express.Multer.File[]) => {
   return uploaded;
 };
 
+export const deleteFromCloudinary = async (publicId: string) => {
+  return cloudinary.uploader.destroy(publicId);
+};
+
 export const fileUploader = {
   upload,
   CloudinaryUpload,

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fileUploader = void 0;
+exports.fileUploader = exports.deleteFromCloudinary = void 0;
 const multer_1 = __importDefault(require("multer"));
 const cloudinary_1 = require("cloudinary");
 // Multer memory storage (required for Vercel)
@@ -34,6 +34,10 @@ const CloudinaryUploadMultiple = async (files) => {
     }
     return uploaded;
 };
+const deleteFromCloudinary = async (publicId) => {
+    return cloudinary_1.v2.uploader.destroy(publicId);
+};
+exports.deleteFromCloudinary = deleteFromCloudinary;
 exports.fileUploader = {
     upload,
     CloudinaryUpload,

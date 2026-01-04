@@ -6,6 +6,8 @@ const router = express.Router();
 // router.post("/upcomming", EventController.createEvent);
 router.post("/", MediaDirectoryController.createMediaDirectory);
 router.get("/", MediaDirectoryController.getMediaDirectory);
+router.put("/:id", MediaDirectoryController.updateMediaDirectory);
+router.delete("/:id", MediaDirectoryController.deleteMediaDirectory);
 // router.get("/:id", EventController.getAdminEvents);
 // router.put("/:id/read", EventController.readEvent);
 

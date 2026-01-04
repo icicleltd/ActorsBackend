@@ -32,6 +32,27 @@ const getMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const updateMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    const payload = req.body;
+    const result = await mediaDirectory_services_1.MediaDirectoryService.updateMediaDirectory(id, payload);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "MediaDirectory updated successfully",
+        data: result,
+    });
+});
+const deleteMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    const result = await mediaDirectory_services_1.MediaDirectoryService.deleteMediaDirectory(id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "MediaDirectory deleted successfully",
+        data: result,
+    });
+});
 // const getAdminEvents = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
 //     const adminId = req.params.id;
@@ -59,4 +80,6 @@ const getMediaDirectory = (0, catchAsync_1.default)(async (req, res, next) => {
 exports.MediaDirectoryController = {
     createMediaDirectory,
     getMediaDirectory,
+    updateMediaDirectory,
+    deleteMediaDirectory,
 };

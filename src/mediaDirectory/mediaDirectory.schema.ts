@@ -15,6 +15,7 @@ const mediaDirectorySchema = new Schema<IMediaDirectory>(
 
     phone: {
       type: String,
+      required: true,
       trim: true,
     },
 

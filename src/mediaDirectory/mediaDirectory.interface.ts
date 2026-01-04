@@ -13,7 +13,7 @@ export interface IMediaDirectory {
   houseName?: string;
   fullName?: string;
 
-  phone?: string;
+  phone: string;
   email?: string;
   mediaRole: MediaDirectoryType;
 
@@ -36,3 +36,7 @@ export interface ICreateMediaDirectory {
   email?: string;
   mediaRole: MediaDirectoryType;
 }
+
+export type AllowedMediaDirectoryFields = Partial<
+  Pick<IMediaDirectory, "fullName" | "houseName" | "phone" | "email">
+>;

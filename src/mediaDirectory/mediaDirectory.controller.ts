@@ -3,6 +3,7 @@ import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { MediaDirectoryService } from "./mediaDirectory.services";
 import {
+  AllowedMediaDirectoryFields,
   CreateEventDto,
   ICreateMediaDirectory,
   MediaDirectoryType,
@@ -28,14 +29,41 @@ const getMediaDirectory = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { mediaRole } = req.query;
     if (!mediaRole || typeof mediaRole !== "string") {
-      throw new AppError(400, "mediaRole query is required"); 
+      throw new AppError(400, "mediaRole query is required");
     }
-    const result = await MediaDirectoryService.getMediaDirectory(mediaRole as MediaDirectoryType);
+    const result = await MediaDirectoryService.getMediaDirectory(
+      mediaRole as MediaDirectoryType
+    );
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
       message: "MediaDirectory fetched successfully",
+      data: result,
+    });
+  }
+);
+const updateMediaDirectory = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const payload: AllowedMediaDirectoryFields = req.body;
+    const result = await MediaDirectoryService.updateMediaDirectory(id, payload);
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "MediaDirectory updated successfully",
+      data: result,
+    });
+  }
+);
+const deleteMediaDirectory = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const result = await MediaDirectoryService.deleteMediaDirectory(id);
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "MediaDirectory deleted successfully",
       data: result,
     });
   }
@@ -72,4 +100,6 @@ const getMediaDirectory = catchAsync(
 export const MediaDirectoryController = {
   createMediaDirectory,
   getMediaDirectory,
+  updateMediaDirectory,
+  deleteMediaDirectory,
 };

@@ -37,9 +37,9 @@ const getGalleryImages = async (
     .skip(skip)
     .limit(limit);
 
-  if (!images.length) {
-    throw new AppError(404, "No gallery images found");
-  }
+  // if (!images.length) {
+  //   throw new AppError(404, "No gallery images found");
+  // }
 
   return images;
 };

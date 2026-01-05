@@ -27,8 +27,9 @@ const createAuth = async (payload: IPayload) => {
   if (!existingUser) {
     throw new AppError(400, "You are not registered");
   }
-
+console.log(payload)
   const isPasswordValid = await existingUser.comparePassword(password);
+  console.log(isPasswordValid)
   if (!isPasswordValid) {
     throw new AppError(401, "Invalid credentials");
   }

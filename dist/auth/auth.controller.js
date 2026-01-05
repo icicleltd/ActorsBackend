@@ -10,6 +10,7 @@ const auth_services_1 = require("./auth.services");
 const cookieHelper_1 = __importDefault(require("../helper/cookieHelper"));
 const createAuth = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
+    console.log(payload);
     const result = await auth_services_1.AuthService.createAuth(payload);
     (0, cookieHelper_1.default)(res, "accessToken", result.accessToken, Number(process.env.ACCESS_COOKIE_EXPIRE_IN));
     (0, sendResponse_1.default)(res, {

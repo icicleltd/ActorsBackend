@@ -8,6 +8,7 @@ import setCookie from "../helper/cookieHelper";
 const createAuth = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: IPayload = req.body;
+    console.log(payload);
     const result = await AuthService.createAuth(payload);
     setCookie(
       res,

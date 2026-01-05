@@ -27,9 +27,9 @@ const getGalleryImages = async (skip, limit, sortBy, sortWith) => {
         .sort({ [sortBy]: sortWith })
         .skip(skip)
         .limit(limit);
-    if (!images.length) {
-        throw new error_1.AppError(404, "No gallery images found");
-    }
+    // if (!images.length) {
+    //   throw new AppError(404, "No gallery images found");
+    // }
     return images;
 };
 /* ------------------------------------

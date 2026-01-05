@@ -135,19 +135,21 @@ const addActor = async (file, actorData) => {
     return actor;
 };
 const promoteMember = async (memberData) => {
-    console.log(memberData, "in serveices");
     const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
     console.log(memberData);
     if (!id || !fullName || !idNo || !rank) {
         throw new error_1.AppError(400, "Member data not provided");
     }
+    if (["executive", "advisor"].includes(rank) && !rankYearRange) {
+        throw new error_1.AppError(400, "Rank year range is required for advisor and executive");
+    }
     const newMember = await actor_schema_1.default.findByIdAndUpdate(id, {
         $push: {
             rankHistory: {
                 rank,
-                yearRange: rankYearRange.yearRange,
-                start: rankYearRange.start,
-                end: rankYearRange.end,
+                yearRange: rankYearRange ? rankYearRange.yearRange : "",
+                start: rankYearRange?.start || 0,
+                end: rankYearRange?.end || 0,
             },
         },
         $set: {
@@ -158,7 +160,7 @@ const promoteMember = async (memberData) => {
         throw new error_1.AppError(500, "Member Not promote");
     }
     console.log(memberData);
-    console.log(newMember);
+    console.log("new", newMember);
     return newMember;
 };
 const deleteMember = async (id) => {

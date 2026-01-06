@@ -51,9 +51,22 @@ const deleteNews = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const editNews = (0, catchAsync_1.default)(async (req, res) => {
+    const file = req.file;
+    const payload = req.body;
+    const id = req.params.id;
+    const result = await news_services_1.NewsService.editNews(id, payload, file);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "News deleted successfully",
+        data: result,
+    });
+});
 exports.NewsController = {
     createNews,
     getAllNews,
     getSingleNews,
     deleteNews,
+    editNews,
 };

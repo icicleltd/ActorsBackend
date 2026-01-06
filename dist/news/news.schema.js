@@ -18,7 +18,15 @@ const newsSchema = new mongoose_1.Schema({
     },
     link: {
         type: String,
-        // required: true,
+        required: true,
+    },
+    details: {
+        type: String,
+        required: true,
+    },
+    category: {
+        type: String,
+        required: true,
     },
 }, {
     timestamps: true,

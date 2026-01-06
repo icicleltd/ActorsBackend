@@ -21,8 +21,18 @@ const newsSchema = new Schema<INews>(
 
     link: {
       type: String,
-      // required: true,
+      required: true,
     },
+    details: {
+      type: String,
+      required: true,
+    },
+    category: {
+      type: String,
+      required: true,
+    },
+
+
   },
   {
     timestamps: true,

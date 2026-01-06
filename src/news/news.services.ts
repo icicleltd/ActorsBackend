@@ -2,6 +2,8 @@ import { AppError } from "../middleware/error";
 import { fileUploader } from "../helper/fileUpload";
 import { News } from "./news.schema";
 import { CreateNewsDto } from "./news.interface";
+import { sanitizePayload } from "../helper/senitizePayload";
+import { Types } from "mongoose";
 
 const createNews = async (
   payload: CreateNewsDto,
@@ -14,12 +16,14 @@ const createNews = async (
   const upload = (await fileUploader.CloudinaryUpload(file)) as {
     secure_url: string;
   };
-
+  console.log(payload);
   const news = await News.create({
     title: payload.title,
     image: upload.secure_url,
     published: payload.published,
     link: payload.link,
+    details: payload.details,
+    category: payload.category,
   });
   console.log(news);
   return news;
@@ -32,23 +36,71 @@ const getAllNews = async (
   sortWith: 1 | -1,
   skip: number
 ) => {
-  return News.find()
-    .sort({ [sortBy]: sortWith })
-    .skip(skip)
-    .limit(limit);
+  // const news = await News.find()
+  //   .sort({ [sortBy]: sortWith })
+  //   .skip(skip)
+  //   .limit(limit);
+  // const total = await News.countDocuments();
+
+  const [news, total] = await Promise.all([
+    News.find()
+      .sort({ [sortBy]: sortWith })
+      .skip(skip)
+      .limit(limit),
+    News.countDocuments(),
+  ]);
+  const totalPages = Math.ceil(total / limit);
+  console.log(total);
+  return { news, total, totalPages };
 };
 
 const getSingleNews = async (id: string) => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(400, "This is not vaild");
+  }
   const news = await News.findById(id);
   if (!news) throw new AppError(404, "News not found");
   return news;
 };
 
 const deleteNews = async (id: string) => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(400, "This is not vaild");
+  }
   const news = await News.findByIdAndDelete(id);
   console.log(news);
   if (!news) throw new AppError(404, "News not found");
   return news;
+};
+
+const editNews = async (
+  id: string,
+  payload: Pick<CreateNewsDto, "title" | "details" | "link" | "published" | "category">,
+  file?: Express.Multer.File
+) => {
+  let uploadUrl;
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(400, "This is not vaild");
+  }
+  if (file) {
+    uploadUrl = (await fileUploader.CloudinaryUpload(file)) as {
+      secure_url: string;
+    };
+  }
+  const updatedPayload = {
+    ...payload,
+    ...(uploadUrl && { image: uploadUrl.secure_url }),
+  };
+  const cleanedPayload = sanitizePayload(updatedPayload);
+  console.log(cleanedPayload);
+  const updateNews = await News.findByIdAndUpdate(
+    id,
+    {
+      $set: cleanedPayload,
+    },
+    { new: true, runValidators: true }
+  );
+  return updateNews;
 };
 
 export const NewsService = {
@@ -56,4 +108,5 @@ export const NewsService = {
   getAllNews,
   getSingleNews,
   deleteNews,
+  editNews,
 };

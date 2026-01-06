@@ -9,6 +9,11 @@ router.post(
   fileUploader.upload.single("image"),
   NewsController.createNews
 );
+router.put(
+  "/:id",
+  fileUploader.upload.single("image"),
+  NewsController.editNews
+);
 
 router.get("/", NewsController.getAllNews);
 router.get("/:id", NewsController.getSingleNews);

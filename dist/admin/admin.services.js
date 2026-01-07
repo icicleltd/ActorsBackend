@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const fileUpload_1 = require("../helper/fileUpload");
+const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("./admin.schema");
 const createAdmin = async (payload) => {
@@ -48,20 +49,28 @@ const updateActorProfile = async (actorData, actorId, file) => {
     const actorProfile = {
         phoneNumber: actorData.phoneNumber,
         presentAddress: actorData.presentAddress,
-        dob: new Date(actorData.dob),
+        dob: actorData.dob && new Date(actorData.dob),
         bloodGroup: actorData.bloodGroup,
-        idNo: actorData.idNo,
+        // idNo: actorData.idNo,
         fullName: actorData.fullName,
-        category: actorData.category,
-        status: actorData.status,
+        // category: actorData.category,
+        // status: actorData.status,
         photo: uploadedUrl,
-        fromActive: actorData.fromActive,
+        // fromActive: actorData.fromActive,
         bio: actorData.bio,
         email: actorData.email,
         password: actorData.password,
     };
-    const result = await actor_schema_1.default.findByIdAndUpdate(actorId, actorProfile, {
+    const updatedPayload = {
+        ...actorData,
+        uploadedUrl,
+    };
+    const sanitize = (0, senitizePayload_1.sanitizePayload)(updatedPayload);
+    const result = await actor_schema_1.default.findByIdAndUpdate(actorId, {
+        $set: sanitize
+    }, {
         new: true,
+        runValidators: true,
     }).select("-password");
     if (!result) {
         throw new Error("Failed to fill up actor profile");

@@ -207,6 +207,26 @@ actorSchema.pre("save", async function () {
     this.password = await bcrypt_1.default.hash(this.password, salt);
 });
 /* ======================================================
+   🔐 PASSWORD HASHING (PRE UPDATE)
+====================================================== */
+actorSchema.pre("findOneAndUpdate", async function () {
+    const update = this.getUpdate();
+    // Check if password is being updated
+    const password = update.$set?.password || update.password;
+    if (password && typeof password === "string") {
+        const bcrypt = await Promise.resolve().then(() => __importStar(require("bcrypt")));
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        // Update the password in the update object
+        if (update.$set) {
+            update.$set.password = hashedPassword;
+        }
+        else {
+            update.password = hashedPassword;
+        }
+    }
+});
+/* ======================================================
    🔐 PASSWORD COMPARE METHOD
 ====================================================== */
 actorSchema.methods.comparePassword = async function (plainPassword) {

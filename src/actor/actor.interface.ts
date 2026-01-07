@@ -16,7 +16,7 @@ export interface IActor extends Document {
   permanentAddress?: string;
   nationality?: string;
   religion?: string;
-  dob?: string;
+  dob?: Date;
   bloodGroup?: string;
 
   // =========================
@@ -162,3 +162,16 @@ export interface IActor extends Document {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export type AllowedActorPayload = Pick<
+  IActor,
+  | "phoneNumber"
+  | "email"
+  | "password"
+  | "dob"
+  | "photo"
+  | "fullName"
+  | "bloodGroup"
+  | "bio"
+  | "presentAddress"
+>;

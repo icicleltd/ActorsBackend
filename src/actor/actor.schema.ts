@@ -204,6 +204,30 @@ actorSchema.pre<IActor>("save", async function () {
 });
 
 /* ======================================================
+   🔐 PASSWORD HASHING (PRE UPDATE)
+====================================================== */
+actorSchema.pre<Query<any, IActor>>("findOneAndUpdate", async function () {
+  const update = this.getUpdate() as any;
+
+  // Check if password is being updated
+  const password = update.$set?.password || update.password;
+
+  if (password && typeof password === "string") {
+    const bcrypt = await import("bcrypt");
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update the password in the update object
+    if (update.$set) {
+      update.$set.password = hashedPassword;
+    } else {
+      update.password = hashedPassword;
+    }
+  }
+});
+
+
+/* ======================================================
    🔐 PASSWORD COMPARE METHOD
 ====================================================== */
 actorSchema.methods.comparePassword = async function (

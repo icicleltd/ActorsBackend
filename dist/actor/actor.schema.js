@@ -113,12 +113,12 @@ const actorSchema = new mongoose_1.Schema({
     educationInfo: { type: String },
     personalInfo: { type: String },
     basicInfo: { type: String },
-    rankYearRange: {
-        yearRange: { type: String },
-        start: { type: Number },
-        end: { type: Number },
-    },
-    rankYear: { type: String },
+    // rankYearRange: {
+    //   yearRange: { type: String },
+    //   start: { type: Number },
+    //   end: { type: Number },
+    // },
+    // rankYear: { type: String },
     profilePhoto: [
         {
             left: { type: String },

@@ -91,12 +91,12 @@ const actorSchema = new Schema<IActor>(
     personalInfo: { type: String },
     basicInfo: { type: String },
 
-    rankYearRange: {
-      yearRange: { type: String },
-      start: { type: Number },
-      end: { type: Number },
-    },
-    rankYear: { type: String },
+    // rankYearRange: {
+    //   yearRange: { type: String },
+    //   start: { type: Number },
+    //   end: { type: Number },
+    // },
+    // rankYear: { type: String },
 
     profilePhoto: [
       {

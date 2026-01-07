@@ -144,7 +144,21 @@ const getSingleActor = async (actorId: string) => {
 //   return { actor, totalActor, categoryACount, categoryBCount, totalPage };
 // };
 
-const ROLE_ORDER = [
+// const ROLE_ORDER = [
+//   "president",
+//   "vice_president",
+//   "general_secretary",
+//   "joint_secretary",
+//   "organizing_secretary",
+//   "finance_secretary",
+//   "office_secretary",
+//   "event_secretary",
+//   "law_welfare_secretary",
+//   "publicity_secretary",
+//   "it_secretary",
+//   "executive_member",
+// ];
+export const ROLE_ORDER = [
   "president",
   "vice_president",
   "general_secretary",
@@ -153,6 +167,11 @@ const ROLE_ORDER = [
   "finance_secretary",
   "office_secretary",
   "event_secretary",
+
+  // newly added (snake_case)
+  "law_secretary",
+  "social_welfare_secretary",
+  
   "law_welfare_secretary",
   "publicity_secretary",
   "it_secretary",
@@ -193,507 +212,506 @@ const getAllActor = async (
   }
 
   // ==================== ADD CURRENT RANK LOGIC ====================
-// if (rankGroup === "all") {
-//   pipeline.push({
-//     $addFields: {
-//       current: {
-//         $let: {
-//           vars: {
-//             // Boolean check: does lifetime exist?
-//             hasLifetime: {
-//               $cond: {
-//                 if: {
-//                   $and: [
-//                     { $isArray: "$rankHistory" },
-//                     { $gt: [{ $size: "$rankHistory" }, 0] },
-//                   ],
-//                 },
-//                 then: {
-//                   $gt: [
-//                     {
-//                       $size: {
-//                         $filter: {
-//                           input: "$rankHistory",
-//                           as: "r",
-//                           cond: { $eq: ["$$r.rank", "lifeTime"] },
-//                         },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 },
-//                 else: false,
-//               },
-//             },
+  // if (rankGroup === "all") {
+  //   pipeline.push({
+  //     $addFields: {
+  //       current: {
+  //         $let: {
+  //           vars: {
+  //             // Boolean check: does lifetime exist?
+  //             hasLifetime: {
+  //               $cond: {
+  //                 if: {
+  //                   $and: [
+  //                     { $isArray: "$rankHistory" },
+  //                     { $gt: [{ $size: "$rankHistory" }, 0] },
+  //                   ],
+  //                 },
+  //                 then: {
+  //                   $gt: [
+  //                     {
+  //                       $size: {
+  //                         $filter: {
+  //                           input: "$rankHistory",
+  //                           as: "r",
+  //                           cond: { $eq: ["$$r.rank", "lifeTime"] },
+  //                         },
+  //                       },
+  //                     },
+  //                     0,
+  //                   ],
+  //                 },
+  //                 else: false,
+  //               },
+  //             },
 
-//             // Find recent executive (start >= 2025 AND end >= 2025 or null)
-//             recentExecutive: {
-//               $cond: {
-//                 if: {
-//                   $and: [
-//                     { $isArray: "$rankHistory" },
-//                     { $gt: [{ $size: "$rankHistory" }, 0] },
-//                   ],
-//                 },
-//                 then: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$rankHistory",
-//                         as: "r",
-//                         cond: {
-//                           $and: [
-//                             {
-//                               $in: [
-//                                 "$$r.rank",
-//                                 [
-//                                   "president",
-//                                   "vice_president",
-//                                   "general_secretary",
-//                                   "joint_secretary",
-//                                   "organizing_secretary",
-//                                   "finance_secretary",
-//                                   "office_secretary",
-//                                   "event_secretary",
-//                                   "law_welfare_secretary",
-//                                   "publicity_secretary",
-//                                   "it_secretary",
-//                                   "executive_member",
-//                                 ],
-//                               ],
-//                             },
-//                             { $gte: ["$$r.start", 2025] },
-//                             // end must be >= 2025, null, or 0 (for edge cases)
-//                             {
-//                               $or: [
-//                                 { $gte: ["$$r.end", 2025] },
-//                                 { $eq: ["$$r.end", null] },
-//                                 { $eq: ["$$r.end", 0] },
-//                               ],
-//                             },
-//                           ],
-//                         },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 },
-//                 else: null,
-//               },
-//             },
+  //             // Find recent executive (start >= 2025 AND end >= 2025 or null)
+  //             recentExecutive: {
+  //               $cond: {
+  //                 if: {
+  //                   $and: [
+  //                     { $isArray: "$rankHistory" },
+  //                     { $gt: [{ $size: "$rankHistory" }, 0] },
+  //                   ],
+  //                 },
+  //                 then: {
+  //                   $arrayElemAt: [
+  //                     {
+  //                       $filter: {
+  //                         input: "$rankHistory",
+  //                         as: "r",
+  //                         cond: {
+  //                           $and: [
+  //                             {
+  //                               $in: [
+  //                                 "$$r.rank",
+  //                                 [
+  //                                   "president",
+  //                                   "vice_president",
+  //                                   "general_secretary",
+  //                                   "joint_secretary",
+  //                                   "organizing_secretary",
+  //                                   "finance_secretary",
+  //                                   "office_secretary",
+  //                                   "event_secretary",
+  //                                   "law_welfare_secretary",
+  //                                   "publicity_secretary",
+  //                                   "it_secretary",
+  //                                   "executive_member",
+  //                                 ],
+  //                               ],
+  //                             },
+  //                             { $gte: ["$$r.start", 2025] },
+  //                             // end must be >= 2025, null, or 0 (for edge cases)
+  //                             {
+  //                               $or: [
+  //                                 { $gte: ["$$r.end", 2025] },
+  //                                 { $eq: ["$$r.end", null] },
+  //                                 { $eq: ["$$r.end", 0] },
+  //                               ],
+  //                             },
+  //                           ],
+  //                         },
+  //                       },
+  //                     },
+  //                     0,
+  //                   ],
+  //                 },
+  //                 else: null,
+  //               },
+  //             },
 
-//             // Find recent advisor (start >= 2025 AND end >= 2025 or null)
-//             recentAdvisor: {
-//               $cond: {
-//                 if: {
-//                   $and: [
-//                     { $isArray: "$rankHistory" },
-//                     { $gt: [{ $size: "$rankHistory" }, 0] },
-//                   ],
-//                 },
-//                 then: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$rankHistory",
-//                         as: "r",
-//                         cond: {
-//                           $and: [
-//                             { $eq: ["$$r.rank", "advisor"] },
-//                             { $gte: ["$$r.start", 2025] },
-//                             // end must be >= 2025, null, or 0
-//                             {
-//                               $or: [
-//                                 { $gte: ["$$r.end", 2025] },
-//                                 { $eq: ["$$r.end", null] },
-//                                 { $eq: ["$$r.end", 0] },
-//                               ],
-//                             },
-//                           ],
-//                         },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 },
-//                 else: null,
-//               },
-//             },
+  //             // Find recent advisor (start >= 2025 AND end >= 2025 or null)
+  //             recentAdvisor: {
+  //               $cond: {
+  //                 if: {
+  //                   $and: [
+  //                     { $isArray: "$rankHistory" },
+  //                     { $gt: [{ $size: "$rankHistory" }, 0] },
+  //                   ],
+  //                 },
+  //                 then: {
+  //                   $arrayElemAt: [
+  //                     {
+  //                       $filter: {
+  //                         input: "$rankHistory",
+  //                         as: "r",
+  //                         cond: {
+  //                           $and: [
+  //                             { $eq: ["$$r.rank", "advisor"] },
+  //                             { $gte: ["$$r.start", 2025] },
+  //                             // end must be >= 2025, null, or 0
+  //                             {
+  //                               $or: [
+  //                                 { $gte: ["$$r.end", 2025] },
+  //                                 { $eq: ["$$r.end", null] },
+  //                                 { $eq: ["$$r.end", 0] },
+  //                               ],
+  //                             },
+  //                           ],
+  //                         },
+  //                       },
+  //                     },
+  //                     0,
+  //                   ],
+  //                 },
+  //                 else: null,
+  //               },
+  //             },
 
-//             // Find old advisor (end < 2025 AND end > 0)
-//             oldAdvisor: {
-//               $cond: {
-//                 if: {
-//                   $and: [
-//                     { $isArray: "$rankHistory" },
-//                     { $gt: [{ $size: "$rankHistory" }, 0] },
-//                   ],
-//                 },
-//                 then: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$rankHistory",
-//                         as: "r",
-//                         cond: {
-//                           $and: [
-//                             { $eq: ["$$r.rank", "advisor"] },
-//                             { $lt: ["$$r.end", 2025] },
-//                             { $gt: ["$$r.end", 0] }, // Exclude 0 (which is used for lifetime)
-//                           ],
-//                         },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 },
-//                 else: null,
-//               },
-//             },
+  //             // Find old advisor (end < 2025 AND end > 0)
+  //             oldAdvisor: {
+  //               $cond: {
+  //                 if: {
+  //                   $and: [
+  //                     { $isArray: "$rankHistory" },
+  //                     { $gt: [{ $size: "$rankHistory" }, 0] },
+  //                   ],
+  //                 },
+  //                 then: {
+  //                   $arrayElemAt: [
+  //                     {
+  //                       $filter: {
+  //                         input: "$rankHistory",
+  //                         as: "r",
+  //                         cond: {
+  //                           $and: [
+  //                             { $eq: ["$$r.rank", "advisor"] },
+  //                             { $lt: ["$$r.end", 2025] },
+  //                             { $gt: ["$$r.end", 0] }, // Exclude 0 (which is used for lifetime)
+  //                           ],
+  //                         },
+  //                       },
+  //                     },
+  //                     0,
+  //                   ],
+  //                 },
+  //                 else: null,
+  //               },
+  //             },
 
-//             // Find pastWay rank
-//             pastWayRank: {
-//               $cond: {
-//                 if: {
-//                   $and: [
-//                     { $isArray: "$rankHistory" },
-//                     { $gt: [{ $size: "$rankHistory" }, 0] },
-//                   ],
-//                 },
-//                 then: {
-//                   $arrayElemAt: [
-//                     {
-//                       $filter: {
-//                         input: "$rankHistory",
-//                         as: "r",
-//                         cond: { $eq: ["$$r.rank", "pastWay"] },
-//                       },
-//                     },
-//                     0,
-//                   ],
-//                 },
-//                 else: null,
-//               },
-//             },
-//           },
-//           in: {
-//             $cond: {
-//               // Priority 1: Lifetime + Recent Executive
-//               if: {
-//                 $and: [
-//                   { $eq: ["$$hasLifetime", true] },
-//                   { $ne: ["$$recentExecutive", null] },
-//                 ],
-//               },
-//               then: {
-//                 primaryRank: "$$recentExecutive.rank",
-//                 secondaryRank: "Lifetime Member",
-//                 yearRange: "$$recentExecutive.yearRange",
-//                 start: "$$recentExecutive.start",
-//                 end: "$$recentExecutive.end",
-//               },
-//               else: {
-//                 $cond: {
-//                   // Priority 2: Lifetime + Recent Advisor
-//                   if: {
-//                     $and: [
-//                       { $eq: ["$$hasLifetime", true] },
-//                       { $ne: ["$$recentAdvisor", null] },
-//                     ],
-//                   },
-//                   then: {
-//                     primaryRank: "Advisor",
-//                     secondaryRank: "Lifetime Member",
-//                     yearRange: "$$recentAdvisor.yearRange",
-//                     start: "$$recentAdvisor.start",
-//                     end: "$$recentAdvisor.end",
-//                   },
-//                   else: {
-//                     $cond: {
-//                       // Priority 3: Lifetime + Old Advisor
-//                       if: {
-//                         $and: [
-//                           { $eq: ["$$hasLifetime", true] },
-//                           { $ne: ["$$oldAdvisor", null] },
-//                         ],
-//                       },
-//                       then: {
-//                         primaryRank: "Ex Advisor",
-//                         secondaryRank: "Lifetime Member",
-//                         yearRange: "$$oldAdvisor.yearRange",
-//                         start: "$$oldAdvisor.start",
-//                         end: "$$oldAdvisor.end",
-//                       },
-//                       else: {
-//                         $cond: {
-//                           // Priority 4: Lifetime Only
-//                           if: { $eq: ["$$hasLifetime", true] },
-//                           then: {
-//                             primaryRank: "Lifetime Member",
-//                             secondaryRank: null,
-//                             yearRange: null,
-//                             start: null,
-//                             end: null,
-//                           },
-//                           else: {
-//                             $cond: {
-//                               // Priority 5: Recent Executive (no lifetime)
-//                               if: { $ne: ["$$recentExecutive", null] },
-//                               then: {
-//                                 primaryRank: "$$recentExecutive.rank",
-//                                 secondaryRank: null,
-//                                 yearRange: "$$recentExecutive.yearRange",
-//                                 start: "$$recentExecutive.start",
-//                                 end: "$$recentExecutive.end",
-//                               },
-//                               else: {
-//                                 $cond: {
-//                                   // Priority 6: Recent Advisor (no lifetime)
-//                                   if: { $ne: ["$$recentAdvisor", null] },
-//                                   then: {
-//                                     primaryRank: "Advisor",
-//                                     secondaryRank: null,
-//                                     yearRange: "$$recentAdvisor.yearRange",
-//                                     start: "$$recentAdvisor.start",
-//                                     end: "$$recentAdvisor.end",
-//                                   },
-//                                   else: {
-//                                     $cond: {
-//                                       // Priority 7: Old Advisor (no lifetime)
-//                                       if: { $ne: ["$$oldAdvisor", null] },
-//                                       then: {
-//                                         primaryRank: "Ex Advisor",
-//                                         secondaryRank: null,
-//                                         yearRange: "$$oldAdvisor.yearRange",
-//                                         start: "$$oldAdvisor.start",
-//                                         end: "$$oldAdvisor.end",
-//                                       },
-//                                       else: {
-//                                         $cond: {
-//                                           // Priority 8: PastWay
-//                                           if: { $ne: ["$$pastWayRank", null] },
-//                                           then: {
-//                                             primaryRank: "Past Way",
-//                                             secondaryRank: null,
-//                                             yearRange: null,
-//                                             start: null,
-//                                             end: null,
-//                                           },
-//                                           else: {
-//                                             // Priority 9: Category-based
-//                                             $switch: {
-//                                               branches: [
-//                                                 {
-//                                                   case: { $eq: ["$category", "A"] },
-//                                                   then: {
-//                                                     primaryRank: "Member",
-//                                                     secondaryRank: null,
-//                                                     yearRange: null,
-//                                                     start: null,
-//                                                     end: null,
-//                                                   },
-//                                                 },
-//                                                 {
-//                                                   case: { $eq: ["$category", "B"] },
-//                                                   then: {
-//                                                     primaryRank: "Primary Member",
-//                                                     secondaryRank: null,
-//                                                     yearRange: null,
-//                                                     start: null,
-//                                                     end: null,
-//                                                   },
-//                                                 },
-//                                                 {
-//                                                   case: { $eq: ["$category", "C"] },
-//                                                   then: {
-//                                                     primaryRank: "Child Member",
-//                                                     secondaryRank: null,
-//                                                     yearRange: null,
-//                                                     start: null,
-//                                                     end: null,
-//                                                   },
-//                                                 },
-//                                               ],
-//                                               default: {
-//                                                 primaryRank: null,
-//                                                 secondaryRank: null,
-//                                                 yearRange: null,
-//                                                 start: null,
-//                                                 end: null,
-//                                               },
-//                                             },
-//                                           },
-//                                         },
-//                                       },
-//                                     },
-//                                   },
-//                                 },
-//                               },
-//                             },
-//                           },
-//                         },
-//                       },
-//                     },
-//                   },
-//                 },
-//               },
-//             },
-//           },
-//         },
-//       },
-//     },
-//   });
-// }
+  //             // Find pastWay rank
+  //             pastWayRank: {
+  //               $cond: {
+  //                 if: {
+  //                   $and: [
+  //                     { $isArray: "$rankHistory" },
+  //                     { $gt: [{ $size: "$rankHistory" }, 0] },
+  //                   ],
+  //                 },
+  //                 then: {
+  //                   $arrayElemAt: [
+  //                     {
+  //                       $filter: {
+  //                         input: "$rankHistory",
+  //                         as: "r",
+  //                         cond: { $eq: ["$$r.rank", "pastWay"] },
+  //                       },
+  //                     },
+  //                     0,
+  //                   ],
+  //                 },
+  //                 else: null,
+  //               },
+  //             },
+  //           },
+  //           in: {
+  //             $cond: {
+  //               // Priority 1: Lifetime + Recent Executive
+  //               if: {
+  //                 $and: [
+  //                   { $eq: ["$$hasLifetime", true] },
+  //                   { $ne: ["$$recentExecutive", null] },
+  //                 ],
+  //               },
+  //               then: {
+  //                 primaryRank: "$$recentExecutive.rank",
+  //                 secondaryRank: "Lifetime Member",
+  //                 yearRange: "$$recentExecutive.yearRange",
+  //                 start: "$$recentExecutive.start",
+  //                 end: "$$recentExecutive.end",
+  //               },
+  //               else: {
+  //                 $cond: {
+  //                   // Priority 2: Lifetime + Recent Advisor
+  //                   if: {
+  //                     $and: [
+  //                       { $eq: ["$$hasLifetime", true] },
+  //                       { $ne: ["$$recentAdvisor", null] },
+  //                     ],
+  //                   },
+  //                   then: {
+  //                     primaryRank: "Advisor",
+  //                     secondaryRank: "Lifetime Member",
+  //                     yearRange: "$$recentAdvisor.yearRange",
+  //                     start: "$$recentAdvisor.start",
+  //                     end: "$$recentAdvisor.end",
+  //                   },
+  //                   else: {
+  //                     $cond: {
+  //                       // Priority 3: Lifetime + Old Advisor
+  //                       if: {
+  //                         $and: [
+  //                           { $eq: ["$$hasLifetime", true] },
+  //                           { $ne: ["$$oldAdvisor", null] },
+  //                         ],
+  //                       },
+  //                       then: {
+  //                         primaryRank: "Ex Advisor",
+  //                         secondaryRank: "Lifetime Member",
+  //                         yearRange: "$$oldAdvisor.yearRange",
+  //                         start: "$$oldAdvisor.start",
+  //                         end: "$$oldAdvisor.end",
+  //                       },
+  //                       else: {
+  //                         $cond: {
+  //                           // Priority 4: Lifetime Only
+  //                           if: { $eq: ["$$hasLifetime", true] },
+  //                           then: {
+  //                             primaryRank: "Lifetime Member",
+  //                             secondaryRank: null,
+  //                             yearRange: null,
+  //                             start: null,
+  //                             end: null,
+  //                           },
+  //                           else: {
+  //                             $cond: {
+  //                               // Priority 5: Recent Executive (no lifetime)
+  //                               if: { $ne: ["$$recentExecutive", null] },
+  //                               then: {
+  //                                 primaryRank: "$$recentExecutive.rank",
+  //                                 secondaryRank: null,
+  //                                 yearRange: "$$recentExecutive.yearRange",
+  //                                 start: "$$recentExecutive.start",
+  //                                 end: "$$recentExecutive.end",
+  //                               },
+  //                               else: {
+  //                                 $cond: {
+  //                                   // Priority 6: Recent Advisor (no lifetime)
+  //                                   if: { $ne: ["$$recentAdvisor", null] },
+  //                                   then: {
+  //                                     primaryRank: "Advisor",
+  //                                     secondaryRank: null,
+  //                                     yearRange: "$$recentAdvisor.yearRange",
+  //                                     start: "$$recentAdvisor.start",
+  //                                     end: "$$recentAdvisor.end",
+  //                                   },
+  //                                   else: {
+  //                                     $cond: {
+  //                                       // Priority 7: Old Advisor (no lifetime)
+  //                                       if: { $ne: ["$$oldAdvisor", null] },
+  //                                       then: {
+  //                                         primaryRank: "Ex Advisor",
+  //                                         secondaryRank: null,
+  //                                         yearRange: "$$oldAdvisor.yearRange",
+  //                                         start: "$$oldAdvisor.start",
+  //                                         end: "$$oldAdvisor.end",
+  //                                       },
+  //                                       else: {
+  //                                         $cond: {
+  //                                           // Priority 8: PastWay
+  //                                           if: { $ne: ["$$pastWayRank", null] },
+  //                                           then: {
+  //                                             primaryRank: "Past Way",
+  //                                             secondaryRank: null,
+  //                                             yearRange: null,
+  //                                             start: null,
+  //                                             end: null,
+  //                                           },
+  //                                           else: {
+  //                                             // Priority 9: Category-based
+  //                                             $switch: {
+  //                                               branches: [
+  //                                                 {
+  //                                                   case: { $eq: ["$category", "A"] },
+  //                                                   then: {
+  //                                                     primaryRank: "Member",
+  //                                                     secondaryRank: null,
+  //                                                     yearRange: null,
+  //                                                     start: null,
+  //                                                     end: null,
+  //                                                   },
+  //                                                 },
+  //                                                 {
+  //                                                   case: { $eq: ["$category", "B"] },
+  //                                                   then: {
+  //                                                     primaryRank: "Primary Member",
+  //                                                     secondaryRank: null,
+  //                                                     yearRange: null,
+  //                                                     start: null,
+  //                                                     end: null,
+  //                                                   },
+  //                                                 },
+  //                                                 {
+  //                                                   case: { $eq: ["$category", "C"] },
+  //                                                   then: {
+  //                                                     primaryRank: "Child Member",
+  //                                                     secondaryRank: null,
+  //                                                     yearRange: null,
+  //                                                     start: null,
+  //                                                     end: null,
+  //                                                   },
+  //                                                 },
+  //                                               ],
+  //                                               default: {
+  //                                                 primaryRank: null,
+  //                                                 secondaryRank: null,
+  //                                                 yearRange: null,
+  //                                                 start: null,
+  //                                                 end: null,
+  //                                               },
+  //                                             },
+  //                                           },
+  //                                         },
+  //                                       },
+  //                                     },
+  //                                   },
+  //                                 },
+  //                               },
+  //                             },
+  //                           },
+  //                         },
+  //                       },
+  //                     },
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   });
+  // }
 
-if (rankGroup === "all") {
-
-  /* ---------------------------------------
+  if (rankGroup === "all") {
+    /* ---------------------------------------
      1️⃣ Ensure rankHistory is array
   --------------------------------------- */
-  pipeline.push({
-    $addFields: {
-      rankHistory: { $ifNull: ["$rankHistory", []] }
-    }
-  });
+    pipeline.push({
+      $addFields: {
+        rankHistory: { $ifNull: ["$rankHistory", []] },
+      },
+    });
 
-  /* ---------------------------------------
+    /* ---------------------------------------
      2️⃣ Detect lifeTime
   --------------------------------------- */
-  pipeline.push({
-    $addFields: {
-      hasLifeTime: {
-        $in: ["lifeTime", "$rankHistory.rank"]
-      }
-    }
-  });
+    pipeline.push({
+      $addFields: {
+        hasLifeTime: {
+          $in: ["lifeTime", "$rankHistory.rank"],
+        },
+      },
+    });
 
-  /* ---------------------------------------
+    /* ---------------------------------------
      3️⃣ Compute latestRank
      (highest end → highest start)
      ignore lifeTime
   --------------------------------------- */
-  // pipeline.push({
-  //   $addFields: {
-  //     latestRank: {
-  //       $first: {
-  //         $sortArray: {
-  //           input: {
-  //             $filter: {
-  //               input: "$rankHistory",
-  //               as: "r",
-  //               cond: { $eq: ["$$r.start", 2025] }
-  //             }
-  //           },
-  //           // sortBy: { end: -1, start: -1 }
-  //         }
-  //       }
-  //     }
-  //   }
-  // });
+    // pipeline.push({
+    //   $addFields: {
+    //     latestRank: {
+    //       $first: {
+    //         $sortArray: {
+    //           input: {
+    //             $filter: {
+    //               input: "$rankHistory",
+    //               as: "r",
+    //               cond: { $eq: ["$$r.start", 2025] }
+    //             }
+    //           },
+    //           // sortBy: { end: -1, start: -1 }
+    //         }
+    //       }
+    //     }
+    //   }
+    // });
 
-  pipeline.push({
-  $addFields: {
-    latestRank: {
-      $first: {
-        $filter: {
-          input: "$rankHistory",
-          as: "r",
-          cond: {
-            $and: [
-              { $eq: ["$$r.start", 2025] },
-              { $ne: ["$$r.rank", "lifeTime"] }
-            ]
-          }
-        }
-      }
-    }
-  }
-});
+    pipeline.push({
+      $addFields: {
+        latestRank: {
+          $first: {
+            $filter: {
+              input: "$rankHistory",
+              as: "r",
+              cond: {
+                $and: [
+                  { $eq: ["$$r.start", 2025] },
+                  { $ne: ["$$r.rank", "lifeTime"] },
+                ],
+              },
+            },
+          },
+        },
+      },
+    });
 
-
-  /* ---------------------------------------
+    /* ---------------------------------------
      4️⃣ Build current field
   --------------------------------------- */
-  pipeline.push({
-    $addFields: {
-      current: {
-        $switch: {
-          branches: [
-
-            /* ✅ Latest Executive (real role name) */
-            {
-              case: { $in: ["$latestRank.rank", ROLE_ORDER] },
-              then: {
-                primary: "$latestRank.rank",
-                secondary: {
-                  $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"]
-                }
-              }
-            },
-
-            /* ✅ Latest Advisor */
-            {
-              case: { $eq: ["$latestRank.rank", "advisor"] },
-              then: {
-                primary: "advisor",
-                secondary: {
-                  $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"]
-                }
-              }
-            },
-
-            /* ✅ Old Advisor → ex_advisor */
-            {
-              case: {
-                $and: [
-                  { $ne: ["$latestRank.rank", "advisor"] },
-                  { $in: ["advisor", "$rankHistory.rank"] }
-                ]
+    pipeline.push({
+      $addFields: {
+        current: {
+          $switch: {
+            branches: [
+              /* ✅ Latest Executive (real role name) */
+              {
+                case: { $in: ["$latestRank.rank", ROLE_ORDER] },
+                then: {
+                  primary: "$latestRank.rank",
+                  secondary: {
+                    $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                  },
+                },
               },
-              then: {
-                primary: "Ex Advisor",
-                secondary: {
-                  $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"]
-                }
-              }
+
+              /* ✅ Latest Advisor */
+              {
+                case: { $eq: ["$latestRank.rank", "advisor"] },
+                then: {
+                  primary: "advisor",
+                  secondary: {
+                    $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                  },
+                },
+              },
+
+              /* ✅ Old Advisor → ex_advisor */
+              {
+                case: {
+                  $and: [
+                    { $ne: ["$latestRank.rank", "advisor"] },
+                    { $in: ["advisor", "$rankHistory.rank"] },
+                  ],
+                },
+                then: {
+                  primary: "Ex Advisor",
+                  secondary: {
+                    $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                  },
+                },
+              },
+
+              /* ✅ Only lifeTime */
+              {
+                case: "$hasLifeTime",
+                then: { primary: "lifeTime" },
+              },
+            ],
+
+            /* ⬇️ fallback by category */
+            default: {
+              primary: {
+                $switch: {
+                  branches: [
+                    { case: { $eq: ["$category", "A"] }, then: "Member" },
+                    {
+                      case: { $eq: ["$category", "B"] },
+                      then: "Primary Member",
+                    },
+                    { case: { $eq: ["$category", "C"] }, then: "Child Member" },
+                  ],
+                  default: "Member",
+                },
+              },
             },
+          },
+        },
+      },
+    });
 
-            /* ✅ Only lifeTime */
-            {
-              case: "$hasLifeTime",
-              then: { primary: "lifeTime" }
-            }
-          ],
-
-          /* ⬇️ fallback by category */
-          default: {
-            primary: {
-              $switch: {
-                branches: [
-                  { case: { $eq: ["$category", "A"] }, then: "Member" },
-                  { case: { $eq: ["$category", "B"] }, then: "Primary Member" },
-                  { case: { $eq: ["$category", "C"] }, then: "Child Member" }
-                ],
-                default: "Member"
-              }
-            }
-          }
-        }
-      }
-    }
-  });
-
-  /* ---------------------------------------
+    /* ---------------------------------------
      5️⃣ Cleanup temp fields
   --------------------------------------- */
-  pipeline.push({
-    $project: {
-      latestRank: 0,
-      hasLifeTime: 0
-    }
-  });
-}
-
+    pipeline.push({
+      $project: {
+        latestRank: 0,
+        hasLifeTime: 0,
+      },
+    });
+  }
 
   console.log(rankGroup, "rank group in services");
 

@@ -1,5 +1,7 @@
+import { AllowedActorPayload } from "../actor/actor.interface";
 import Actor from "../actor/actor.schema";
 import { fileUploader } from "../helper/fileUpload";
+import { sanitizePayload } from "../helper/senitizePayload";
 import { AppError } from "../middleware/error";
 import { PayloadAdmin, PayloadLoign } from "./admin.interface";
 import { Admin } from "./admin.schema";
@@ -26,8 +28,9 @@ const readAdmin = async () => {
     msg: "Admin read",
   };
 };
+
 const updateActorProfile = async (
-  actorData: any,
+  actorData: AllowedActorPayload,
   actorId: string,
   file: any
 ) => {
@@ -51,21 +54,31 @@ const updateActorProfile = async (
   const actorProfile = {
     phoneNumber: actorData.phoneNumber,
     presentAddress: actorData.presentAddress,
-    dob: new Date(actorData.dob),
+    dob:actorData.dob && new Date(actorData.dob),
     bloodGroup: actorData.bloodGroup,
-    idNo: actorData.idNo,
+    // idNo: actorData.idNo,
     fullName: actorData.fullName,
-    category: actorData.category,
-    status: actorData.status,
+    // category: actorData.category,
+    // status: actorData.status,
     photo: uploadedUrl,
-    fromActive: actorData.fromActive,
+    // fromActive: actorData.fromActive,
     bio: actorData.bio,
     email: actorData.email,
     password: actorData.password,
   };
-  const result = await Actor.findByIdAndUpdate(actorId, actorProfile, {
+  const updatedPayload = {
+    ...actorData,
+    uploadedUrl,
+  };
+  const sanitize = sanitizePayload(updatedPayload);
+
+  const result = await Actor.findByIdAndUpdate(actorId, {
+    $set: sanitize
+  }, {
     new: true,
+    runValidators: true,
   }).select("-password");
+ 
   if (!result) {
     throw new Error("Failed to fill up actor profile");
   }
@@ -166,7 +179,7 @@ const promoteMember = async (memberData: any) => {
       $push: {
         rankHistory: {
           rank,
-          yearRange: rankYearRange? rankYearRange.yearRange : "",
+          yearRange: rankYearRange ? rankYearRange.yearRange : "",
           start: rankYearRange?.start || 0,
           end: rankYearRange?.end || 0,
         },
@@ -181,7 +194,7 @@ const promoteMember = async (memberData: any) => {
     throw new AppError(500, "Member Not promote");
   }
   console.log(memberData);
-  console.log("new",newMember);
+  console.log("new", newMember);
   return newMember;
 };
 const deleteMember = async (id: string) => {

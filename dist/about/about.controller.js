@@ -12,8 +12,8 @@ const about_services_1 = require("./about.services");
 ------------------------------------ */
 const createAbout = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
-    const files = req.files;
-    const result = await about_services_1.AboutService.createAbout(payload, files);
+    const file = req.file;
+    const result = await about_services_1.AboutService.createAbout(payload, file);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
@@ -25,18 +25,7 @@ const createAbout = (0, catchAsync_1.default)(async (req, res, next) => {
    GET ABOUTS
 ------------------------------------ */
 const getAbouts = (0, catchAsync_1.default)(async (req, res, next) => {
-    const eventType = req.query.eventType;
-    const sortBy = req.query.sortBy;
-    const sortWith = req.query.sortWith === "asc"
-        ? 1
-        : req.query.sortWith === "desc"
-            ? -1
-            : -1;
-    const payload = {};
-    if (eventType === "PAST" || eventType === "UPCOMING") {
-        payload.eventType = eventType;
-    }
-    const result = await about_services_1.AboutService.getAbouts(payload, sortBy, sortWith);
+    const result = await about_services_1.AboutService.getAbouts();
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -45,37 +34,11 @@ const getAbouts = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 /* ------------------------------------
-   GET ADMIN ABOUTS
------------------------------------- */
-const getAdminAbouts = (0, catchAsync_1.default)(async (req, res, next) => {
-    const adminId = req.params.id;
-    const result = await about_services_1.AboutService.getAbouts(adminId);
-    (0, sendResponse_1.default)(res, {
-        statusCode: 200,
-        success: true,
-        message: "Admin abouts fetched successfully",
-        data: result,
-    });
-});
-/* ------------------------------------
-   READ ABOUT
------------------------------------- */
-const readAbout = (0, catchAsync_1.default)(async (req, res, next) => {
-    const aboutId = req.params.id;
-    const result = await about_services_1.AboutService.getAbouts(aboutId);
-    (0, sendResponse_1.default)(res, {
-        statusCode: 200,
-        success: true,
-        message: "About updated successfully",
-        data: result,
-    });
-});
-/* ------------------------------------
    DELETE ABOUT
 ------------------------------------ */
 const deleteAbout = (0, catchAsync_1.default)(async (req, res, next) => {
-    const aboutId = req.params.id;
-    const result = await about_services_1.AboutService.deleteAbout(aboutId);
+    const payload = req.body;
+    const result = await about_services_1.AboutService.deleteAbout(payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -87,10 +50,8 @@ const deleteAbout = (0, catchAsync_1.default)(async (req, res, next) => {
    UPDATE ABOUT
 ------------------------------------ */
 const updateAbout = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { id } = req.params;
     const payload = req.body;
-    const files = req.files;
-    const result = await about_services_1.AboutService.updateAbout(id, payload, files);
+    const result = await about_services_1.AboutService.updateAbout(payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -104,8 +65,6 @@ const updateAbout = (0, catchAsync_1.default)(async (req, res, next) => {
 exports.AboutController = {
     createAbout,
     getAbouts,
-    getAdminAbouts,
-    readAbout,
     deleteAbout,
     updateAbout,
 };

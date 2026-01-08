@@ -10,11 +10,9 @@ const createAbout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: any = req.body;
 
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
+    const file = req.file;
 
-    const result = await AboutService.createAbout(payload, files);
+    const result = await AboutService.createAbout(payload, file);
 
     sendResponse(res, {
       statusCode: 201,
@@ -30,25 +28,7 @@ const createAbout = catchAsync(
 ------------------------------------ */
 const getAbouts = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const eventType = req.query.eventType;
-    const sortBy = req.query.sortBy as string;
-    const sortWith =
-      req.query.sortWith === "asc"
-        ? 1
-        : req.query.sortWith === "desc"
-        ? -1
-        : -1;
-
-    const payload: any = {};
-    if (eventType === "PAST" || eventType === "UPCOMING") {
-      payload.eventType = eventType;
-    }
-
-    const result = await AboutService.getAbouts(
-      payload,
-      sortBy,
-      sortWith
-    );
+    const result = await AboutService.getAbouts();
 
     sendResponse(res, {
       statusCode: 200,
@@ -60,49 +40,12 @@ const getAbouts = catchAsync(
 );
 
 /* ------------------------------------
-   GET ADMIN ABOUTS
------------------------------------- */
-const getAdminAbouts = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const adminId = req.params.id;
-
-    const result = await AboutService.getAbouts(adminId);
-
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: "Admin abouts fetched successfully",
-      data: result,
-    });
-  }
-);
-
-/* ------------------------------------
-   READ ABOUT
------------------------------------- */
-const readAbout = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const aboutId = req.params.id;
-
-    const result = await AboutService.getAbouts(aboutId);
-
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: "About updated successfully",
-      data: result,
-    });
-  }
-);
-
-/* ------------------------------------
    DELETE ABOUT
 ------------------------------------ */
 const deleteAbout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const aboutId = req.params.id;
-
-    const result = await AboutService.deleteAbout(aboutId);
+    const payload = req.body;
+    const result = await AboutService.deleteAbout(payload);
 
     sendResponse(res, {
       statusCode: 200,
@@ -118,14 +61,8 @@ const deleteAbout = catchAsync(
 ------------------------------------ */
 const updateAbout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-
     const payload = req.body;
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
-
-    const result = await AboutService.updateAbout(id, payload, files);
+    const result = await AboutService.updateAbout(payload);
 
     sendResponse(res, {
       statusCode: 200,
@@ -142,8 +79,6 @@ const updateAbout = catchAsync(
 export const AboutController = {
   createAbout,
   getAbouts,
-  getAdminAbouts,
-  readAbout,
   deleteAbout,
   updateAbout,
 };

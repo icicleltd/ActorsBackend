@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ActorService = void 0;
+exports.ActorService = exports.ROLE_ORDER = void 0;
 const fileUpload_1 = require("../helper/fileUpload");
 const actor_schema_1 = __importDefault(require("./actor.schema"));
 const error_1 = require("../middleware/error");
@@ -139,7 +139,21 @@ const getSingleActor = async (actorId) => {
 //   }
 //   return { actor, totalActor, categoryACount, categoryBCount, totalPage };
 // };
-const ROLE_ORDER = [
+// const ROLE_ORDER = [
+//   "president",
+//   "vice_president",
+//   "general_secretary",
+//   "joint_secretary",
+//   "organizing_secretary",
+//   "finance_secretary",
+//   "office_secretary",
+//   "event_secretary",
+//   "law_welfare_secretary",
+//   "publicity_secretary",
+//   "it_secretary",
+//   "executive_member",
+// ];
+exports.ROLE_ORDER = [
     "president",
     "vice_president",
     "general_secretary",
@@ -148,6 +162,9 @@ const ROLE_ORDER = [
     "finance_secretary",
     "office_secretary",
     "event_secretary",
+    // newly added (snake_case)
+    "law_secretary",
+    "social_welfare_secretary",
     "law_welfare_secretary",
     "publicity_secretary",
     "it_secretary",
@@ -522,28 +539,28 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     // }
     if (rankGroup === "all") {
         /* ---------------------------------------
-           1️⃣ Ensure rankHistory is array
-        --------------------------------------- */
+         1️⃣ Ensure rankHistory is array
+      --------------------------------------- */
         pipeline.push({
             $addFields: {
-                rankHistory: { $ifNull: ["$rankHistory", []] }
-            }
+                rankHistory: { $ifNull: ["$rankHistory", []] },
+            },
         });
         /* ---------------------------------------
-           2️⃣ Detect lifeTime
-        --------------------------------------- */
+         2️⃣ Detect lifeTime
+      --------------------------------------- */
         pipeline.push({
             $addFields: {
                 hasLifeTime: {
-                    $in: ["lifeTime", "$rankHistory.rank"]
-                }
-            }
+                    $in: ["lifeTime", "$rankHistory.rank"],
+                },
+            },
         });
         /* ---------------------------------------
-           3️⃣ Compute latestRank
-           (highest end → highest start)
-           ignore lifeTime
-        --------------------------------------- */
+         3️⃣ Compute latestRank
+         (highest end → highest start)
+         ignore lifeTime
+      --------------------------------------- */
         // pipeline.push({
         //   $addFields: {
         //     latestRank: {
@@ -572,17 +589,17 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                             cond: {
                                 $and: [
                                     { $eq: ["$$r.start", 2025] },
-                                    { $ne: ["$$r.rank", "lifeTime"] }
-                                ]
-                            }
-                        }
-                    }
-                }
-            }
+                                    { $ne: ["$$r.rank", "lifeTime"] },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
         });
         /* ---------------------------------------
-           4️⃣ Build current field
-        --------------------------------------- */
+         4️⃣ Build current field
+      --------------------------------------- */
         pipeline.push({
             $addFields: {
                 current: {
@@ -590,13 +607,13 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                         branches: [
                             /* ✅ Latest Executive (real role name) */
                             {
-                                case: { $in: ["$latestRank.rank", ROLE_ORDER] },
+                                case: { $in: ["$latestRank.rank", exports.ROLE_ORDER] },
                                 then: {
                                     primary: "$latestRank.rank",
                                     secondary: {
-                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"]
-                                    }
-                                }
+                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                    },
+                                },
                             },
                             /* ✅ Latest Advisor */
                             {
@@ -604,30 +621,30 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                 then: {
                                     primary: "advisor",
                                     secondary: {
-                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"]
-                                    }
-                                }
+                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                    },
+                                },
                             },
                             /* ✅ Old Advisor → ex_advisor */
                             {
                                 case: {
                                     $and: [
                                         { $ne: ["$latestRank.rank", "advisor"] },
-                                        { $in: ["advisor", "$rankHistory.rank"] }
-                                    ]
+                                        { $in: ["advisor", "$rankHistory.rank"] },
+                                    ],
                                 },
                                 then: {
                                     primary: "Ex Advisor",
                                     secondary: {
-                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"]
-                                    }
-                                }
+                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                    },
+                                },
                             },
                             /* ✅ Only lifeTime */
                             {
                                 case: "$hasLifeTime",
-                                then: { primary: "lifeTime" }
-                            }
+                                then: { primary: "lifeTime" },
+                            },
                         ],
                         /* ⬇️ fallback by category */
                         default: {
@@ -635,25 +652,28 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                 $switch: {
                                     branches: [
                                         { case: { $eq: ["$category", "A"] }, then: "Member" },
-                                        { case: { $eq: ["$category", "B"] }, then: "Primary Member" },
-                                        { case: { $eq: ["$category", "C"] }, then: "Child Member" }
+                                        {
+                                            case: { $eq: ["$category", "B"] },
+                                            then: "Primary Member",
+                                        },
+                                        { case: { $eq: ["$category", "C"] }, then: "Child Member" },
                                     ],
-                                    default: "Member"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+                                    default: "Member",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
         /* ---------------------------------------
-           5️⃣ Cleanup temp fields
-        --------------------------------------- */
+         5️⃣ Cleanup temp fields
+      --------------------------------------- */
         pipeline.push({
             $project: {
                 latestRank: 0,
-                hasLifeTime: 0
-            }
+                hasLifeTime: 0,
+            },
         });
     }
     console.log(rankGroup, "rank group in services");
@@ -678,7 +698,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         pipeline.push({ $unwind: "$rankHistory" });
         const rankFilter = {};
         if (rankGroup === "executive") {
-            rankFilter["rankHistory.rank"] = { $in: ROLE_ORDER };
+            rankFilter["rankHistory.rank"] = { $in: exports.ROLE_ORDER };
         }
         if (executiveRank) {
             rankFilter["rankHistory.rank"] = executiveRank;
@@ -703,7 +723,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         pipeline.push({
             $addFields: {
                 roleOrder: {
-                    $indexOfArray: [ROLE_ORDER, "$rankHistory.rank"],
+                    $indexOfArray: [exports.ROLE_ORDER, "$rankHistory.rank"],
                 },
             },
         });

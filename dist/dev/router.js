@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const router = express_1.default.Router();
 // router.post("/upcomming", EventController.createEvent);
 // router.get("/migrate", async (req, res) => {
@@ -68,4 +69,19 @@ const router = express_1.default.Router();
 //   // return res.send({ actor: actor });
 //   res.send({ length: actors.length, actor: actors });
 // });
+router.post("/pull-duplicate-rank/:id", async (req, res) => {
+    const actorId = req.params.id;
+    const rankId = req.body.rankId;
+    const result = await actor_schema_1.default.findByIdAndUpdate(actorId, {
+        $pull: {
+            rankHistory: {
+                _id: rankId,
+            },
+        },
+    }, {
+        new: true,
+    });
+    console.log(result);
+    res.send(result);
+});
 exports.default = router;

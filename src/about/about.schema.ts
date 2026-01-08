@@ -1,5 +1,16 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 import { IAbout } from "./about.interface";
+
+const pointSchema = new Schema(
+  {
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: true }
+);
 
 const aboutSchema = new Schema<IAbout>(
   {
@@ -15,10 +26,15 @@ const aboutSchema = new Schema<IAbout>(
       trim: true,
     },
 
-    points: {
-      type: [String],
-      default: [],
-    },
+    points: [
+      {
+        point: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+      },
+    ],
 
     images: [
       {
@@ -27,16 +43,18 @@ const aboutSchema = new Schema<IAbout>(
           required: true,
           trim: true,
         },
-        src: {
+        image: {
           type: String,
           required: true,
+        },
+        publicId: {
+          type: String,
+          required: false,
         },
       },
     ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 export const About = model<IAbout>("About", aboutSchema);

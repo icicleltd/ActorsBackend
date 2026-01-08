@@ -4,6 +4,7 @@ import Actor from "../actor/actor.schema";
 const router = express.Router();
 
 // router.post("/upcomming", EventController.createEvent);
+
 // router.get("/migrate", async (req, res) => {
 //   const { text } = req.body;
 
@@ -52,6 +53,7 @@ const router = express.Router();
 //     });
 //   }
 // });
+
 // router.post("/updateIdNo", async (req, res) => {
 //   const actors = await Actor.find({
 //     idNo: { $not: /-/ }, // only old ones
@@ -72,4 +74,25 @@ const router = express.Router();
 //   // return res.send({ actor: actor });
 //   res.send({ length: actors.length, actor: actors });
 // });
+
+router.post("/pull-duplicate-rank/:id", async (req, res) => {
+  const actorId = req.params.id;
+  const rankId = req.body.rankId;
+
+  const result = await Actor.findByIdAndUpdate(
+    actorId,
+    {
+      $pull: {
+        rankHistory: {
+          _id: rankId,
+        },
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  console.log(result);
+  res.send(result);
+});
 export default router;

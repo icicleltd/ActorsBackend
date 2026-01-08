@@ -1,87 +1,88 @@
+import { error } from "console";
 import { fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
+import { AboutPayload, IAbout } from "./about.interface";
 import { About } from "./about.schema";
 
 /* ------------------------------------------------
    CREATE ABOUT
 ------------------------------------------------ */
-const createAbout = async (
-  payload: any,
-  files: { [fieldname: string]: Express.Multer.File[] }
-) => {
-  const { title, name, description, eventDate, isBookingOpen } = payload;
-
-  if (!files) {
-    throw new AppError(400, "File required");
+const createAbout = async (payload: any, file: any) => {
+  const { title, description, points, year } = payload;
+  // console.log(payload);
+  const haveAbout = await About.find({});
+  if (haveAbout.length > 1) {
+    throw new AppError(400, "Aready have a about");
   }
-
-  const uploadArray = async (fileArr?: Express.Multer.File[]) => {
-    if (!fileArr || fileArr.length === 0) return [];
-    const uploaded = await fileUploader.CloudinaryUploadMultiple(fileArr);
-    return uploaded.map((u: any) => u.secure_url);
-  };
-
-  const [logo, banner, images] = await Promise.all([
-    uploadArray(files.logo).then(r => r[0] || null),
-    uploadArray(files.banner).then(r => r[0] || null),
-    uploadArray(files.images),
-  ]);
-
-  if (!eventDate || !name) {
-    throw new AppError(400, "Name and date are required");
+  let result;
+  if (title && description) {
+    result = await About.findOneAndUpdate(
+      {},
+      {
+        title,
+        description,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
   }
+  if (points) {
+    const pointText = points.trim();
 
-  const eventTime = new Date(eventDate);
-  const isUpcoming = eventTime > new Date();
+    const existingPoint = await About.findOne({
+      "points.point": pointText,
+    });
 
-  /* ---------- UPCOMING ABOUT ---------- */
-  if (isUpcoming) {
-    if (!logo || !banner) {
-      throw new AppError(400, "Logo and banner are required");
+    if (existingPoint) {
+      throw new AppError(409, "This point already exists");
     }
 
-    // return await About.create({
-    //   title,
-    //   description,
-    //   isBookingOpen: isBookingOpen ?? true,
-    //   registrationCount: 0,
-    // });
+    result = await About.findOneAndUpdate(
+      {},
+      {
+        $push: {
+          points: { point: pointText },
+        },
+      },
+      { new: true }
+    );
+
+    if (!result) {
+      throw new AppError(400, "Create title and description first");
+    }
   }
 
-  /* ---------- PAST ABOUT ---------- */
-  if (!images.length) {
-    throw new AppError(400, "Images are required");
+  if (year && file) {
+    console.log("payload in crete", payload);
+    const uploadImage = (await fileUploader.CloudinaryUpload(file)) as {
+      secure_url: string;
+    };
+    if (!uploadImage) {
+      throw new AppError(500, "Failed to upload file");
+    }
+    result = await About.findOneAndUpdate(
+      {},
+      {
+        $addToSet: {
+          images: {
+            year,
+            image: uploadImage.secure_url,
+          },
+        },
+      },
+      { new: true, upsert: true }
+    );
   }
-
-  // return await About.create({
-  //   name,
-  //   title,
-  //   eventDate: eventTime,
-  //   description,
-  //   images,
-  // });
+  return result;
 };
 
 /* ------------------------------------------------
    GET ABOUTS
 ------------------------------------------------ */
-const getAbouts = async (
-  { eventType }: any,
-  sortBy = "createdAt",
-  sortWith: 1 | -1 = -1
-) => {
-  const now = new Date();
-  const filter: any = {};
-
-  if (eventType === "PAST") {
-    filter.eventDate = { $lt: now };
-  }
-
-  if (eventType === "UPCOMING") {
-    filter.eventDate = { $gte: now };
-  }
-
-  const abouts = await About.find(filter).sort({ [sortBy]: sortWith });
+const getAbouts = async () => {
+  const abouts = await About.find({});
 
   if (!abouts.length) {
     throw new AppError(404, "About not found");
@@ -93,18 +94,42 @@ const getAbouts = async (
 /* ------------------------------------------------
    DELETE ABOUT
 ------------------------------------------------ */
-const deleteAbout = async (aboutId: string) => {
-  if (!aboutId) {
-    throw new AppError(400, "No about id provided");
+const deleteAbout = async (payload: any) => {
+  console.log("in payload delete", payload);
+
+  if (!payload) {
+    throw new AppError(400, "No payload provided");
   }
 
-  const about = await About.findByIdAndDelete(aboutId);
+  let result;
 
-  if (!about) {
-    throw new AppError(404, "About not found");
+  // ✅ DELETE IMAGE
+  if (payload._id) {
+    result = await About.findOneAndUpdate(
+      {},
+      {
+        $pull: {
+          images: { _id: payload._id },
+        },
+      },
+      { new: true }
+    );
   }
 
-  return about;
+  // ✅ DELETE POINT
+  if (payload.point) {
+    result = await About.findOneAndUpdate(
+      {},
+      {
+        $pull: {
+          points: { point: payload.point },
+        },
+      },
+      { new: true }
+    );
+  }
+
+  return result;
 };
 
 /* ------------------------------------------------
@@ -155,61 +180,12 @@ const updateAboutPatch = async (
 /* ------------------------------------------------
    PUT ABOUT
 ------------------------------------------------ */
-const updateAbout = async (
-  id: string,
-  payload: any,
-  files?: { [fieldname: string]: Express.Multer.File[] }
-) => {
-  const about = await About.findById(id);
-  if (!about) {
-    throw new AppError(404, "About not found");
+const updateAbout = async (payload: any) => {
+  if (!payload) {
+    throw new AppError(400, "No point provided");
   }
 
-  const { title, name, description, eventDate } = payload;
-  if (!title || !name || !description || !eventDate) {
-    throw new AppError(400, "Required fields missing for PUT update");
-  }
-
-  const eventTime = new Date(eventDate);
-  if (eventTime > new Date()) {
-    throw new AppError(
-      400,
-      "You selected a future date. Please select a past date."
-    );
-  }
-
-  let existingImages: string[] = [];
-  if (payload.existingImages) {
-    existingImages = Array.isArray(payload.existingImages)
-      ? payload.existingImages
-      : [payload.existingImages];
-  }
-
-  const uploadArray = async (fileArr?: Express.Multer.File[]) => {
-    if (!fileArr || fileArr.length === 0) return [];
-    const uploaded = await fileUploader.CloudinaryUploadMultiple(fileArr);
-    return uploaded.map((u: any) => u.secure_url);
-  };
-
-  const uploadedImages = await uploadArray(files?.images);
-  const finalImages = [...existingImages, ...uploadedImages];
-
-  if (!finalImages.length) {
-    throw new AppError(400, "At least one image is required");
-  }
-
-  return await About.findByIdAndUpdate(
-    id,
-    {
-      title,
-      name,
-      description,
-      details: payload.details || "",
-      eventDate: eventTime,
-      images: finalImages,
-    },
-    { new: true }
-  );
+  return;
 };
 
 /* ------------------------------------------------

@@ -17,6 +17,12 @@ adminRouter.put(
   fileUploader.upload.single("photo"),
   AdminController.updateActorProfile
 );
+adminRouter.post(
+  "/gallery/:id",
+  fileUploader.upload.fields([{ name: "images", maxCount: 20 }]),
+  AdminController.uploadGallery
+);
+adminRouter.delete("/gallery/:id", AdminController.deleteImage);
 adminRouter.delete("/deletemember/:id", AdminController.deleteMember);
 adminRouter.get("/", AdminController.getAdmin);
 adminRouter.put("/update-idno", async (req, res) => {

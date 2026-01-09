@@ -126,6 +126,18 @@ const actorSchema = new mongoose_1.Schema({
             front: { type: String },
         },
     ],
+    gallery: [
+        {
+            image: {
+                type: String,
+                trim: true,
+                required: true,
+            },
+            publicId: {
+                type: String,
+            },
+        },
+    ],
     photo: {
         type: String,
         default: "https://res.cloudinary.com/dk4ltobvb/image/upload/v1766485148/Actors.png.png",

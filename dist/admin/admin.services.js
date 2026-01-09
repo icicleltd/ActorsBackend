@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
+const mongoose_1 = require("mongoose");
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const fileUpload_1 = require("../helper/fileUpload");
 const senitizePayload_1 = require("../helper/senitizePayload");
@@ -67,7 +68,7 @@ const updateActorProfile = async (actorData, actorId, file) => {
     };
     const sanitize = (0, senitizePayload_1.sanitizePayload)(updatedPayload);
     const result = await actor_schema_1.default.findByIdAndUpdate(actorId, {
-        $set: sanitize
+        $set: sanitize,
     }, {
         new: true,
         runValidators: true,
@@ -203,6 +204,51 @@ const login = async (payload) => {
     };
     return;
 };
+const uploadGallery = async (files, id) => {
+    if (!files || !files.images || files.images.length === 0) {
+        throw new error_1.AppError(400, "Images are required");
+    }
+    if (!mongoose_1.Types.ObjectId.isValid(id)) {
+        throw new error_1.AppError(400, "Id is not valid");
+    }
+    const uploaded = await fileUpload_1.fileUploader.CloudinaryUploadMultiple(files.images);
+    const images = uploaded.map((u) => ({
+        publicId: u.public_id,
+        image: u.secure_url,
+    }));
+    console.log("images", images);
+    const result = await actor_schema_1.default.findByIdAndUpdate(id, {
+        $addToSet: {
+            gallery: images,
+        },
+    });
+    console.log(result);
+    return result;
+};
+const deleteImage = async (id, deleteMode, deleteImageId) => {
+    if (!mongoose_1.Types.ObjectId.isValid(id)) {
+        throw new error_1.AppError(400, "Id is not valid");
+    }
+    console.log(id);
+    if (deleteMode === "all") {
+        const result = await actor_schema_1.default.findByIdAndUpdate(id, {
+            $pull: {
+                gallery: {},
+            },
+        }, { new: true });
+        console.log(result);
+        return result;
+    }
+    if (!deleteImageId) {
+        throw new error_1.AppError(400, "Image id required");
+    }
+    const result = await actor_schema_1.default.findByIdAndUpdate(id, {
+        $pull: {
+            gallery: { _id: deleteImageId },
+        },
+    }, { new: true });
+    return result;
+};
 const test = async () => {
     return;
 };
@@ -216,4 +262,6 @@ exports.AdminService = {
     test,
     deleteMember,
     login,
+    uploadGallery,
+    deleteImage,
 };

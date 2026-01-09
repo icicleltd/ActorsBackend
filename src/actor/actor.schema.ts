@@ -105,6 +105,18 @@ const actorSchema = new Schema<IActor>(
         front: { type: String },
       },
     ],
+    gallery: [
+      {
+        image: {
+          type: String,
+          trim: true,
+          required: true,
+        },
+        publicId: {
+          type: String,
+        },
+      },
+    ],
 
     photo: {
       type: String,
@@ -225,7 +237,6 @@ actorSchema.pre<Query<any, IActor>>("findOneAndUpdate", async function () {
     }
   }
 });
-
 
 /* ======================================================
    🔐 PASSWORD COMPARE METHOD

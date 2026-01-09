@@ -1,9 +1,11 @@
+import { Query } from 'mongoose';
 import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { AdminService } from "./admin.services";
 import { callbackify } from "util";
 import { PayloadLoign } from "./admin.interface";
+import { runInNewContext } from "vm";
 
 const createAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -104,6 +106,36 @@ const login = catchAsync(
     });
   }
 );
+const uploadGallery = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
+    };
+    const id = req.params.id;
+    const result = await AdminService.uploadGallery(files, id);
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  }
+);
+const deleteImage = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    // console.log(id)
+    const deleteMode = req.query.delete;
+    const deleteImageId= req.query.deleteImageId
+    const result = await AdminService.deleteImage(id, deleteMode,deleteImageId);
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  }
+);
 const test = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const result = await AdminService.test();
@@ -124,5 +156,7 @@ export const AdminController = {
   promoteMember,
   test,
   deleteMember,
-  login
+  login,
+  uploadGallery,
+  deleteImage
 };

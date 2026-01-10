@@ -32,16 +32,23 @@ const getGalleryImages = async (
   sortBy: string,
   sortWith: 1 | -1
 ) => {
-  const images = await Gallery.find()
-    .sort({ [sortBy]: sortWith })
-    .skip(skip)
-    .limit(limit);
+  // const images = await Gallery.find()
+  //   .sort({ [sortBy]: sortWith })
+  //   .skip(skip)
+  //   .limit(limit);
 
   // if (!images.length) {
   //   throw new AppError(404, "No gallery images found");
   // }
-
-  return images;
+  const [images, total] = await Promise.all([
+    Gallery.find()
+      .sort({ [sortBy]: sortWith })
+      .skip(skip)
+      .limit(limit),
+    Gallery.countDocuments(),
+  ]);
+  const totalPages = Math.ceil(total / limit);
+  return {images,total,totalPages};
 };
 
 /* ------------------------------------

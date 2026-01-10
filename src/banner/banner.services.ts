@@ -8,43 +8,47 @@ import { Banner } from "./banner.schema";
 const createBanner = async (payload: {
   file?: Express.Multer.File;
   title: string;
-  subtitle?: string;
+  description?: string;
 }) => {
-  const { file, title, subtitle } = payload;
-
-  if (!file) {
-    throw new AppError(400, "Banner image is required");
-  }
-
-  if (!title) {
-    throw new AppError(400, "Banner title is required");
+  const { file, title, description } = payload;
+  console.log("title, desc", payload);
+  let result;
+  if (title && description) {
+    result = await Banner.findOneAndUpdate(
+      {},
+      {
+        title,
+        description,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
   }
 
   // Upload to Cloudinary
-  const uploadResult = await fileUploader.CloudinaryUpload(file);
+  // const uploadResult = await fileUploader.CloudinaryUpload(file);
 
-  // Get last order
-  const lastBanner = await Banner.findOne().sort({ order: -1 });
-  const order = lastBanner ? lastBanner.order + 1 : 1;
+  // // Get last order
+  // const lastBanner = await Banner.findOne().sort({ order: -1 });
+  // const order = lastBanner ? lastBanner.order + 1 : 1;
 
-  const banner = await Banner.create({
-    title,
-    subtitle,
-    imageUrl: uploadResult.secure_url,
-    publicId: uploadResult.public_id,
-    order,
-  });
+  // const banner = await Banner.create({
+  //   title,
+  //   subtitle,
+  //   imageUrl: uploadResult.secure_url,
+  //   publicId: uploadResult.public_id,
+  //   order,
+  // });
 
-  return banner;
+  return result;
 };
 
 /* ------------------------------------
    GET ALL BANNERS
 ------------------------------------- */
-const getBanners = async (
-  sortBy: string = "order",
-  sortWith: 1 | -1 = 1
-) => {
+const getBanners = async (sortBy: string = "order", sortWith: 1 | -1 = 1) => {
   const banners = await Banner.find().sort({ [sortBy]: sortWith });
   return banners;
 };
@@ -86,14 +90,12 @@ const deleteAllBanners = async () => {
 /* ------------------------------------
    REORDER BANNERS
 ------------------------------------- */
-const reorderBanners = async (
-  items: { id: string; order: number }[]
-) => {
+const reorderBanners = async (items: { id: string; order: number }[]) => {
   if (!Array.isArray(items)) {
     throw new AppError(400, "Invalid reorder payload");
   }
 
-  const bulkOps = items.map(item => ({
+  const bulkOps = items.map((item) => ({
     updateOne: {
       filter: { _id: item.id },
       update: { order: item.order },

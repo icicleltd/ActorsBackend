@@ -13,6 +13,8 @@ adminRouter.post("/add-actor", fileUpload_1.fileUploader.upload.single("photo"),
 adminRouter.post("/login", admin_controller_1.AdminController.login);
 adminRouter.put("/promote", admin_controller_1.AdminController.promoteMember);
 adminRouter.put("/update-actor/:id", fileUpload_1.fileUploader.upload.single("photo"), admin_controller_1.AdminController.updateActorProfile);
+adminRouter.post("/gallery/:id", fileUpload_1.fileUploader.upload.fields([{ name: "images", maxCount: 20 }]), admin_controller_1.AdminController.uploadGallery);
+adminRouter.delete("/gallery/:id", admin_controller_1.AdminController.deleteImage);
 adminRouter.delete("/deletemember/:id", admin_controller_1.AdminController.deleteMember);
 adminRouter.get("/", admin_controller_1.AdminController.getAdmin);
 adminRouter.put("/update-idno", async (req, res) => {

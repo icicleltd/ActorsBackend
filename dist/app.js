@@ -15,6 +15,7 @@ const mediaDirectory_router_1 = __importDefault(require("./mediaDirectory/mediaD
 const galary_router_1 = __importDefault(require("./galary/galary.router"));
 const news_router_1 = __importDefault(require("./news/news.router"));
 const about_router_1 = __importDefault(require("./about/about.router"));
+const banner_router_1 = __importDefault(require("./banner/banner.router"));
 const app = (0, express_1.default)();
 // Middleware
 app.use(express_1.default.json());
@@ -73,6 +74,8 @@ app.use("/api/v1/media-directory", mediaDirectory_router_1.default);
 app.use("/api/v1/galary", galary_router_1.default);
 app.use("/api/v1/news", news_router_1.default);
 app.use("/api/v1/about", about_router_1.default);
+app.use("/api/v1/banner", banner_router_1.default);
+app.use("/api/v1/appointment", banner_router_1.default);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

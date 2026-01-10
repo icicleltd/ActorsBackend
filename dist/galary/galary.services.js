@@ -23,14 +23,22 @@ const createGalleryImages = async (files) => {
    GET ALL IMAGES (Frontend/Admin)
 ------------------------------------- */
 const getGalleryImages = async (skip, limit, sortBy, sortWith) => {
-    const images = await galary_schema_1.Gallery.find()
-        .sort({ [sortBy]: sortWith })
-        .skip(skip)
-        .limit(limit);
+    // const images = await Gallery.find()
+    //   .sort({ [sortBy]: sortWith })
+    //   .skip(skip)
+    //   .limit(limit);
     // if (!images.length) {
     //   throw new AppError(404, "No gallery images found");
     // }
-    return images;
+    const [images, total] = await Promise.all([
+        galary_schema_1.Gallery.find()
+            .sort({ [sortBy]: sortWith })
+            .skip(skip)
+            .limit(limit),
+        galary_schema_1.Gallery.countDocuments(),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+    return { images, total, totalPages };
 };
 /* ------------------------------------
    DELETE SINGLE IMAGE

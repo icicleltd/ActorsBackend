@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { AllowedActorPayload } from "../actor/actor.interface";
 import Actor from "../actor/actor.schema";
 import { fileUploader } from "../helper/fileUpload";
@@ -54,7 +55,7 @@ const updateActorProfile = async (
   const actorProfile = {
     phoneNumber: actorData.phoneNumber,
     presentAddress: actorData.presentAddress,
-    dob:actorData.dob && new Date(actorData.dob),
+    dob: actorData.dob && new Date(actorData.dob),
     bloodGroup: actorData.bloodGroup,
     // idNo: actorData.idNo,
     fullName: actorData.fullName,
@@ -72,13 +73,17 @@ const updateActorProfile = async (
   };
   const sanitize = sanitizePayload(updatedPayload);
 
-  const result = await Actor.findByIdAndUpdate(actorId, {
-    $set: sanitize
-  }, {
-    new: true,
-    runValidators: true,
-  }).select("-password");
- 
+  const result = await Actor.findByIdAndUpdate(
+    actorId,
+    {
+      $set: sanitize,
+    },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).select("-password");
+
   if (!result) {
     throw new Error("Failed to fill up actor profile");
   }
@@ -228,6 +233,63 @@ const login = async (payload: PayloadLoign) => {
   };
   return;
 };
+const uploadGallery = async (
+  files: {
+    [fieldname: string]: Express.Multer.File[];
+  },
+  id: string
+) => {
+  if (!files || !files.images || files.images.length === 0) {
+    throw new AppError(400, "Images are required");
+  }
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(400, "Id is not valid");
+  }
+
+  const uploaded = await fileUploader.CloudinaryUploadMultiple(files.images);
+
+  const images = uploaded.map((u: any) => ({
+    publicId: u.public_id,
+    image: u.secure_url,
+  }));
+  console.log("images", images);
+  const result = await Actor.findByIdAndUpdate(id, {
+    $addToSet: {
+      gallery: images,
+    },
+  });
+  console.log(result);
+  return result;
+};
+const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new AppError(400, "Id is not valid");
+  }
+  console.log(id);
+  if (deleteMode === "all") {
+    const result = await Actor.findByIdAndUpdate(id, {
+      $pull: {
+        gallery: {},
+      },
+    },{new: true});
+    console.log(result);
+    return result;
+  }
+
+  if (!deleteImageId) {
+    throw new AppError(400, "Image id required");
+  }
+  const result = await Actor.findByIdAndUpdate(
+    id,
+    {
+      $pull: {
+        gallery: { _id: deleteImageId },
+      },
+    },
+    { new: true }
+  );
+  return result;
+};
 const test = async () => {
   return;
 };
@@ -241,4 +303,6 @@ export const AdminService = {
   test,
   deleteMember,
   login,
+  uploadGallery,
+  deleteImage,
 };

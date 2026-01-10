@@ -128,6 +128,11 @@ export interface IActor extends Document {
     front?: string;
   }[];
 
+  gallery: {
+    image: string;
+    publicId: string;
+  }[];
+
   photo?: string;
   characterPhoto?: string[];
 

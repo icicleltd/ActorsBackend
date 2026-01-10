@@ -88,6 +88,30 @@ const login = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const uploadGallery = (0, catchAsync_1.default)(async (req, res, next) => {
+    const files = req.files;
+    const id = req.params.id;
+    const result = await admin_services_1.AdminService.uploadGallery(files, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Actor Promoted successfully",
+        data: result,
+    });
+});
+const deleteImage = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    // console.log(id)
+    const deleteMode = req.query.delete;
+    const deleteImageId = req.query.deleteImageId;
+    const result = await admin_services_1.AdminService.deleteImage(id, deleteMode, deleteImageId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Actor Promoted successfully",
+        data: result,
+    });
+});
 const test = (0, catchAsync_1.default)(async (req, res, next) => {
     const result = await admin_services_1.AdminService.test();
     (0, sendResponse_1.default)(res, {
@@ -106,5 +130,7 @@ exports.AdminController = {
     promoteMember,
     test,
     deleteMember,
-    login
+    login,
+    uploadGallery,
+    deleteImage
 };

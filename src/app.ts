@@ -11,6 +11,8 @@ import mediaDirectoryRouter from "./mediaDirectory/mediaDirectory.router";
 import galaryRouter from "./galary/galary.router";
 import newsRouter from "./news/news.router";
 import aboutRouter from "./about/about.router";
+import bannerRouter from "./banner/banner.router";
+import appointmentRouter from "./appointments/appointments.router";
 
 const app = express();
 // Middleware
@@ -81,6 +83,8 @@ app.use("/api/v1/media-directory", mediaDirectoryRouter);
 app.use("/api/v1/galary", galaryRouter);
 app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/about", aboutRouter);
+app.use("/api/v1/banner", bannerRouter);
+app.use("/api/v1/appointment", bannerRouter);
 app.use(globalErrorHandler);
 
 // Test route

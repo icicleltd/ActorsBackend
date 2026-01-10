@@ -1,6 +1,6 @@
 export interface IBanner {
   title: string;
-  subtitle?: string;
+  description?: string;
   imageUrl: string;
   publicId: string;
   order: number;

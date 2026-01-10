@@ -9,7 +9,7 @@ const bannerSchema = new Schema<IBanner>(
       trim: true,
     },
 
-    subtitle: {
+    description: {
       type: String,
       trim: true,
     },

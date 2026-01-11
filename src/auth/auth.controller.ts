@@ -29,6 +29,7 @@ const createAuth = catchAsync(
 const getAuths = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const user = req.user;
+    console.log("in controller",user)
     const result = await AuthService.getAuths(user);
 
     sendResponse(res, {

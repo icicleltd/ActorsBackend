@@ -17,6 +17,7 @@ export const VerifyLogin = async (
     accessToken,
     process.env.ACCESS_TOKEN_SECRET_KEY as Secret
   );
+  console.log(data)
   req.user = data;
   next();
 };

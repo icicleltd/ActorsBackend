@@ -55,6 +55,7 @@ const getAdmin = catchAsync(
       message: "Admin fetched successfully",
       data: result,
     });
+
   }
 );
 const addActor = catchAsync(
@@ -101,7 +102,7 @@ const login = catchAsync(
     sendResponse(res, {
       statusCode: 201,
       success: true,
-      message: "Actor Promoted successfully",
+      message: "Admin login successfully",
       data: result,
     });
   }

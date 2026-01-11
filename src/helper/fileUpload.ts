@@ -36,6 +36,43 @@ const CloudinaryUploadMultiple = async (files: Express.Multer.File[]) => {
   return uploaded;
 };
 
+// Upload single PDF
+const CloudinaryUploadPDF = async (file: Express.Multer.File) => {
+  if (file.mimetype !== "application/pdf") {
+    throw new Error("Only PDF files are allowed");
+  }
+
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "raw",
+        folder: "pdfs",
+        public_id: file.originalname.replace(".pdf", ""),
+        format: "pdf", // 🔥 REQUIRED
+        use_filename: true,
+        unique_filename: false,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+};
+
+const CloudinaryUploadMultiplePDF = async (files: Express.Multer.File[]) => {
+  const uploaded = [];
+
+  for (const file of files) {
+    const result = await CloudinaryUploadPDF(file);
+    uploaded.push(result);
+  }
+
+  return uploaded;
+};
+
 export const deleteFromCloudinary = async (publicId: string) => {
   return cloudinary.uploader.destroy(publicId);
 };
@@ -44,4 +81,6 @@ export const fileUploader = {
   upload,
   CloudinaryUpload,
   CloudinaryUploadMultiple,
+  CloudinaryUploadPDF,
+  CloudinaryUploadMultiplePDF,
 };

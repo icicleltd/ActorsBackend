@@ -6,6 +6,9 @@ import { sanitizePayload } from "../helper/senitizePayload";
 import { AppError } from "../middleware/error";
 import { PayloadAdmin, PayloadLoign } from "./admin.interface";
 import { Admin } from "./admin.schema";
+import { TokenPayload } from "../auth/auth.interface";
+import { jwtHelper } from "../helper/jwtHelper";
+import { Secret } from "jsonwebtoken";
 
 const createAdmin = async (payload: PayloadAdmin) => {
   if (!payload) {
@@ -213,25 +216,64 @@ const deleteMember = async (id: string) => {
   }
   return responce;
 };
+// login admin and super admin //
 const login = async (payload: PayloadLoign) => {
-  const { email, password, role } = payload;
-  const existing = await Admin.findOne({ email })
-    .select("+password _id email")
+  const { identifier, password, role } = payload;
+
+  if (!identifier || !identifier.trim()) {
+    throw new AppError(400, "Identifier is required");
+  }
+
+  if (!password || !password.trim()) {
+    throw new AppError(400, "Password is required");
+  }
+
+  if (!role || !role.trim()) {
+    throw new AppError(400, "Role is required");
+  }
+
+  const fields = ["email", "phone"];
+  const trimmedIdentifier = identifier.trim().toLowerCase();
+  console.log(trimmedIdentifier);
+  const filter = {
+    $or: fields.map((field) => ({
+      [field]: trimmedIdentifier,
+    })),
+  };
+
+  const existing = await Admin.findOne(filter)
+    .select("+password _id email fullName")
     .lean(false);
+  console.log("is ", existing);
   if (!existing) {
     throw new AppError(401, "Unauthorized");
   }
+
   const isMatch = await existing.comparePassword(password);
   if (!isMatch) {
-    throw new AppError(401, "Invalid credentials");
+    throw new AppError(401, "Invalid Password");
   }
-  const data: any = {
+  const data: TokenPayload = {
     _id: existing._id,
     email: existing.email,
     role,
     fullName: existing.fullName,
   };
-  return;
+  const accessToken = await jwtHelper.generateToken(
+    data,
+    process.env.ACCESS_TOKEN_SECRET_KEY as Secret,
+    process.env.ACCESS_TOKEN_EXPIRE_IN as string
+  );
+  if (!accessToken) {
+    throw new AppError(400, "Token not found");
+  }
+  const userResponse = existing.toObject();
+  delete userResponse.password;
+  // console.log(data);
+  return {
+    user: userResponse,
+    accessToken,
+  };
 };
 const uploadGallery = async (
   files: {
@@ -267,11 +309,15 @@ const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
   }
   console.log(id);
   if (deleteMode === "all") {
-    const result = await Actor.findByIdAndUpdate(id, {
-      $pull: {
-        gallery: {},
+    const result = await Actor.findByIdAndUpdate(
+      id,
+      {
+        $pull: {
+          gallery: {},
+        },
       },
-    },{new: true});
+      { new: true }
+    );
     console.log(result);
     return result;
   }

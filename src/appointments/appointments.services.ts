@@ -5,9 +5,32 @@ import Schedule from "./appointments.schema";
 /* ------------------------------------
    CREATE / UPDATE SCHEDULE BANNER
 ------------------------------------- */
-const createSchedule = async (payload: any) => {
-  console.log(payload);
-  let schedule;
+const createSchedule = async (payload: any, files: any) => {
+  const appointmentInfo = JSON.parse(payload.appointment);
+  const member = JSON.parse(payload.member);
+  if (!appointmentInfo || !member) {
+    throw new AppError(400, "Appointment info required");
+  }
+  let uploaded;
+  if (files) {
+    uploaded = await fileUploader.CloudinaryUploadMultiplePDF(files);
+  }
+  const pdfLinks = uploaded?.map((pdf: any) => pdf.secure_url as string);
+  const { date, phone, email, message, name } = appointmentInfo;
+  const appointmentData = {
+    date: new Date(date),
+    name,
+    phone,
+    email,
+    message,
+    approver: member.memberId,
+    pdfLinks,
+  };
+  const result = await Schedule.create(appointmentData);
+  if (!result) {
+    throw new AppError(500, "Not created appointmentData");
+  }
+  return result;
 };
 
 // Upload image (if provided)

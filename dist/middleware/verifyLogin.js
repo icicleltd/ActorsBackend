@@ -11,6 +11,7 @@ const VerifyLogin = async (req, res, next) => {
     }
     const accessToken = authHeader.split(" ")[1];
     const data = jwtHelper_1.jwtHelper.verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET_KEY);
+    console.log(data);
     req.user = data;
     next();
 };

@@ -37,10 +37,10 @@ const mongoose_1 = __importStar(require("mongoose"));
 const scheduleSchema = new mongoose_1.Schema({
     title: {
         type: String,
-        required: true,
+        // required: true,
         trim: true,
     },
-    description: {
+    message: {
         type: String,
         trim: true,
     },
@@ -48,35 +48,49 @@ const scheduleSchema = new mongoose_1.Schema({
         type: Date,
         required: true,
     },
-    startTime: {
+    name: {
         type: String,
         required: true,
     },
-    endTime: {
+    phone: {
         type: String,
         required: true,
+    },
+    email: {
+        type: String,
+        required: true,
+    },
+    startTime: {
+        type: String,
+        // required: true,
+    },
+    endTime: {
+        type: String,
+        // required: true,
     },
     location: {
         type: String,
         trim: true,
     },
-    // ✅ Actor reference (many-to-many)
-    actors: [
-        {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: "Actor",
-            required: true,
-        },
-    ],
+    approver: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Actor",
+        required: true,
+    },
     scheduleType: {
         type: String,
         enum: ["shooting", "rehearsal", "meeting", "event"],
         default: "shooting",
     },
+    pdfLinks: [
+        {
+            type: String,
+        },
+    ],
     status: {
         type: String,
-        enum: ["scheduled", "completed", "cancelled"],
-        default: "scheduled",
+        enum: ["pending", "approved", "rejected"],
+        default: "pending",
     },
     // optional (admin / user)
     createdBy: {

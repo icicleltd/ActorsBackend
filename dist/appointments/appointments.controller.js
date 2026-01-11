@@ -12,9 +12,9 @@ const appointments_services_1 = require("./appointments.services");
 ------------------------------------- */
 const createSchedule = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
-    const result = await appointments_services_1.ScheduleService.createSchedule({
-        payload,
-    });
+    const files = req.files;
+    console.log(files);
+    const result = await appointments_services_1.ScheduleService.createSchedule(payload, files);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,

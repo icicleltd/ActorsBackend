@@ -11,7 +11,7 @@ const router = express_1.default.Router();
  * Create / Update Schedule
  * image + title + description (multipart/form-data)
  */
-router.post("/", fileUpload_1.fileUploader.upload.single("image"), appointments_controller_1.ScheduleController.createSchedule);
+router.post("/", fileUpload_1.fileUploader.upload.array("pdf"), appointments_controller_1.ScheduleController.createSchedule);
 /**
  * Get all schedules (sorted)
  */

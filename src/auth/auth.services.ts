@@ -3,6 +3,7 @@ import Actor from "../actor/actor.schema";
 import { jwtHelper } from "../helper/jwtHelper";
 import { AppError } from "../middleware/error";
 import { DecodedToken, IPayload, TokenPayload } from "./auth.interface";
+import { Admin } from "../admin/admin.schema";
 
 const createAuth = async (payload: IPayload) => {
   const { password, identifier, role } = payload;
@@ -25,13 +26,13 @@ const createAuth = async (payload: IPayload) => {
     .select("+password _id email fullName")
     .lean(false);
   if (!existingUser) {
-    throw new AppError(400, "You are not registered");
+    throw new AppError(401, "Unauthorized");
   }
-console.log(payload)
+  console.log(payload);
   const isPasswordValid = await existingUser.comparePassword(password);
-  console.log(isPasswordValid)
+  console.log(isPasswordValid);
   if (!isPasswordValid) {
-    throw new AppError(401, "Invalid credentials");
+    throw new AppError(401, "Invalid Password");
   }
   const data: TokenPayload = {
     _id: existingUser._id,
@@ -61,8 +62,15 @@ const getAuths = async (payload: DecodedToken) => {
   if (!_id) {
     throw new AppError(401, "Unathorize");
   }
-  const user = await Actor.findById(_id);
-  return user;
+  const [user, admin] = await Promise.all([
+    Actor.findById(_id),
+    Admin.findById(_id),
+  ]);
+  console.log(user,admin)
+  if (!user && !admin) {
+    throw new AppError(404, "Not found");
+  }
+  return {user , admin};
 };
 
 const getAdminAuths = async (adminId: string) => {

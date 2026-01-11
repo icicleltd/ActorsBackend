@@ -1,21 +1,26 @@
 import { Types } from "mongoose";
 
 export interface ISchedule {
-  title: string;
-  description?: string;
+  title?: string;
+
+  name: string;
+  phone: string;
+  email: string;
+  message?: string;
 
   date: Date;
-  startTime: string; // "10:00"
-  endTime: string;   // "18:00"
+  startTime?: string; // "10:00"
+  endTime?: string; // "18:00"
 
   location?: string;
 
-  // 🔗 Reference Actor(s)
-  actors: Types.ObjectId[];
+  pdfLinks?: string[];
 
-  scheduleType: "shooting" | "rehearsal" | "meeting" | "event";
+  approver: Types.ObjectId;
 
-  status: "scheduled" | "completed" | "cancelled";
+  scheduleType?: "shooting" | "rehearsal" | "meeting" | "event";
+
+  status: "pending" | "approved" | "rejected";
 
   createdBy?: Types.ObjectId;
 }

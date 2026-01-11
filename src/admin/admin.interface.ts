@@ -3,7 +3,7 @@ import { Document, Types } from "mongoose";
 export interface IAdmin extends Document {
   fullName: string;
   email: string;
-  password: string;
+  password?: string;
   phone?: string;
   avatar?: string;
   role: "admin" | "moderator" | "superadmin";
@@ -17,13 +17,13 @@ export interface IAdmin extends Document {
 export interface PayloadAdmin {
   fullName: string;
   email: string;
-  password: string;
+  password?: string;
   phone?: string;
   avatar?: string;
   role: "admin" | "moderator" | "superadmin";
 }
 export interface PayloadLoign {
-  email: string;
+  identifier: string;
   password: string;
-  role?: "admin" | "moderator" | "superadmin";
+  role: "admin" | "moderator" | "superadmin";
 }

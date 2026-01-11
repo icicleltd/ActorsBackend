@@ -84,7 +84,8 @@ app.use("/api/v1/galary", galaryRouter);
 app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/about", aboutRouter);
 app.use("/api/v1/banner", bannerRouter);
-app.use("/api/v1/appointment", bannerRouter);
+app.use("/api/v1/appointment", appointmentRouter
+);
 app.use(globalErrorHandler);
 
 // Test route

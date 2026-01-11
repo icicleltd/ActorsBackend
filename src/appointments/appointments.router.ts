@@ -10,7 +10,7 @@ const router = express.Router();
  */
 router.post(
   "/",
-  fileUploader.upload.single("image"),
+  fileUploader.upload.array("pdf"),
   ScheduleController.createSchedule
 );
 

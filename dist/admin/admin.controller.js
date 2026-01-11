@@ -84,7 +84,7 @@ const login = (0, catchAsync_1.default)(async (req, res, next) => {
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
-        message: "Actor Promoted successfully",
+        message: "Admin login successfully",
         data: result,
     });
 });

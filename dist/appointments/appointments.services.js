@@ -4,14 +4,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScheduleService = void 0;
+const fileUpload_1 = require("../helper/fileUpload");
 const error_1 = require("../middleware/error");
 const appointments_schema_1 = __importDefault(require("./appointments.schema"));
 /* ------------------------------------
    CREATE / UPDATE SCHEDULE BANNER
 ------------------------------------- */
-const createSchedule = async (payload) => {
-    console.log(payload);
-    let schedule;
+const createSchedule = async (payload, files) => {
+    const appointmentInfo = JSON.parse(payload.appointment);
+    const member = JSON.parse(payload.member);
+    if (!appointmentInfo || !member) {
+        throw new error_1.AppError(400, "Appointment info required");
+    }
+    let uploaded;
+    if (files) {
+        uploaded = await fileUpload_1.fileUploader.CloudinaryUploadMultiplePDF(files);
+    }
+    const pdfLinks = uploaded?.map((pdf) => pdf.secure_url);
+    const { date, phone, email, message, name } = appointmentInfo;
+    const appointmentData = {
+        date: new Date(date),
+        name,
+        phone,
+        email,
+        message,
+        approver: member.memberId,
+        pdfLinks,
+    };
+    const result = await appointments_schema_1.default.create(appointmentData);
+    if (!result) {
+        throw new error_1.AppError(500, "Not created appointmentData");
+    }
+    return result;
 };
 // Upload image (if provided)
 //   const uploadResult = await fileUploader.CloudinaryUpload(file);

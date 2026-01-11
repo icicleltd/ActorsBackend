@@ -10,6 +10,7 @@ const fileUpload_1 = require("../helper/fileUpload");
 const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("./admin.schema");
+const jwtHelper_1 = require("../helper/jwtHelper");
 const createAdmin = async (payload) => {
     if (!payload) {
         throw new error_1.AppError(400, "No data provided");
@@ -184,17 +185,36 @@ const deleteMember = async (id) => {
     }
     return responce;
 };
+// login admin and super admin //
 const login = async (payload) => {
-    const { email, password, role } = payload;
-    const existing = await admin_schema_1.Admin.findOne({ email })
-        .select("+password _id email")
+    const { identifier, password, role } = payload;
+    if (!identifier || !identifier.trim()) {
+        throw new error_1.AppError(400, "Identifier is required");
+    }
+    if (!password || !password.trim()) {
+        throw new error_1.AppError(400, "Password is required");
+    }
+    if (!role || !role.trim()) {
+        throw new error_1.AppError(400, "Role is required");
+    }
+    const fields = ["email", "phone"];
+    const trimmedIdentifier = identifier.trim().toLowerCase();
+    console.log(trimmedIdentifier);
+    const filter = {
+        $or: fields.map((field) => ({
+            [field]: trimmedIdentifier,
+        })),
+    };
+    const existing = await admin_schema_1.Admin.findOne(filter)
+        .select("+password _id email fullName")
         .lean(false);
+    console.log("is ", existing);
     if (!existing) {
         throw new error_1.AppError(401, "Unauthorized");
     }
     const isMatch = await existing.comparePassword(password);
     if (!isMatch) {
-        throw new error_1.AppError(401, "Invalid credentials");
+        throw new error_1.AppError(401, "Invalid Password");
     }
     const data = {
         _id: existing._id,
@@ -202,7 +222,17 @@ const login = async (payload) => {
         role,
         fullName: existing.fullName,
     };
-    return;
+    const accessToken = await jwtHelper_1.jwtHelper.generateToken(data, process.env.ACCESS_TOKEN_SECRET_KEY, process.env.ACCESS_TOKEN_EXPIRE_IN);
+    if (!accessToken) {
+        throw new error_1.AppError(400, "Token not found");
+    }
+    const userResponse = existing.toObject();
+    delete userResponse.password;
+    // console.log(data);
+    return {
+        user: userResponse,
+        accessToken,
+    };
 };
 const uploadGallery = async (files, id) => {
     if (!files || !files.images || files.images.length === 0) {

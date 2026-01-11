@@ -7,6 +7,7 @@ exports.AuthService = void 0;
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const jwtHelper_1 = require("../helper/jwtHelper");
 const error_1 = require("../middleware/error");
+const admin_schema_1 = require("../admin/admin.schema");
 const createAuth = async (payload) => {
     const { password, identifier, role } = payload;
     const filter = {};
@@ -28,13 +29,13 @@ const createAuth = async (payload) => {
         .select("+password _id email fullName")
         .lean(false);
     if (!existingUser) {
-        throw new error_1.AppError(400, "You are not registered");
+        throw new error_1.AppError(401, "Unauthorized");
     }
     console.log(payload);
     const isPasswordValid = await existingUser.comparePassword(password);
     console.log(isPasswordValid);
     if (!isPasswordValid) {
-        throw new error_1.AppError(401, "Invalid credentials");
+        throw new error_1.AppError(401, "Invalid Password");
     }
     const data = {
         _id: existingUser._id,
@@ -58,8 +59,15 @@ const getAuths = async (payload) => {
     if (!_id) {
         throw new error_1.AppError(401, "Unathorize");
     }
-    const user = await actor_schema_1.default.findById(_id);
-    return user;
+    const [user, admin] = await Promise.all([
+        actor_schema_1.default.findById(_id),
+        admin_schema_1.Admin.findById(_id),
+    ]);
+    console.log(user, admin);
+    if (!user && !admin) {
+        throw new error_1.AppError(404, "Not found");
+    }
+    return { user, admin };
 };
 const getAdminAuths = async (adminId) => {
     return;

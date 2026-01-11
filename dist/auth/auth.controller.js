@@ -22,6 +22,7 @@ const createAuth = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 const getAuths = (0, catchAsync_1.default)(async (req, res, next) => {
     const user = req.user;
+    console.log("in controller", user);
     const result = await auth_services_1.AuthService.getAuths(user);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,

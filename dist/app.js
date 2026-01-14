@@ -17,6 +17,7 @@ const news_router_1 = __importDefault(require("./news/news.router"));
 const about_router_1 = __importDefault(require("./about/about.router"));
 const banner_router_1 = __importDefault(require("./banner/banner.router"));
 const appointments_router_1 = __importDefault(require("./appointments/appointments.router"));
+const verifyLogin_1 = require("./middleware/verifyLogin");
 const app = (0, express_1.default)();
 // Middleware
 app.use(express_1.default.json());
@@ -66,12 +67,12 @@ app.use((req, res, next) => {
 //-----------cors----------------
 //---------router-------------
 app.use("/api/v1/actors", actor_router_1.default);
-app.use("/api/v1/admin", admin_router_1.default);
+app.use("/api/v1/admin", verifyLogin_1.VerifyLogin, admin_router_1.default);
 app.use("/api/v1/notification", notification_router_1.default);
 app.use("/api/v1/events", event_router_1.default);
 app.use("/", router_1.default);
 app.use("/api/v1/auth", auth_router_1.default);
-app.use("/api/v1/media-directory", mediaDirectory_router_1.default);
+app.use("/api/v1/media-directory", verifyLogin_1.VerifyLogin, mediaDirectory_router_1.default);
 app.use("/api/v1/galary", galary_router_1.default);
 app.use("/api/v1/news", news_router_1.default);
 app.use("/api/v1/about", about_router_1.default);

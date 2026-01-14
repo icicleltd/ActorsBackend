@@ -4,7 +4,11 @@ import Actor from "../actor/actor.schema";
 import { fileUploader } from "../helper/fileUpload";
 import { sanitizePayload } from "../helper/senitizePayload";
 import { AppError } from "../middleware/error";
-import { PayloadAdmin, PayloadLoign } from "./admin.interface";
+import {
+  PayloadAdmin,
+  PayloadLoign,
+  PayloadMakeAdmin,
+} from "./admin.interface";
 import { Admin } from "./admin.schema";
 import { TokenPayload } from "../auth/auth.interface";
 import { jwtHelper } from "../helper/jwtHelper";
@@ -72,10 +76,11 @@ const updateActorProfile = async (
   };
   const updatedPayload = {
     ...actorData,
-    uploadedUrl,
+    photo: uploadedUrl,
   };
+  console.log("updatedPayload", updatedPayload);
   const sanitize = sanitizePayload(updatedPayload);
-
+  console.log("sanitize", sanitize);
   const result = await Actor.findByIdAndUpdate(
     actorId,
     {
@@ -86,7 +91,7 @@ const updateActorProfile = async (
       runValidators: true,
     }
   ).select("-password");
-
+  console.log("result", result);
   if (!result) {
     throw new Error("Failed to fill up actor profile");
   }
@@ -238,6 +243,7 @@ const login = async (payload: PayloadLoign) => {
   const filter = {
     $or: fields.map((field) => ({
       [field]: trimmedIdentifier,
+      isActive: true,
     })),
   };
 
@@ -336,6 +342,29 @@ const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
   );
   return result;
 };
+const makeAdmin = async (payload: PayloadMakeAdmin) => {
+  const { userId, role } = payload;
+  const existing = await Actor.findById(userId);
+  if (!existing?.isActive) {
+    throw new AppError(403, "This member is bloced");
+  }
+  if (existing.role === role) {
+    throw new AppError(400, `This member is already ${role}`);
+  }
+  const result = await Actor.findByIdAndUpdate(
+    userId,
+    {
+      $set: {
+        role,
+      },
+    },
+    { new: true, runValidators: true }
+  );
+
+  console.log(existing);
+  console.log(result);
+  return result;
+};
 const test = async () => {
   return;
 };
@@ -351,4 +380,5 @@ export const AdminService = {
   login,
   uploadGallery,
   deleteImage,
+  makeAdmin,
 };

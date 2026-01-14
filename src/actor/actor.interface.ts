@@ -103,12 +103,15 @@ export interface IActor extends Document {
   fromActive?: string;
   endActive?: string | null;
   presentActive?: string | null;
+  role: "member" | "admin";
 
   // =========================
   // Physical Info
   // =========================
   height?: string;
   weight?: string;
+  isProfilePublic: boolean;
+  isActive: boolean;
 
   // =========================
   // Work / Personal Info

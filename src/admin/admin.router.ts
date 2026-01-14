@@ -12,6 +12,7 @@ adminRouter.post(
 adminRouter.post("/login", AdminController.login);
 
 adminRouter.put("/promote", AdminController.promoteMember);
+adminRouter.put("/make-admin", AdminController.makeAdmin);
 adminRouter.put(
   "/update-actor/:id",
   fileUploader.upload.single("photo"),

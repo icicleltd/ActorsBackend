@@ -57,8 +57,9 @@ const createAuth = async (payload: IPayload) => {
   };
 };
 
-const getAuths = async (payload: DecodedToken) => {
-  const { _id, email, fullName, role } = payload;
+const getAuths = async (payload: any) => {
+  console.log(payload);
+  const { _id, email, fullName, role } = payload.data;
   if (!_id) {
     throw new AppError(401, "Unathorize");
   }
@@ -66,11 +67,33 @@ const getAuths = async (payload: DecodedToken) => {
     Actor.findById(_id),
     Admin.findById(_id),
   ]);
-  console.log(user,admin)
+
+  console.log(user, admin);
   if (!user && !admin) {
     throw new AppError(404, "Not found");
   }
-  return {user , admin};
+  let accessToken = payload.accessToken;
+  if (user && user?.role !== role) {
+    const data: TokenPayload = {
+      _id: user._id,
+      email: user.email,
+      role: user?.role,
+      fullName: user.fullName,
+    };
+    accessToken = await jwtHelper.generateToken(
+      data,
+      process.env.ACCESS_TOKEN_SECRET_KEY as Secret,
+      process.env.ACCESS_TOKEN_EXPIRE_IN as string
+    );
+    if (!accessToken) {
+      throw new AppError(400, "Token not found");
+    }
+  }
+  console.log(accessToken);
+  console.log("token role", role);
+  console.log("db role", user?.role);
+  console.log(user);
+  return { user, admin, accessToken };
 };
 
 const getAdminAuths = async (adminId: string) => {

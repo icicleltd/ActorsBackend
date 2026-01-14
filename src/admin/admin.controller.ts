@@ -1,4 +1,4 @@
-import { Query } from 'mongoose';
+import { Query } from "mongoose";
 import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
@@ -55,7 +55,6 @@ const getAdmin = catchAsync(
       message: "Admin fetched successfully",
       data: result,
     });
-
   }
 );
 const addActor = catchAsync(
@@ -127,8 +126,24 @@ const deleteImage = catchAsync(
     const id = req.params.id;
     // console.log(id)
     const deleteMode = req.query.delete;
-    const deleteImageId= req.query.deleteImageId
-    const result = await AdminService.deleteImage(id, deleteMode,deleteImageId);
+    const deleteImageId = req.query.deleteImageId;
+    const result = await AdminService.deleteImage(
+      id,
+      deleteMode,
+      deleteImageId
+    );
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  }
+);
+const makeAdmin = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body
+    const result = await AdminService.makeAdmin(payload);
     sendResponse(res, {
       statusCode: 201,
       success: true,
@@ -159,5 +174,6 @@ export const AdminController = {
   deleteMember,
   login,
   uploadGallery,
-  deleteImage
+  deleteImage,
+  makeAdmin,
 };

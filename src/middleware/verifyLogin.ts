@@ -7,17 +7,22 @@ export const VerifyLogin = async (
   next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
+  console.log("in varify login",authHeader)
   if (!authHeader || !authHeader.startsWith("Bearer")) {
     return res.status(401).json({
-      megs: "No token provided",
+      message: "No token provided",
     });
   }
   const accessToken = authHeader.split(" ")[1];
+  console.log(accessToken)
   const data = jwtHelper.verifyToken(
     accessToken,
     process.env.ACCESS_TOKEN_SECRET_KEY as Secret
   );
-  console.log(data)
-  req.user = data;
+  console.log("decode",data)
+  const value = {
+    data, accessToken
+  }
+  req.user = value;
   next();
 };

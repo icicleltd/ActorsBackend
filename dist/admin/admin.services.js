@@ -65,15 +65,18 @@ const updateActorProfile = async (actorData, actorId, file) => {
     };
     const updatedPayload = {
         ...actorData,
-        uploadedUrl,
+        photo: uploadedUrl,
     };
+    console.log("updatedPayload", updatedPayload);
     const sanitize = (0, senitizePayload_1.sanitizePayload)(updatedPayload);
+    console.log("sanitize", sanitize);
     const result = await actor_schema_1.default.findByIdAndUpdate(actorId, {
         $set: sanitize,
     }, {
         new: true,
         runValidators: true,
     }).select("-password");
+    console.log("result", result);
     if (!result) {
         throw new Error("Failed to fill up actor profile");
     }
@@ -203,6 +206,7 @@ const login = async (payload) => {
     const filter = {
         $or: fields.map((field) => ({
             [field]: trimmedIdentifier,
+            isActive: true,
         })),
     };
     const existing = await admin_schema_1.Admin.findOne(filter)
@@ -279,6 +283,24 @@ const deleteImage = async (id, deleteMode, deleteImageId) => {
     }, { new: true });
     return result;
 };
+const makeAdmin = async (payload) => {
+    const { userId, role } = payload;
+    const existing = await actor_schema_1.default.findById(userId);
+    if (!existing?.isActive) {
+        throw new error_1.AppError(403, "This member is bloced");
+    }
+    if (existing.role === role) {
+        throw new error_1.AppError(400, `This member is already ${role}`);
+    }
+    const result = await actor_schema_1.default.findByIdAndUpdate(userId, {
+        $set: {
+            role,
+        },
+    }, { new: true, runValidators: true });
+    console.log(existing);
+    console.log(result);
+    return result;
+};
 const test = async () => {
     return;
 };
@@ -294,4 +316,5 @@ exports.AdminService = {
     login,
     uploadGallery,
     deleteImage,
+    makeAdmin,
 };

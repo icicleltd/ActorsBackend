@@ -676,7 +676,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             },
         });
     }
-    console.log(rankGroup, "rank group in services");
     // ==================== CATEGORY FILTERS ====================
     if (category) {
         pipeline.push({
@@ -775,7 +774,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     ]);
     // ==================== EXECUTE PIPELINE ====================
     const result = await actor_schema_1.default.aggregate(pipeline);
-    console.log(reportActor);
+    // console.log(reportActor);
     const aggregationResult = result[0] || {};
     return {
         actor: aggregationResult.data || [],
@@ -849,6 +848,7 @@ const filterByRank = async (rank) => {
 //   return updatedActor;
 // };
 const updateActor = async (payload, files, id) => {
+    console.log(payload, files);
     if (!id) {
         throw new error_1.AppError(400, "Actor ID is required");
     }
@@ -887,6 +887,7 @@ const updateActor = async (payload, files, id) => {
     }
     // Update the actor in the database
     const newActor = await actor_schema_1.default.findByIdAndUpdate(id, { $set: updateData }, { new: true });
+    console.log(newActor);
     return newActor;
 };
 exports.default = {

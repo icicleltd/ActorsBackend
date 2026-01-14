@@ -47,8 +47,8 @@ const getAllActor = (0, catchAsync_1.default)(async (req, res, next) => {
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange = req.query.searchYearRange;
     const advisorYearRange = req.query.advisorYearRange;
-    console.log(executiveRank, "executiveRank");
-    console.log(searchYearRange, "in controller");
+    // console.log(executiveRank, "executiveRank");
+    // console.log(searchYearRange, "in controller");
     // console.log(rankSearch, "rankSearch");
     // console.log(search, "search");
     // console.log(searchYearRange, "searchYearRange");

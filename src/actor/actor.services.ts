@@ -713,7 +713,7 @@ const getAllActor = async (
     });
   }
 
-  console.log(rankGroup, "rank group in services");
+ 
 
   // ==================== CATEGORY FILTERS ====================
   if (category) {
@@ -827,7 +827,7 @@ const getAllActor = async (
 
   // ==================== EXECUTE PIPELINE ====================
   const result = await Actor.aggregate(pipeline);
-  console.log(reportActor);
+  // console.log(reportActor);
   const aggregationResult = result[0] || {};
 
   return {
@@ -914,6 +914,7 @@ const updateActor = async (
   files: { [fieldname: string]: Express.Multer.File[] },
   id: string
 ) => {
+  console.log(payload,files)
   if (!id) {
     throw new AppError(400, "Actor ID is required");
   }
@@ -960,6 +961,7 @@ const updateActor = async (
     { $set: updateData },
     { new: true }
   );
+  console.log(newActor)
   return newActor;
 };
 

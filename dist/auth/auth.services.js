@@ -55,7 +55,8 @@ const createAuth = async (payload) => {
     };
 };
 const getAuths = async (payload) => {
-    const { _id, email, fullName, role } = payload;
+    console.log(payload);
+    const { _id, email, fullName, role } = payload.data;
     if (!_id) {
         throw new error_1.AppError(401, "Unathorize");
     }
@@ -67,7 +68,24 @@ const getAuths = async (payload) => {
     if (!user && !admin) {
         throw new error_1.AppError(404, "Not found");
     }
-    return { user, admin };
+    let accessToken = payload.accessToken;
+    if (user && user?.role !== role) {
+        const data = {
+            _id: user._id,
+            email: user.email,
+            role: user?.role,
+            fullName: user.fullName,
+        };
+        accessToken = await jwtHelper_1.jwtHelper.generateToken(data, process.env.ACCESS_TOKEN_SECRET_KEY, process.env.ACCESS_TOKEN_EXPIRE_IN);
+        if (!accessToken) {
+            throw new error_1.AppError(400, "Token not found");
+        }
+    }
+    console.log(accessToken);
+    console.log("token role", role);
+    console.log("db role", user?.role);
+    console.log(user);
+    return { user, admin, accessToken };
 };
 const getAdminAuths = async (adminId) => {
     return;

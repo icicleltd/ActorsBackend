@@ -130,6 +130,9 @@ const actorSchema = new Schema<IActor>(
       duration: { type: Number, max: 30 },
       sizeMB: { type: Number, max: 100 },
     },
+    isActive:{type: Boolean, default:true},
+    isProfilePublic:{type: Boolean, default: true},
+    role: { type: String, default: "member" },
 
     category: { type: String, enum: ["A", "B", "C"] },
     status: {

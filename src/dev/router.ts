@@ -95,4 +95,12 @@ router.post("/pull-duplicate-rank/:id", async (req, res) => {
   console.log(result);
   res.send(result);
 });
+router.post("/fix-roles", async (req, res) => {
+  const result = await Actor.updateMany(
+    { role: { $exists: false } },
+    { $set: { role: "member" } }
+  );
+
+  res.json(result);
+});
 export default router;

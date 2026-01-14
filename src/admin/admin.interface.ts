@@ -27,3 +27,7 @@ export interface PayloadLoign {
   password: string;
   role: "admin" | "moderator" | "superadmin";
 }
+export interface PayloadMakeAdmin {
+  userId: string;
+  role: "admin" | "moderator" | "superadmin";
+}

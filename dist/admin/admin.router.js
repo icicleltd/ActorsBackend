@@ -12,6 +12,7 @@ adminRouter.post("/", admin_controller_1.AdminController.createAdmin);
 adminRouter.post("/add-actor", fileUpload_1.fileUploader.upload.single("photo"), admin_controller_1.AdminController.addActor);
 adminRouter.post("/login", admin_controller_1.AdminController.login);
 adminRouter.put("/promote", admin_controller_1.AdminController.promoteMember);
+adminRouter.put("/make-admin", admin_controller_1.AdminController.makeAdmin);
 adminRouter.put("/update-actor/:id", fileUpload_1.fileUploader.upload.single("photo"), admin_controller_1.AdminController.updateActorProfile);
 adminRouter.post("/gallery/:id", fileUpload_1.fileUploader.upload.fields([{ name: "images", maxCount: 20 }]), admin_controller_1.AdminController.uploadGallery);
 adminRouter.delete("/gallery/:id", admin_controller_1.AdminController.deleteImage);

@@ -19,11 +19,11 @@ const bannerSchema = new mongoose_1.Schema({
     },
     publicId: {
         type: String,
-        required: true,
     },
     order: {
         type: Number,
         required: true,
+        unique: true,
     },
 }, {
     timestamps: true,

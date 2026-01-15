@@ -8,11 +8,7 @@ const router = express.Router();
  * Create banner
  * image + title + subtitle (multipart/form-data)
  */
-router.post(
-  "/",
-  fileUploader.upload.single("image"),
-  BannerController.createBanner
-);
+router.post("/", BannerController.createBanner);
 
 /**
  * Get all banners (sorted by order)

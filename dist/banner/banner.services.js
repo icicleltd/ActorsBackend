@@ -1,44 +1,34 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BannerService = void 0;
-const fileUpload_1 = require("../helper/fileUpload");
 const error_1 = require("../middleware/error");
 const banner_schema_1 = require("./banner.schema");
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
 const createBanner = async (payload) => {
-    const { file, title, description } = payload;
-    console.log("title, desc", payload);
-    let result;
-    if (title && description) {
-        result = await banner_schema_1.Banner.findOneAndUpdate({}, {
-            title,
-            description,
-        }, {
-            new: true,
-            upsert: true,
-        });
+    const { imageUrl, title, description, order } = payload;
+    if (!imageUrl || !title || !order) {
+        throw new error_1.AppError(400, "Image title and order required");
     }
-    // Upload to Cloudinary
-    // const uploadResult = await fileUploader.CloudinaryUpload(file);
-    // // Get last order
-    // const lastBanner = await Banner.findOne().sort({ order: -1 });
-    // const order = lastBanner ? lastBanner.order + 1 : 1;
-    // const banner = await Banner.create({
-    //   title,
-    //   subtitle,
-    //   imageUrl: uploadResult.secure_url,
-    //   publicId: uploadResult.public_id,
-    //   order,
-    // });
+    console.log(payload);
+    const result = await banner_schema_1.Banner.create({
+        title,
+        description,
+        imageUrl,
+        order,
+    });
+    console.log(result);
+    if (!result) {
+        throw new error_1.AppError(404, "Banner not created");
+    }
     return result;
 };
 /* ------------------------------------
    GET ALL BANNERS
 ------------------------------------- */
 const getBanners = async (sortBy = "order", sortWith = 1) => {
-    const banners = await banner_schema_1.Banner.find().sort({ [sortBy]: sortWith });
+    const banners = await banner_schema_1.Banner.find().sort({ order: 1 });
     return banners;
 };
 /* ------------------------------------
@@ -52,7 +42,7 @@ const deleteBanner = async (id) => {
     if (!banner) {
         throw new error_1.AppError(404, "Banner not found");
     }
-    await (0, fileUpload_1.deleteFromCloudinary)(banner.publicId);
+    // await deleteFromCloudinary(banner.publicId);
     await banner_schema_1.Banner.findByIdAndDelete(id);
     return banner;
 };
@@ -62,7 +52,7 @@ const deleteBanner = async (id) => {
 const deleteAllBanners = async () => {
     const banners = await banner_schema_1.Banner.find();
     for (const banner of banners) {
-        await (0, fileUpload_1.deleteFromCloudinary)(banner.publicId);
+        // await deleteFromCloudinary(banner.publicId);
     }
     const result = await banner_schema_1.Banner.deleteMany({});
     return result;

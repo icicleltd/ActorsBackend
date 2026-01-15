@@ -22,12 +22,12 @@ const bannerSchema = new Schema<IBanner>(
 
     publicId: {
       type: String,
-      required: true,
     },
 
     order: {
       type: Number,
       required: true,
+      unique: true,
     },
   },
   {

@@ -12,12 +12,12 @@ const banner_services_1 = require("./banner.services");
    image + title + subtitle
 ------------------------------------- */
 const createBanner = (0, catchAsync_1.default)(async (req, res, next) => {
-    const file = req.file;
-    const { title, description } = req.body;
+    const { title, description, imageUrl, order } = req.body;
     const result = await banner_services_1.BannerService.createBanner({
-        file,
+        imageUrl,
         title,
         description,
+        order
     });
     (0, sendResponse_1.default)(res, {
         statusCode: 201,

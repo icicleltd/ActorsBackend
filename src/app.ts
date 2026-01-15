@@ -15,6 +15,7 @@ import bannerRouter from "./banner/banner.router";
 import appointmentRouter from "./appointments/appointments.router";
 import { isRoleChange } from "./middleware/isRolechange";
 import { VerifyLogin } from "./middleware/verifyLogin";
+import { VerifyAdmin } from "./middleware/verifyAdmin";
 
 const app = express();
 // Middleware
@@ -76,12 +77,16 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 //-----------cors----------------
 //---------router-------------
 app.use("/api/v1/actors", actorRouter);
-app.use("/api/v1/admin",VerifyLogin, adminRouter);
+app.use("/api/v1/admin", VerifyLogin, adminRouter);
 app.use("/api/v1/notification", notificationRouter);
 app.use("/api/v1/events", eventRouter);
 app.use("/", devRouter);
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/media-directory",VerifyLogin, mediaDirectoryRouter);
+app.use(
+  "/api/v1/media-directory",
+  VerifyLogin,
+  mediaDirectoryRouter
+);
 app.use("/api/v1/galary", galaryRouter);
 app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/about", aboutRouter);

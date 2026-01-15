@@ -13,7 +13,7 @@ import newsRouter from "./news/news.router";
 import aboutRouter from "./about/about.router";
 import bannerRouter from "./banner/banner.router";
 import appointmentRouter from "./appointments/appointments.router";
-import { isRoleChange } from "./middleware/isRolechange";
+import youtubeRouter from "./youtube/youtube.router";
 import { VerifyLogin } from "./middleware/verifyLogin";
 
 const app = express();
@@ -87,6 +87,7 @@ app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/about", aboutRouter);
 app.use("/api/v1/banner", bannerRouter);
 app.use("/api/v1/appointment", appointmentRouter);
+app.use("/api/v1/youtube", youtubeRouter);
 app.use(globalErrorHandler);
 
 // Test route

@@ -4,14 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const fileUpload_1 = require("../helper/fileUpload");
 const banner_controller_1 = require("./banner.controller");
 const router = express_1.default.Router();
 /**
  * Create banner
  * image + title + subtitle (multipart/form-data)
  */
-router.post("/", fileUpload_1.fileUploader.upload.single("image"), banner_controller_1.BannerController.createBanner);
+router.post("/", banner_controller_1.BannerController.createBanner);
 /**
  * Get all banners (sorted by order)
  */

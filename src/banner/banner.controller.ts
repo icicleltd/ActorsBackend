@@ -9,13 +9,13 @@ import { BannerService } from "./banner.services";
 ------------------------------------- */
 const createBanner = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const file = req.file;
-    const { title, description } = req.body;
+    const { title, description, imageUrl,order } = req.body;
 
     const result = await BannerService.createBanner({
-      file,
+      imageUrl,
       title,
       description,
+      order
     });
 
     sendResponse(res, {

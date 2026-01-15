@@ -6,42 +6,26 @@ import { Banner } from "./banner.schema";
    CREATE BANNER
 ------------------------------------- */
 const createBanner = async (payload: {
-  file?: Express.Multer.File;
+  imageUrl: string;
   title: string;
   description?: string;
+  order: number;
 }) => {
-  const { file, title, description } = payload;
-  console.log("title, desc", payload);
-  let result;
-  if (title && description) {
-    result = await Banner.findOneAndUpdate(
-      {},
-      {
-        title,
-        description,
-      },
-      {
-        new: true,
-        upsert: true,
-      }
-    );
+  const { imageUrl, title, description, order } = payload;
+  if (!imageUrl || !title || !order) {
+    throw new AppError(400, "Image title and order required");
   }
-
-  // Upload to Cloudinary
-  // const uploadResult = await fileUploader.CloudinaryUpload(file);
-
-  // // Get last order
-  // const lastBanner = await Banner.findOne().sort({ order: -1 });
-  // const order = lastBanner ? lastBanner.order + 1 : 1;
-
-  // const banner = await Banner.create({
-  //   title,
-  //   subtitle,
-  //   imageUrl: uploadResult.secure_url,
-  //   publicId: uploadResult.public_id,
-  //   order,
-  // });
-
+  console.log(payload);
+  const result = await Banner.create({
+    title,
+    description,
+    imageUrl,
+    order,
+  });
+  console.log(result);
+  if (!result) {
+    throw new AppError(404, "Banner not created");
+  }
   return result;
 };
 
@@ -49,7 +33,7 @@ const createBanner = async (payload: {
    GET ALL BANNERS
 ------------------------------------- */
 const getBanners = async (sortBy: string = "order", sortWith: 1 | -1 = 1) => {
-  const banners = await Banner.find().sort({ [sortBy]: sortWith });
+  const banners = await Banner.find().sort({ order: 1 });
   return banners;
 };
 
@@ -67,7 +51,7 @@ const deleteBanner = async (id: string) => {
     throw new AppError(404, "Banner not found");
   }
 
-  await deleteFromCloudinary(banner.publicId);
+  // await deleteFromCloudinary(banner.publicId);
   await Banner.findByIdAndDelete(id);
 
   return banner;
@@ -80,7 +64,7 @@ const deleteAllBanners = async () => {
   const banners = await Banner.find();
 
   for (const banner of banners) {
-    await deleteFromCloudinary(banner.publicId);
+    // await deleteFromCloudinary(banner.publicId);
   }
 
   const result = await Banner.deleteMany({});

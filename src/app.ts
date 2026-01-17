@@ -14,6 +14,7 @@ import aboutRouter from "./about/about.router";
 import bannerRouter from "./banner/banner.router";
 import appointmentRouter from "./appointments/appointments.router";
 import youtubeRouter from "./youtube/youtube.router";
+import sponcerRouter from "./sponcer/sponcer.router";
 import { VerifyLogin } from "./middleware/verifyLogin";
 import { VerifyAdmin } from "./middleware/verifyAdmin";
 
@@ -93,6 +94,7 @@ app.use("/api/v1/about", aboutRouter);
 app.use("/api/v1/banner", bannerRouter);
 app.use("/api/v1/appointment", appointmentRouter);
 app.use("/api/v1/youtube", youtubeRouter);
+app.use("/api/v1/sponcer", sponcerRouter);
 app.use(globalErrorHandler);
 
 // Test route

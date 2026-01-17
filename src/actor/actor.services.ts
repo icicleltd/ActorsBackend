@@ -338,7 +338,7 @@ const getAllActor = async (
               },
               {
                 case: "$hasPastWay",
-                then: { primary: "Past away Member" },
+                then: { primary: "pastWay" },
               },
             ],
 

@@ -17,7 +17,10 @@ const actorSchema = new Schema<IActor>(
     nationality: { type: String },
     religion: { type: String },
     dob: { type: Date },
-    bloodGroup: { type: String },
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
+    },
 
     // Contact
     email: { type: String },
@@ -130,8 +133,8 @@ const actorSchema = new Schema<IActor>(
       duration: { type: Number, max: 30 },
       sizeMB: { type: Number, max: 100 },
     },
-    isActive:{type: Boolean, default:true},
-    isProfilePublic:{type: Boolean, default: true},
+    isActive: { type: Boolean, default: true },
+    isProfilePublic: { type: Boolean, default: true },
     role: { type: String, default: "member" },
 
     category: { type: String, enum: ["A", "B", "C"] },
@@ -141,7 +144,7 @@ const actorSchema = new Schema<IActor>(
       default: "pending",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // add gard for rank history duplicate added
@@ -155,7 +158,7 @@ actorSchema.pre<IActor>("save", async function () {
     if (seen.has(key)) {
       throw new AppError(
         400,
-        `Duplicate rankHistory entry: rank "${entity.rank}" with yearRange "${entity.yearRange}" already exists`
+        `Duplicate rankHistory entry: rank "${entity.rank}" with yearRange "${entity.yearRange}" already exists`,
       );
     }
     seen.add(key);
@@ -200,7 +203,7 @@ actorSchema.pre<Query<any, IActor>>("findOneAndUpdate", async function () {
     if (seen.has(key)) {
       throw new AppError(
         400,
-        `Duplicate rankHistory entry: rank "${entity.rank}" with yearRange "${entity.yearRange}" already exists`
+        `Duplicate rankHistory entry: rank "${entity.rank}" with yearRange "${entity.yearRange}" already exists`,
       );
     }
     seen.add(key);
@@ -245,7 +248,7 @@ actorSchema.pre<Query<any, IActor>>("findOneAndUpdate", async function () {
    🔐 PASSWORD COMPARE METHOD
 ====================================================== */
 actorSchema.methods.comparePassword = async function (
-  plainPassword: string
+  plainPassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(plainPassword, this.password);
 };

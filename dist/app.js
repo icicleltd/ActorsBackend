@@ -18,6 +18,7 @@ const about_router_1 = __importDefault(require("./about/about.router"));
 const banner_router_1 = __importDefault(require("./banner/banner.router"));
 const appointments_router_1 = __importDefault(require("./appointments/appointments.router"));
 const youtube_router_1 = __importDefault(require("./youtube/youtube.router"));
+const sponcer_router_1 = __importDefault(require("./sponcer/sponcer.router"));
 const verifyLogin_1 = require("./middleware/verifyLogin");
 const app = (0, express_1.default)();
 // Middleware
@@ -80,6 +81,7 @@ app.use("/api/v1/about", about_router_1.default);
 app.use("/api/v1/banner", banner_router_1.default);
 app.use("/api/v1/appointment", appointments_router_1.default);
 app.use("/api/v1/youtube", youtube_router_1.default);
+app.use("/api/v1/sponcer", sponcer_router_1.default);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

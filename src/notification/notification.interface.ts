@@ -1,10 +1,29 @@
-import { Document, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
-export interface INotification extends Document {
-  senderId: Types.ObjectId;
-  recipientId: Types.ObjectId;
-  type: string;
-  reference?: string | null;
-  isRead: boolean;
+export type NotificationType =
+  | "APPLICATION_SUBMITTED"
+  | "PAYMENT_SUBMITTED"
+  | "REFERENCE_REQUEST"
+  | "APPLICATION_APPROVED"
+  | "APPLICATION_REJECTED"
+  | "CONTACT";
+
+export type RecipientRole = "admin" | "member" | "superadmin";
+
+export interface INotification {
+  recipientRole: RecipientRole[];
+
+  // Who will receive this
+  recipient?: Types.ObjectId; // actorId (null for admin broadcast)
+
+  type: NotificationType;
+
   title: string;
+  message: string;
+
+  // Context references
+  application: Types.ObjectId;
+  payment?: Types.ObjectId;
+
+  isRead: boolean;
 }

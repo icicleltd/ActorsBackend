@@ -1,16 +1,15 @@
-import { PayloadLoign } from './../admin/admin.interface';
+import { PayloadLoign } from '../admin/admin.interface';
 import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
-import { BeAMemberService } from "./beAMember.services";
-import { IBeAMemberPayload } from './beAMember.interface';
+import { BeAMemberService } from "./payment.services";
 
 /* ------------------------------------
    CREATE BE A MEMBER (Admin)
 ------------------------------------- */
 const createBeAMember = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const PayloadBeAMember : IBeAMemberPayload = req.body;
+    const PayloadBeAMember = req.body;
 
     const result = await BeAMemberService.createBeAMember(PayloadBeAMember);
 

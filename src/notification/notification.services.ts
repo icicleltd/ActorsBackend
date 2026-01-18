@@ -1,5 +1,5 @@
 import { AppError } from "../middleware/error";
-import Notification from "./notification.schema";
+import { Notification } from "./notification.schema";
 
 const createNotification = async () => {
   return {

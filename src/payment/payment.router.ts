@@ -1,7 +1,7 @@
 import express from "express";
 import { VerifyAdmin } from "../middleware/verifyAdmin";
 import { VerifyLogin } from "../middleware/verifyLogin";
-import { BeAMemberController } from "./beAMember.controller";
+import { BeAMemberController } from "./payment.controller";
 
 const router = express.Router();
 

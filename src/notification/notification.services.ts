@@ -2,6 +2,7 @@ import { AppError } from "../middleware/error";
 import { INotificationQuery } from "./notification.interface";
 import { Notification } from "./notification.schema";
 
+
 const createNotification = async () => {
   return {
     msg: "Notification created",

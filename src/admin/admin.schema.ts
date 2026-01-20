@@ -14,9 +14,9 @@ const adminSchema = new Schema<IAdmin>(
       required: true,
       unique: true,
       lowercase: true,
+       trim: true,
     },
 
-    
     password: {
       type: String,
       required: true,
@@ -26,6 +26,7 @@ const adminSchema = new Schema<IAdmin>(
     phone: {
       type: String,
       default: "",
+      trim: true,
     },
 
     avatar: {
@@ -51,7 +52,7 @@ const adminSchema = new Schema<IAdmin>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 adminSchema.pre<IAdmin>("save", async function () {
@@ -62,7 +63,7 @@ adminSchema.pre<IAdmin>("save", async function () {
 });
 
 adminSchema.methods.comparePassword = async function (
-  plainPassword: string
+  plainPassword: string,
 ): Promise<boolean> {
   return bcrypt.compare(plainPassword, this.password);
 };

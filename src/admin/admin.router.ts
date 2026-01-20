@@ -109,7 +109,7 @@ adminRouter.put("/update-idno", async (req, res) => {
 adminRouter.put("/:id", AdminController.readNotificaton);
 // adminRouter.delete("/delete-all", async (req, res) => {
 //   const text = req.body.text;
-//   console.log(text);
+//   
 //   try {
 //     if (text === "delete all") {
 //       await Actor.deleteMany({});

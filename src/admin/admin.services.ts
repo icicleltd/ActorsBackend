@@ -78,9 +78,9 @@ const updateActorProfile = async (
     ...actorData,
     photo: uploadedUrl,
   };
-  console.log("updatedPayload", updatedPayload);
+  
   const sanitize = sanitizePayload(updatedPayload);
-  console.log("sanitize", sanitize);
+  
   const result = await Actor.findByIdAndUpdate(
     actorId,
     {
@@ -91,7 +91,7 @@ const updateActorProfile = async (
       runValidators: true,
     }
   ).select("-password");
-  console.log("result", result);
+ 
   if (!result) {
     throw new Error("Failed to fill up actor profile");
   }
@@ -122,7 +122,7 @@ const updateActorProfile = async (
 //     fromActive: actorData.fromActive,
 //     bio: actorData.bio,
 //   };
-//   console.log(actorProfile);
+//  
 //   const actor = await Actor.create(actorProfile);
 //   if (!actor) {
 //     throw new AppError(500, "Failed to create actor");
@@ -162,7 +162,7 @@ const addActor = async (file: any, actorData: any) => {
     password: actorData.password,
   };
 
-  console.log(actorProfile);
+  
 
   // Create the actor in the database
   const actor = await Actor.create(actorProfile);
@@ -170,13 +170,13 @@ const addActor = async (file: any, actorData: any) => {
   if (!actor) {
     throw new AppError(500, "Failed to create actor");
   }
-  console.log(actor);
+
   return actor;
 };
 
 const promoteMember = async (memberData: any) => {
   const { id, fullName, idNo, rank, rankYear, rankYearRange } = memberData;
-  console.log(memberData);
+
   if (!id || !fullName || !idNo || !rank) {
     throw new AppError(400, "Member data not provided");
   }
@@ -206,8 +206,7 @@ const promoteMember = async (memberData: any) => {
   if (!newMember) {
     throw new AppError(500, "Member Not promote");
   }
-  console.log(memberData);
-  console.log("new", newMember);
+
   return newMember;
 };
 const deleteMember = async (id: string) => {
@@ -215,7 +214,7 @@ const deleteMember = async (id: string) => {
     throw new AppError(400, "Member id Not found");
   }
   const responce = await Actor.findByIdAndDelete(id);
-  console.log(responce);
+
   if (!responce) {
     throw new AppError(40, "Member not delete");
   }
@@ -239,7 +238,7 @@ const login = async (payload: PayloadLoign) => {
 
   const fields = ["email", "phone"];
   const trimmedIdentifier = identifier.trim().toLowerCase();
-  console.log(trimmedIdentifier);
+ 
   const filter = {
     $or: fields.map((field) => ({
       [field]: trimmedIdentifier,
@@ -250,7 +249,7 @@ const login = async (payload: PayloadLoign) => {
   const existing = await Admin.findOne(filter)
     .select("+password _id email fullName")
     .lean(false);
-  console.log("is ", existing);
+  
   if (!existing) {
     throw new AppError(401, "Unauthorized");
   }
@@ -275,7 +274,7 @@ const login = async (payload: PayloadLoign) => {
   }
   const userResponse = existing.toObject();
   delete userResponse.password;
-  // console.log(data);
+  
   return {
     user: userResponse,
     accessToken,
@@ -300,20 +299,20 @@ const uploadGallery = async (
     publicId: u.public_id,
     image: u.secure_url,
   }));
-  console.log("images", images);
+ 
   const result = await Actor.findByIdAndUpdate(id, {
     $addToSet: {
       gallery: images,
     },
   });
-  console.log(result);
+  
   return result;
 };
 const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
   if (!Types.ObjectId.isValid(id)) {
     throw new AppError(400, "Id is not valid");
   }
-  console.log(id);
+  
   if (deleteMode === "all") {
     const result = await Actor.findByIdAndUpdate(
       id,
@@ -324,7 +323,7 @@ const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
       },
       { new: true }
     );
-    console.log(result);
+    
     return result;
   }
 
@@ -361,8 +360,7 @@ const makeAdmin = async (payload: PayloadMakeAdmin) => {
     { new: true, runValidators: true }
   );
 
-  console.log(existing);
-  console.log(result);
+  
   return result;
 };
 const test = async () => {

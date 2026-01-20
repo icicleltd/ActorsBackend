@@ -10,7 +10,6 @@ import { YoutubeService } from "./youtube.services";
 const createYoutbe = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { title, url } = req.body;
-    console.log(req.body);
     const result = await YoutubeService.createYoutbe({
       title,
       url,

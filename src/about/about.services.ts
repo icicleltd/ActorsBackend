@@ -9,7 +9,7 @@ import { About } from "./about.schema";
 ------------------------------------------------ */
 const createAbout = async (payload: any, file: any) => {
   const { title, description, points, year } = payload;
-  // console.log(payload);
+ 
   const haveAbout = await About.find({});
   if (haveAbout.length > 1) {
     throw new AppError(400, "Aready have a about");
@@ -55,7 +55,7 @@ const createAbout = async (payload: any, file: any) => {
   }
 
   if (year && file) {
-    console.log("payload in crete", payload);
+   
     const uploadImage = (await fileUploader.CloudinaryUpload(file)) as {
       secure_url: string;
     };
@@ -95,7 +95,6 @@ const getAbouts = async () => {
    DELETE ABOUT
 ------------------------------------------------ */
 const deleteAbout = async (payload: any) => {
-  console.log("in payload delete", payload);
 
   if (!payload) {
     throw new AppError(400, "No payload provided");

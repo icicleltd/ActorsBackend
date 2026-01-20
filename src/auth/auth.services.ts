@@ -20,17 +20,19 @@ const createAuth = async (payload: IPayload) => {
   }
   const trimmedIdentifier = identifier.trim().toLowerCase();
   filter.$or = fields.map((field) => ({
-    [field]: trimmedIdentifier,
+    // [field]: trimmedIdentifier,
+    [field]: { $regex: trimmedIdentifier, $options: "i" },
   }));
   const existingUser = await Actor.findOne(filter)
     .select("+password _id email fullName")
     .lean(false);
+  console.log(trimmedIdentifier, existingUser);
   if (!existingUser) {
     throw new AppError(401, "Unauthorized");
   }
-  console.log(payload);
+
   const isPasswordValid = await existingUser.comparePassword(password);
-  console.log(isPasswordValid);
+
   if (!isPasswordValid) {
     throw new AppError(401, "Invalid Password");
   }
@@ -43,7 +45,7 @@ const createAuth = async (payload: IPayload) => {
   const accessToken = await jwtHelper.generateToken(
     data,
     process.env.ACCESS_TOKEN_SECRET_KEY as Secret,
-    process.env.ACCESS_TOKEN_EXPIRE_IN as string
+    process.env.ACCESS_TOKEN_EXPIRE_IN as string,
   );
   if (!accessToken) {
     throw new AppError(400, "Token not found");
@@ -58,7 +60,6 @@ const createAuth = async (payload: IPayload) => {
 };
 
 const getAuths = async (payload: any) => {
-  console.log(payload);
   const { _id, email, fullName, role } = payload.data;
   if (!_id) {
     throw new AppError(401, "Unathorize");
@@ -68,7 +69,6 @@ const getAuths = async (payload: any) => {
     Admin.findById(_id),
   ]);
 
-  console.log(user, admin);
   if (!user && !admin) {
     throw new AppError(404, "Not found");
   }
@@ -83,16 +83,12 @@ const getAuths = async (payload: any) => {
     accessToken = await jwtHelper.generateToken(
       data,
       process.env.ACCESS_TOKEN_SECRET_KEY as Secret,
-      process.env.ACCESS_TOKEN_EXPIRE_IN as string
+      process.env.ACCESS_TOKEN_EXPIRE_IN as string,
     );
     if (!accessToken) {
       throw new AppError(400, "Token not found");
     }
   }
-  console.log(accessToken);
-  console.log("token role", role);
-  console.log("db role", user?.role);
-  console.log(user);
   return { user, admin, accessToken };
 };
 

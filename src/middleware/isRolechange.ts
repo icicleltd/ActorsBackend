@@ -17,18 +17,14 @@ export const isRoleChange = async (
     }
 
     const accessToken = authHeader.split(" ")[1];
-    console.log(accessToken);
-    // ✅ Verify safely
     const data = jwtHelper.verifyToken(
       accessToken,
       process.env.ACCESS_TOKEN_SECRET_KEY as Secret
     );
 
     req.user = data; // attach user if valid
-    console.log(data);
     return next();
   } catch (error) {
-    // ❗ IMPORTANT: do NOT block
     console.warn("Token invalid or expired, continuing as guest");
     return next(error);
   }

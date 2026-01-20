@@ -8,6 +8,8 @@ import { PaymentPayload } from "../payment/payment.interface";
 import { Payment } from "../payment/payment.schema";
 import { Notification } from "../notification/notification.schema";
 import { Counter } from "../serialCounter/serialCounter.schema";
+import { applicationSubmittedTemplate } from "../helper/mailTempate/applicationSubmitted";
+import { sendMail } from "../helper/emailHelper";
 
 /* ------------------------------------
    CREATE BE A MEMBER
@@ -35,10 +37,10 @@ const createBeAMember = async (payload: IBeAMemberPayload) => {
   // };
   const session = await mongoose.startSession();
   try {
-    let createBeAMember;
+    let createdBeAMember: IBeAMember | null = null;
     await session.withTransaction(async () => {
       const [beAMember] = await BeAMember.create([beAMemberData], { session });
-      createBeAMember = beAMember;
+      createdBeAMember = beAMember;
       const [payment] = await Payment.create(
         [
           {
@@ -72,7 +74,7 @@ const createBeAMember = async (payload: IBeAMemberPayload) => {
       );
       if (payload.actorReference?.length) {
         const referenceNotifications = payload.actorReference.map((ref) => ({
-          recipientRole: ["member","admin", "superadmin"],
+          recipientRole: ["member", "admin", "superadmin"],
           recipient: new mongoose.Types.ObjectId(ref.actorId),
           type: "REFERENCE_REQUEST",
           title: "Reference Approval Request",
@@ -90,9 +92,24 @@ const createBeAMember = async (payload: IBeAMemberPayload) => {
         },
       );
     });
-    return createBeAMember;
+
+    if (!createdBeAMember) {
+      throw new AppError(500, "Failed to create application");
+    }
+
+    const { subject, text, html } = applicationSubmittedTemplate(
+      payload.fullName,
+    );
+
+    sendMail({
+      to: payload.email,
+      subject,
+      text,
+      html,
+    });
+    return createdBeAMember;
   } catch (error) {
-    console.log(error);
+    console.log("be a member tarasation error",error);
     throw new AppError(400, `${error}`);
   } finally {
     session.endSession();

@@ -11,11 +11,9 @@ const createSponcer = async (payload: { title: string; url: string }) => {
   if (!url) {
     throw new AppError(400, "Url required");
   }
-  console.log(payload);
   const result = await Sponcer.create({
     url,
   });
-  console.log(result);
   if (!result) {
     throw new AppError(404, "Banner not created");
   }

@@ -7,11 +7,11 @@ import { CreateEventDto, GetEventsDto } from "./event.interface";
 const createEvent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: CreateEventDto = req.body;
-    console.log(payload);
+    
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];
     };
-    console.log(files);
+  
     // const adminId = req.user?.id;
     const result = await EventService.createEvent(payload, files);
 
@@ -34,7 +34,6 @@ const getEvents = catchAsync(
         : req.query.sortWith === "desc"
         ? -1
         : -1;
-    console.log(sortBy, sortWith);
     const payload: GetEventsDto = {};
     if (eventType === "PAST" || eventType === "UPCOMING") {
       payload.eventType = eventType;
@@ -98,7 +97,6 @@ const deleteEvent = catchAsync(
 const updateEvent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-console.log(id)
     const payload = req.body;
     const files = req.files as {
       [fieldname: string]: Express.Multer.File[];

@@ -1,11 +1,12 @@
 import { model, Schema } from "mongoose";
 import { INotification } from "./notification.interface";
+import { NOTIFICATION_TYPES, RECIPIENT_ROLES } from "./notification.constant";
 
 const notificationSchema = new Schema<INotification>(
   {
     recipientRole: {
       type: [String],
-      enum: ["admin", "member", "superadmin"],
+      enum:  RECIPIENT_ROLES,
       required: true,
     },
 
@@ -16,14 +17,7 @@ const notificationSchema = new Schema<INotification>(
 
     type: {
       type: String,
-      enum: [
-        "APPLICATION_SUBMITTED",
-        "PAYMENT_SUBMITTED",
-        "REFERENCE_REQUEST",
-        "APPLICATION_APPROVED",
-        "APPLICATION_REJECTED",
-        "CONTACT",
-      ],
+      enum:  NOTIFICATION_TYPES,
       required: true,
     },
 

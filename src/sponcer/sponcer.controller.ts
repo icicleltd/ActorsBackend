@@ -10,7 +10,6 @@ import { SponcerService } from "./sponcer.services";
 const createSponcer = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { title, url } = req.body;
-    console.log(req.body);
     const result = await SponcerService.createSponcer({
       title,
       url,

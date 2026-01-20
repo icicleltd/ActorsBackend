@@ -19,6 +19,8 @@ import counterRouter from "./serialCounter/serialCounter.router";
 import beAMemberRouter from "./beAMember/beAMember.router";
 import { VerifyLogin } from "./middleware/verifyLogin";
 import { VerifyAdmin } from "./middleware/verifyAdmin";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 // Middleware

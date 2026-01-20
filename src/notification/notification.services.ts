@@ -1,4 +1,5 @@
 import { AppError } from "../middleware/error";
+import { INotificationQuery } from "./notification.interface";
 import { Notification } from "./notification.schema";
 
 const createNotification = async () => {
@@ -6,12 +7,31 @@ const createNotification = async () => {
     msg: "Notification created",
   };
 };
-const getNotification = async () => {
-  const notification = await Notification.find({});
-  if (!notification) {
-    throw new AppError(204, "not found");
+const getNotification = async (queryPayload: INotificationQuery) => {
+  const { recipientRole, recipient, notificationType } = queryPayload;
+
+  const filter: Partial<Record<string, unknown>> = {};
+
+  if (recipientRole === "member") {
+    if (!recipient) {
+      throw new AppError(400, "Recipient is required for member notifications");
+    }
+    filter.recipient = recipient;
   }
-  return notification;
+
+  if (recipientRole === "admin" || recipientRole === "superadmin") {
+    filter.recipientRole = { $in: ["admin", "superadmin"] };
+  }
+
+  if (notificationType && notificationType !== "ALL") {
+    filter.type = notificationType;
+  }
+
+  const notifications = await Notification.find(filter)
+    .sort({ createdAt: -1 })
+    .lean();
+  console.log("notifications", notifications.length);
+  return notifications;
 };
 const getAdminNotification = async (adminId: string) => {
   if (!adminId) {
@@ -34,7 +54,7 @@ const readNotification = async (notificatinId: string) => {
     {
       isRead: true,
     },
-    { new: true }
+    { new: true },
   );
   if (!notification) {
     throw new AppError(404, "Notification not found");

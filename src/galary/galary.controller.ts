@@ -55,7 +55,6 @@ const getGalleryImages = catchAsync(
 const deleteGalleryImage = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    console.log(id);
     const result = await GalleryService.deleteGalleryImage(id);
 
     sendResponse(res, {

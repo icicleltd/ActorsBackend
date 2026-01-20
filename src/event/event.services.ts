@@ -54,7 +54,6 @@ const createEvent = async (
     description,
     images,
   });
-  console.log(pastEvent);
   return pastEvent;
 };
 
@@ -64,7 +63,6 @@ const getEvents = async (
   sortWith: -1 | 1
 ) => {
   const now = new Date();
-  console.log(sortBy, sortWith, "in services");
   let filter: any = {};
 
   if (eventType === "PAST") {
@@ -139,8 +137,6 @@ const updateEventPatch = async (
   if (!event) {
     throw new AppError(404, "Event not found");
   }
-  console.log(payload);
-  console.log(files);
   /* ------------------------------------
      EXISTING IMAGES FROM CLIENT
   ------------------------------------- */
@@ -188,7 +184,6 @@ const updateEventPatch = async (
   const updatedEvent = await Event.findByIdAndUpdate(id, updatePayload, {
     new: true,
   });
-  console.log(updateEvent);
   return updatedEvent;
 };
 
@@ -261,7 +256,6 @@ const updateEvent = async (
     },
     { new: true }
   );
-  console.log(updatedEvent);
   return updatedEvent;
 };
 

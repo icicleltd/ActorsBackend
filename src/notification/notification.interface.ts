@@ -1,29 +1,41 @@
-import { Schema, model, Types } from "mongoose";
+import { Types } from "mongoose";
+import { NOTIFICATION_TYPES, RECIPIENT_ROLES } from "./notification.constant";
 
-export type NotificationType =
-  | "APPLICATION_SUBMITTED"
-  | "PAYMENT_SUBMITTED"
-  | "REFERENCE_REQUEST"
-  | "APPLICATION_APPROVED"
-  | "APPLICATION_REJECTED"
-  | "CONTACT";
+/* =======================
+   DERIVED TYPES
+======================= */
 
-export type RecipientRole = "admin" | "member" | "superadmin";
+export type RecipientRole = (typeof RECIPIENT_ROLES)[number];
+
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/* =======================
+   MAIN DOCUMENT TYPE
+======================= */
 
 export interface INotification {
   recipientRole: RecipientRole[];
 
-  // Who will receive this
-  recipient?: Types.ObjectId; // actorId (null for admin broadcast)
+  // Actor _id (undefined for admin/superadmin broadcast)
+  recipient?: Types.ObjectId;
 
   type: NotificationType;
 
   title: string;
   message: string;
 
-  // Context references
   application: Types.ObjectId;
   payment?: Types.ObjectId;
 
   isRead: boolean;
+}
+
+/* =======================
+   QUERY TYPE
+======================= */
+
+export interface INotificationQuery {
+  recipientRole: RecipientRole;
+  recipient?: Types.ObjectId;
+  notificationType?: NotificationType;
 }

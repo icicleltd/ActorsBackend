@@ -16,7 +16,6 @@ const createNews = async (
   const upload = (await fileUploader.CloudinaryUpload(file)) as {
     secure_url: string;
   };
-  console.log(payload);
   const news = await News.create({
     title: payload.title,
     image: upload.secure_url,
@@ -25,7 +24,6 @@ const createNews = async (
     details: payload.details,
     category: payload.category,
   });
-  console.log(news);
   return news;
 };
 
@@ -50,7 +48,6 @@ const getAllNews = async (
     News.countDocuments(),
   ]);
   const totalPages = Math.ceil(total / limit);
-  console.log(total);
   return { news, total, totalPages };
 };
 
@@ -68,7 +65,6 @@ const deleteNews = async (id: string) => {
     throw new AppError(400, "This is not vaild");
   }
   const news = await News.findByIdAndDelete(id);
-  console.log(news);
   if (!news) throw new AppError(404, "News not found");
   return news;
 };
@@ -92,7 +88,6 @@ const editNews = async (
     ...(uploadUrl && { image: uploadUrl.secure_url }),
   };
   const cleanedPayload = sanitizePayload(updatedPayload);
-  console.log(cleanedPayload);
   const updateNews = await News.findByIdAndUpdate(
     id,
     {

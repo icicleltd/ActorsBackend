@@ -2,7 +2,6 @@ import { fileUploader } from "../helper/fileUpload";
 import Actor from "./actor.schema";
 import { AppError } from "../middleware/error";
 import { Admin } from "../admin/admin.schema";
-import Notification from "../notification/notification.schema";
 import type { PipelineStage, SortOrder } from "mongoose";
 
 const createActor = async (files: any, data: any) => {
@@ -44,15 +43,15 @@ const createActor = async (files: any, data: any) => {
   }
   const admins = await Admin.find({});
 
-  admins.forEach(async (admin) => {
-    await Notification.create({
-      senderId: newActor._id,
-      recipientId: admin._id,
-      type: "ACTOR_SUBMISSION",
-      title: "New actor filled info",
-      reference: newActor.fullName,
-    });
-  });
+  // admins.forEach(async (admin) => {
+  //   await Notification.create({
+  //     senderId: newActor._id,
+  //     recipientId: admin._id,
+  //     type: "ACTOR_SUBMISSION",
+  //     title: "New actor filled info",
+  //     reference: newActor.fullName,
+  //   });
+  // });
 
   return {
     actorinfo: newActor,
@@ -441,7 +440,7 @@ const getAllActor = async (
     });
     pipeline.push({ $sort: { "rankHistory.end": -1, roleOrder: 1 } });
   } else if (rankGroup === "advisor") {
-    console.log("in advisor if");
+    
     pipeline.push({
       $sort: { "rankHistory.end": -1, idNo: 1 },
     });
@@ -488,7 +487,7 @@ const getAllActor = async (
 
   // ==================== EXECUTE PIPELINE ====================
   const result = await Actor.aggregate(pipeline);
-  // console.log(reportActor);
+  
   const aggregationResult = result[0] || {};
 
   return {
@@ -503,7 +502,7 @@ const getAllActor = async (
   };
 };
 const filterByRank = async (rank: string) => {
-  console.log(rank);
+
   if (!rank) {
     throw new Error("No rank provided");
   }
@@ -575,7 +574,7 @@ const updateActor = async (
   files: { [fieldname: string]: Express.Multer.File[] },
   id: string
 ) => {
-  console.log(payload,files)
+ 
   if (!id) {
     throw new AppError(400, "Actor ID is required");
   }
@@ -622,7 +621,7 @@ const updateActor = async (
     { $set: updateData },
     { new: true }
   );
-  console.log(newActor)
+ 
   return newActor;
 };
 

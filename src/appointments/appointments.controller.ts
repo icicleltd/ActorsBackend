@@ -10,7 +10,7 @@ const createSchedule = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
     const files = req.files;
-    console.log(files);
+   
 
     const result = await ScheduleService.createSchedule(payload, files);
 

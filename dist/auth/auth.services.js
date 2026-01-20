@@ -23,17 +23,17 @@ const createAuth = async (payload) => {
     }
     const trimmedIdentifier = identifier.trim().toLowerCase();
     filter.$or = fields.map((field) => ({
-        [field]: trimmedIdentifier,
+        // [field]: trimmedIdentifier,
+        [field]: { $regex: trimmedIdentifier, $options: "i" },
     }));
     const existingUser = await actor_schema_1.default.findOne(filter)
         .select("+password _id email fullName")
         .lean(false);
+    console.log(trimmedIdentifier, existingUser);
     if (!existingUser) {
         throw new error_1.AppError(401, "Unauthorized");
     }
-    console.log(payload);
     const isPasswordValid = await existingUser.comparePassword(password);
-    console.log(isPasswordValid);
     if (!isPasswordValid) {
         throw new error_1.AppError(401, "Invalid Password");
     }
@@ -55,7 +55,6 @@ const createAuth = async (payload) => {
     };
 };
 const getAuths = async (payload) => {
-    console.log(payload);
     const { _id, email, fullName, role } = payload.data;
     if (!_id) {
         throw new error_1.AppError(401, "Unathorize");
@@ -64,7 +63,6 @@ const getAuths = async (payload) => {
         actor_schema_1.default.findById(_id),
         admin_schema_1.Admin.findById(_id),
     ]);
-    console.log(user, admin);
     if (!user && !admin) {
         throw new error_1.AppError(404, "Not found");
     }
@@ -81,10 +79,6 @@ const getAuths = async (payload) => {
             throw new error_1.AppError(400, "Token not found");
         }
     }
-    console.log(accessToken);
-    console.log("token role", role);
-    console.log("db role", user?.role);
-    console.log(user);
     return { user, admin, accessToken };
 };
 const getAdminAuths = async (adminId) => {

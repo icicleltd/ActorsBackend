@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
+const emailHelper_1 = require("../helper/emailHelper");
+const error_1 = require("../middleware/error");
 const router = express_1.default.Router();
 // router.post("/upcomming", EventController.createEvent);
 // router.get("/migrate", async (req, res) => {
@@ -18,10 +20,10 @@ const router = express_1.default.Router();
 //       rankYearRange: { $exists: true },
 //       rankHistory: { $exists: false },
 //     });
-//     // console.log(actors);
+//     
 //     for (const actor of actors) {
 //       const { rank, rankYearRange } = actor as any;
-//       console.log(rank, rankYearRange);
+//       
 //       //   if (!rank || !rankYearRange) continue;
 //       actor.rankHistory = [
 //         {
@@ -31,12 +33,11 @@ const router = express_1.default.Router();
 //           end: rankYearRange.end,
 //         },
 //       ];
-//       console.log(actor);
+//       
 //       //  return res.send(actor)
-//       //   console.log(actor);
+//       //   
 //       await actor.save();
 //     }
-//     console.log(`Found ${actors.length} actors to migrate`);
 //     let updatedCount = 0;
 //     return res.json({
 //       success: true,
@@ -57,13 +58,8 @@ const router = express_1.default.Router();
 //   for (const actor of actors) {
 //     const oldIdNo = actor.idNo;
 //     const newIDNo = `${actor.category}-${actor.idNo}`;
-//     console.log("Updating:", {
-//       name: actor.fullName,
-//       oldIdNo,
-//       newIDNo,
-//     });
 //     actor.idNo = newIDNo;
-//     console.log(actor);
+//     
 //     await actor.save();
 //   }
 //   // return res.send({ actor: actor });
@@ -81,11 +77,56 @@ router.post("/pull-duplicate-rank/:id", async (req, res) => {
     }, {
         new: true,
     });
-    console.log(result);
     res.send(result);
 });
 router.post("/fix-roles", async (req, res) => {
     const result = await actor_schema_1.default.updateMany({ role: { $exists: false } }, { $set: { role: "member" } });
     res.json(result);
+});
+// test mail
+router.post("/test-mail", async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        throw new error_1.AppError(400, "Email required");
+    }
+    await (0, emailHelper_1.sendMail)({
+        to: email,
+        subject: "Actors Equity – Application Submitted Successfully",
+        html: `
+    <div style="font-family: Arial, sans-serif; background:#f6f8fb; padding:20px;">
+      <div style="max-width:600px; margin:auto; background:#ffffff; border-radius:8px; padding:24px;">
+        
+        <h2 style="color:#0f172a; margin-bottom:8px;">
+          Application Submitted Successfully 🎉
+        </h2>
+
+        <p style="color:#334155; font-size:15px;">
+          Dear Applicant,
+        </p>
+
+        <p style="color:#334155; font-size:15px;">
+          Thank you for submitting your <strong>Actors Equity membership application</strong>.
+          We have successfully received your form.
+        </p>
+
+        <div style="margin:16px 0; padding:12px; background:#f1f5f9; border-left:4px solid #0ea5e9;">
+          <p style="margin:0; color:#0f172a;">
+            <strong>Current Status:</strong> <span style="color:#f59e0b;">Pending Review</span>
+          </p>
+        </div>
+
+  
+
+        <hr style="margin:24px 0; border:none; border-top:1px solid #e5e7eb;" />
+
+        <p style="font-size:13px; color:#64748b;">
+          Regards,<br />
+          <strong>Actors Equity Team</strong>
+        </p>
+      </div>
+    </div>
+  `,
+    });
+    res.send({ success: true });
 });
 exports.default = router;

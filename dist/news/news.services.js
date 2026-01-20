@@ -11,7 +11,6 @@ const createNews = async (payload, file) => {
         throw new error_1.AppError(400, "Image is required");
     }
     const upload = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
-    console.log(payload);
     const news = await news_schema_1.News.create({
         title: payload.title,
         image: upload.secure_url,
@@ -20,7 +19,6 @@ const createNews = async (payload, file) => {
         details: payload.details,
         category: payload.category,
     });
-    console.log(news);
     return news;
 };
 const getAllNews = async (limit, page, sortBy, sortWith, skip) => {
@@ -37,7 +35,6 @@ const getAllNews = async (limit, page, sortBy, sortWith, skip) => {
         news_schema_1.News.countDocuments(),
     ]);
     const totalPages = Math.ceil(total / limit);
-    console.log(total);
     return { news, total, totalPages };
 };
 const getSingleNews = async (id) => {
@@ -54,7 +51,6 @@ const deleteNews = async (id) => {
         throw new error_1.AppError(400, "This is not vaild");
     }
     const news = await news_schema_1.News.findByIdAndDelete(id);
-    console.log(news);
     if (!news)
         throw new error_1.AppError(404, "News not found");
     return news;
@@ -72,7 +68,6 @@ const editNews = async (id, payload, file) => {
         ...(uploadUrl && { image: uploadUrl.secure_url }),
     };
     const cleanedPayload = (0, senitizePayload_1.sanitizePayload)(updatedPayload);
-    console.log(cleanedPayload);
     const updateNews = await news_schema_1.News.findByIdAndUpdate(id, {
         $set: cleanedPayload,
     }, { new: true, runValidators: true });

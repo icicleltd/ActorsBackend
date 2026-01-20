@@ -19,7 +19,11 @@ const banner_router_1 = __importDefault(require("./banner/banner.router"));
 const appointments_router_1 = __importDefault(require("./appointments/appointments.router"));
 const youtube_router_1 = __importDefault(require("./youtube/youtube.router"));
 const sponcer_router_1 = __importDefault(require("./sponcer/sponcer.router"));
+const serialCounter_router_1 = __importDefault(require("./serialCounter/serialCounter.router"));
+const beAMember_router_1 = __importDefault(require("./beAMember/beAMember.router"));
 const verifyLogin_1 = require("./middleware/verifyLogin");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
 app.use(express_1.default.json());
@@ -82,6 +86,8 @@ app.use("/api/v1/banner", banner_router_1.default);
 app.use("/api/v1/appointment", appointments_router_1.default);
 app.use("/api/v1/youtube", youtube_router_1.default);
 app.use("/api/v1/sponcer", sponcer_router_1.default);
+app.use("/api/v1/counter", serialCounter_router_1.default);
+app.use("/api/v1/be-a-member", beAMember_router_1.default);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

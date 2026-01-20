@@ -1,28 +1,39 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationService = void 0;
 const error_1 = require("../middleware/error");
-const notification_schema_1 = __importDefault(require("./notification.schema"));
+const notification_schema_1 = require("./notification.schema");
 const createNotification = async () => {
     return {
         msg: "Notification created",
     };
 };
-const getNotification = async () => {
-    const notification = await notification_schema_1.default.find({});
-    if (!notification) {
-        throw new error_1.AppError(204, "not found");
+const getNotification = async (queryPayload) => {
+    const { recipientRole, recipient, notificationType } = queryPayload;
+    const filter = {};
+    if (recipientRole === "member") {
+        if (!recipient) {
+            throw new error_1.AppError(400, "Recipient is required for member notifications");
+        }
+        filter.recipient = recipient;
     }
-    return notification;
+    if (recipientRole === "admin" || recipientRole === "superadmin") {
+        filter.recipientRole = { $in: ["admin", "superadmin"] };
+    }
+    if (notificationType && notificationType !== "ALL") {
+        filter.type = notificationType;
+    }
+    const notifications = await notification_schema_1.Notification.find(filter)
+        .sort({ createdAt: -1 })
+        .lean();
+    console.log("notifications", notifications.length);
+    return notifications;
 };
 const getAdminNotification = async (adminId) => {
     if (!adminId) {
         throw new error_1.AppError(400, "No admin id provided");
     }
-    const notification = await notification_schema_1.default.find({
+    const notification = await notification_schema_1.Notification.find({
         recipientId: adminId,
     });
     if (!notification) {
@@ -34,7 +45,7 @@ const readNotification = async (notificatinId) => {
     if (!notificatinId) {
         throw new error_1.AppError(400, "No notification id provided");
     }
-    const notification = await notification_schema_1.default.findByIdAndUpdate(notificatinId, {
+    const notification = await notification_schema_1.Notification.findByIdAndUpdate(notificatinId, {
         isRead: true,
     }, { new: true });
     if (!notification) {

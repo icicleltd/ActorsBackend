@@ -9,7 +9,6 @@ const about_schema_1 = require("./about.schema");
 ------------------------------------------------ */
 const createAbout = async (payload, file) => {
     const { title, description, points, year } = payload;
-    // console.log(payload);
     const haveAbout = await about_schema_1.About.find({});
     if (haveAbout.length > 1) {
         throw new error_1.AppError(400, "Aready have a about");
@@ -42,7 +41,6 @@ const createAbout = async (payload, file) => {
         }
     }
     if (year && file) {
-        console.log("payload in crete", payload);
         const uploadImage = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
         if (!uploadImage) {
             throw new error_1.AppError(500, "Failed to upload file");
@@ -72,7 +70,6 @@ const getAbouts = async () => {
    DELETE ABOUT
 ------------------------------------------------ */
 const deleteAbout = async (payload) => {
-    console.log("in payload delete", payload);
     if (!payload) {
         throw new error_1.AppError(400, "No payload provided");
     }

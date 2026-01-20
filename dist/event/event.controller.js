@@ -9,9 +9,7 @@ const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const event_services_1 = require("./event.services");
 const createEvent = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
-    console.log(payload);
     const files = req.files;
-    console.log(files);
     // const adminId = req.user?.id;
     const result = await event_services_1.EventService.createEvent(payload, files);
     (0, sendResponse_1.default)(res, {
@@ -29,7 +27,6 @@ const getEvents = (0, catchAsync_1.default)(async (req, res, next) => {
         : req.query.sortWith === "desc"
             ? -1
             : -1;
-    console.log(sortBy, sortWith);
     const payload = {};
     if (eventType === "PAST" || eventType === "UPCOMING") {
         payload.eventType = eventType;
@@ -74,7 +71,6 @@ const deleteEvent = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 const updateEvent = (0, catchAsync_1.default)(async (req, res, next) => {
     const { id } = req.params;
-    console.log(id);
     const payload = req.body;
     const files = req.files;
     const result = await event_services_1.EventService.updateEvent(id, payload, files);

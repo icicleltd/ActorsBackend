@@ -13,7 +13,6 @@ const youtube_services_1 = require("./youtube.services");
 ------------------------------------- */
 const createYoutbe = (0, catchAsync_1.default)(async (req, res, next) => {
     const { title, url } = req.body;
-    console.log(req.body);
     const result = await youtube_services_1.YoutubeService.createYoutbe({
         title,
         url,

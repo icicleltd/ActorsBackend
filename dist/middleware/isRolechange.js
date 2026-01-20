@@ -11,15 +11,11 @@ const isRoleChange = async (req, res, next) => {
             throw new error_1.AppError(401, "Unauthorized");
         }
         const accessToken = authHeader.split(" ")[1];
-        console.log(accessToken);
-        // ✅ Verify safely
         const data = jwtHelper_1.jwtHelper.verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET_KEY);
         req.user = data; // attach user if valid
-        console.log(data);
         return next();
     }
     catch (error) {
-        // ❗ IMPORTANT: do NOT block
         console.warn("Token invalid or expired, continuing as guest");
         return next(error);
     }

@@ -51,15 +51,18 @@ const actorSchema = new mongoose_1.Schema({
     nationality: { type: String },
     religion: { type: String },
     dob: { type: Date },
-    bloodGroup: { type: String },
+    bloodGroup: {
+        type: String,
+        enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
+    },
     // Contact
-    email: { type: String },
+    email: { type: String, trim: true, },
     password: {
         type: String,
         minlength: 6,
         select: false, // 🔐 do not return password by default
     },
-    phoneNumber: { type: String, unique: true },
+    phoneNumber: { type: String, unique: true, trim: true, },
     whatsApp: { type: String },
     nid: { type: String },
     passport: { type: String },
@@ -88,7 +91,7 @@ const actorSchema = new mongoose_1.Schema({
         },
     ],
     coverImages: [{ type: String }],
-    idNo: { type: String, unique: true },
+    idNo: { type: String, unique: true, trim: true, },
     rank: { type: String },
     rankHistory: [
         {

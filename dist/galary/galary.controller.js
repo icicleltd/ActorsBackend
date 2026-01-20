@@ -42,7 +42,6 @@ const getGalleryImages = (0, catchAsync_1.default)(async (req, res, next) => {
 ------------------------------------- */
 const deleteGalleryImage = (0, catchAsync_1.default)(async (req, res, next) => {
     const { id } = req.params;
-    console.log(id);
     const result = await galary_services_1.GalleryService.deleteGalleryImage(id);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,

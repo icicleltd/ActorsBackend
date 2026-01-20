@@ -11,14 +11,12 @@ const createBanner = async (payload) => {
     if (!imageUrl || !title || !order) {
         throw new error_1.AppError(400, "Image title and order required");
     }
-    console.log(payload);
     const result = await banner_schema_1.Banner.create({
         title,
         description,
         imageUrl,
         order,
     });
-    console.log(result);
     if (!result) {
         throw new error_1.AppError(404, "Banner not created");
     }

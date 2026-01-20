@@ -11,12 +11,10 @@ const createYoutbe = async (payload) => {
     if (!url) {
         throw new error_1.AppError(400, "Url required");
     }
-    console.log(payload);
     const result = await youtube_schema_1.Youtube.create({
         title,
         url,
     });
-    console.log(result);
     if (!result) {
         throw new error_1.AppError(404, "Banner not created");
     }

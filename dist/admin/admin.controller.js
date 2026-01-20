@@ -101,7 +101,6 @@ const uploadGallery = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 const deleteImage = (0, catchAsync_1.default)(async (req, res, next) => {
     const id = req.params.id;
-    // console.log(id)
     const deleteMode = req.query.delete;
     const deleteImageId = req.query.deleteImageId;
     const result = await admin_services_1.AdminService.deleteImage(id, deleteMode, deleteImageId);

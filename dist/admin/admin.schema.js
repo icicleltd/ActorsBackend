@@ -17,6 +17,7 @@ const adminSchema = new mongoose_1.Schema({
         required: true,
         unique: true,
         lowercase: true,
+        trim: true,
     },
     password: {
         type: String,
@@ -26,6 +27,7 @@ const adminSchema = new mongoose_1.Schema({
     phone: {
         type: String,
         default: "",
+        trim: true,
     },
     avatar: {
         type: String,

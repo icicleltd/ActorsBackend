@@ -8,7 +8,6 @@ const fileUpload_1 = require("../helper/fileUpload");
 const actor_schema_1 = __importDefault(require("./actor.schema"));
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("../admin/admin.schema");
-const notification_schema_1 = __importDefault(require("../notification/notification.schema"));
 const createActor = async (files, data) => {
     const uploadArray = async (fileArr) => {
         if (!fileArr || fileArr.length === 0)
@@ -47,15 +46,15 @@ const createActor = async (files, data) => {
         throw new error_1.AppError(400, "Failed to create actor");
     }
     const admins = await admin_schema_1.Admin.find({});
-    admins.forEach(async (admin) => {
-        await notification_schema_1.default.create({
-            senderId: newActor._id,
-            recipientId: admin._id,
-            type: "ACTOR_SUBMISSION",
-            title: "New actor filled info",
-            reference: newActor.fullName,
-        });
-    });
+    // admins.forEach(async (admin) => {
+    //   await Notification.create({
+    //     senderId: newActor._id,
+    //     recipientId: admin._id,
+    //     type: "ACTOR_SUBMISSION",
+    //     title: "New actor filled info",
+    //     reference: newActor.fullName,
+    //   });
+    // });
     return {
         actorinfo: newActor,
     };
@@ -306,7 +305,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                             },
                             {
                                 case: "$hasPastWay",
-                                then: { primary: "Past away Member" },
+                                then: { primary: "pastWay" },
                             },
                         ],
                         /* ⬇️ fallback by category */
@@ -392,7 +391,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
         pipeline.push({ $sort: { "rankHistory.end": -1, roleOrder: 1 } });
     }
     else if (rankGroup === "advisor") {
-        console.log("in advisor if");
         pipeline.push({
             $sort: { "rankHistory.end": -1, idNo: 1 },
         });
@@ -437,7 +435,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     ]);
     // ==================== EXECUTE PIPELINE ====================
     const result = await actor_schema_1.default.aggregate(pipeline);
-    // console.log(reportActor);
     const aggregationResult = result[0] || {};
     return {
         actor: aggregationResult.data || [],
@@ -449,7 +446,6 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     };
 };
 const filterByRank = async (rank) => {
-    console.log(rank);
     if (!rank) {
         throw new Error("No rank provided");
     }
@@ -511,7 +507,6 @@ const filterByRank = async (rank) => {
 //   return updatedActor;
 // };
 const updateActor = async (payload, files, id) => {
-    console.log(payload, files);
     if (!id) {
         throw new error_1.AppError(400, "Actor ID is required");
     }
@@ -550,7 +545,6 @@ const updateActor = async (payload, files, id) => {
     }
     // Update the actor in the database
     const newActor = await actor_schema_1.default.findByIdAndUpdate(id, { $set: updateData }, { new: true });
-    console.log(newActor);
     return newActor;
 };
 exports.default = {

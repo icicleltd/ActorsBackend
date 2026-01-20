@@ -13,7 +13,6 @@ const sponcer_services_1 = require("./sponcer.services");
 ------------------------------------- */
 const createSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
     const { title, url } = req.body;
-    console.log(req.body);
     const result = await sponcer_services_1.SponcerService.createSponcer({
         title,
         url,

@@ -35,7 +35,18 @@ export interface INotification {
 ======================= */
 
 export interface INotificationQuery {
-  recipientRole: RecipientRole;
+  role: RecipientRole;
   recipient?: Types.ObjectId;
   notificationType?: NotificationType;
+}
+export interface IFetchNotification {
+   role: RecipientRole;
+  recipient?: Types.ObjectId;
+  notificationType?: NotificationType;
+  page: number;
+  limit: number;
+  skip: number;
+  search: string;
+  sortBy: string;
+  sortWith: 1 | -1;
 }

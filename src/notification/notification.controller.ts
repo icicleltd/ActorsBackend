@@ -54,12 +54,16 @@ const createNotification = catchAsync(
 // });
 
 const getNotification = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { recipient, recipientRole, notificationType } = req.query;
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const { recipient, notificationType } = req.query;
+    const role = req.user.data.role;
+    const search = req.query.search as string;
 
-    if (!isValidEnumValue(recipientRole, RECIPIENT_ROLES)) {
-      throw new AppError(400, "Invalid recipientRole");
-    }
+    const limit = parseInt(req.query?.limit as string) || 10;
+    const page = parseInt(req.query?.page as string) || 1;
+    const skip = (page - 1) * limit;
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortWith: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
 
     if (
       notificationType &&
@@ -76,11 +80,17 @@ const getNotification = catchAsync(
       validatedNotificationType = notificationType;
     }
     const result = await NotificationService.getNotification({
-      recipientRole,
+      role,
       recipient: recipient
         ? new Types.ObjectId(recipient as string)
         : undefined,
       notificationType: validatedNotificationType,
+      page,
+      limit,
+      skip,
+      sortBy,
+      sortWith,
+      search,
     });
 
     sendResponse(res, {
@@ -105,13 +115,37 @@ const getAdminNotification = catchAsync(
   },
 );
 const readNotificaton = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const notificatinId = req.params.id;
-    const result = await NotificationService.readNotification(notificatinId);
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const role = req.user.data.role;
+    const { notificationType, _id } = req.body;
+    console.log(req.body);
+    const result = await NotificationService.readNotification(
+      notificationType,
+      _id,
+    );
     sendResponse(res, {
       statusCode: 200,
       success: true,
       message: "updated successfully",
+      data: result,
+    });
+  },
+);
+
+const unReadCountNotification = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const { recipient } = req.query;
+    const role = req.user.data.role;
+    const result = await NotificationService.unReadCountNotification({
+      role,
+      recipient: recipient
+        ? new Types.ObjectId(recipient as string)
+        : undefined,
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Notification get count successfully",
       data: result,
     });
   },
@@ -122,4 +156,5 @@ export const NotificationController = {
   getNotification,
   getAdminNotification,
   readNotificaton,
+  unReadCountNotification,
 };

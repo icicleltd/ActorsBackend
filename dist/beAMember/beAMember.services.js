@@ -13,6 +13,7 @@ const notification_schema_1 = require("../notification/notification.schema");
 const serialCounter_schema_1 = require("../serialCounter/serialCounter.schema");
 const applicationSubmitted_1 = require("../helper/mailTempate/applicationSubmitted");
 const emailHelper_1 = require("../helper/emailHelper");
+const applicationApproved_1 = require("../helper/mailTempate/applicationApproved");
 /* ------------------------------------
    CREATE BE A MEMBER
 ------------------------------------- */
@@ -51,7 +52,7 @@ const createBeAMember = async (payload) => {
                 },
             ], { session });
             await beAMember_schema_1.default.findByIdAndUpdate(beAMember._id, {
-                payment: beAMember._id,
+                payment: payment._id,
             }, { session });
             const [notification] = await notification_schema_1.Notification.create([
                 {
@@ -74,9 +75,22 @@ const createBeAMember = async (payload) => {
                 }));
                 await notification_schema_1.Notification.insertMany(referenceNotifications, { session });
             }
-            await serialCounter_schema_1.Counter.findOneAndUpdate({ name: "be_a_member" }, {
+            const counter = await serialCounter_schema_1.Counter.findOneAndUpdate({ name: "be_a_member" }, {
                 $inc: { seq: 1 },
             });
+            if (!counter) {
+                throw new error_1.AppError(500, "Failed to update member counter");
+            }
+            await notification_schema_1.Notification.create([
+                {
+                    recipientRole: ["admin", "superadmin"],
+                    type: "BE_A_MEMBER",
+                    title: "New Membership Application",
+                    message: `${beAMember.fullName} submitted a Be A Member application`,
+                    application: beAMember._id,
+                    payment: payment._id,
+                },
+            ], { session });
         });
         if (!createdBeAMember) {
             throw new error_1.AppError(500, "Failed to create application");
@@ -101,9 +115,102 @@ const createBeAMember = async (payload) => {
 /* ------------------------------------
    GET ALL BE A MEMBERS
 ------------------------------------- */
-const getBeAMembers = async () => {
-    const members = await actor_schema_1.default.find().sort({ createdAt: -1 });
+const getBeAMembers = async (limit, skip, sortBy, sortWith) => {
+    const members = await beAMember_schema_1.default.find()
+        .populate({
+        path: "actorReference.actorId",
+    })
+        .populate({
+        path: "payment",
+        select: "method amount status verifiedAt",
+    })
+        .sort({ [sortBy]: sortWith })
+        .limit(limit)
+        .skip(skip);
     return members;
+};
+const approveByAdmin = async (payload) => {
+    const { id, status, adminId, rejectionReason, message } = payload;
+    if (!id) {
+        throw new error_1.AppError(400, "Be a Member ID is required");
+    }
+    if (!["approved", "rejected", "pending"].includes(status)) {
+        throw new error_1.AppError(400, "Invalid status value");
+    }
+    const session = await mongoose_1.default.startSession();
+    try {
+        let updatedBeAMember;
+        let updatedPayment;
+        await session.withTransaction(async () => {
+            // 1️⃣ Fetch application first (status guard)
+            const existingBeAMember = await beAMember_schema_1.default.findById(id).session(session);
+            if (!existingBeAMember) {
+                throw new error_1.AppError(404, "Be A Member application not found");
+            }
+            if (existingBeAMember.status === status) {
+                throw new error_1.AppError(400, `Application is already ${status}`);
+            }
+            // 2️⃣ Update Be A Member status
+            updatedBeAMember = await beAMember_schema_1.default.findByIdAndUpdate(id, { $set: { status } }, { new: true, runValidators: true, session });
+            // 3️⃣ Update Payment
+            updatedPayment = await payment_schema_1.Payment.findOneAndUpdate({ beAMember: updatedBeAMember._id }, {
+                $set: {
+                    status: status === "approved" ? "verified" : "rejected",
+                    verifiedBy: status === "approved" ? adminId : null,
+                    verifiedAt: status === "approved" ? new Date() : null,
+                    rejectionReason: status === "rejected" ? rejectionReason : null,
+                },
+            }, { new: true, session });
+            if (!updatedPayment) {
+                throw new error_1.AppError(404, "Payment record not found");
+            }
+            // 4️⃣ UPDATE existing Notification (NO CREATE)
+            const updatedNotification = await notification_schema_1.Notification.findOneAndUpdate({
+                application: updatedBeAMember._id,
+            }, {
+                $set: {
+                    recipientRole: ["admin", "superadmin"],
+                    type: status === "approved"
+                        ? "APPLICATION_APPROVED"
+                        : "APPLICATION_REJECTED",
+                    title: status === "approved"
+                        ? "Membership Application Approved"
+                        : "Membership Application Rejected",
+                    message: status === "approved"
+                        ? `${updatedBeAMember.fullName}'s membership application has been approved`
+                        : `${updatedBeAMember.fullName}'s membership application has been rejected`,
+                    payment: updatedPayment._id,
+                    isRead: false,
+                },
+            }, { new: true, session });
+            if (!updatedNotification) {
+                throw new error_1.AppError(404, "Notification not found for this application");
+            }
+            const { subject, html, text } = (0, applicationApproved_1.applicationVerifiedTemplate)(existingBeAMember.fullName, message);
+            (0, emailHelper_1.sendMail)({
+                to: existingBeAMember.email,
+                subject,
+                text,
+                html,
+            });
+        });
+        return {
+            success: true,
+            message: status === "approved"
+                ? "Application approved successfully"
+                : "Application rejected successfully",
+            data: {
+                application: updatedBeAMember,
+                payment: updatedPayment,
+            },
+        };
+    }
+    catch (error) {
+        throw error;
+    }
+    finally {
+        session.endSession();
+    }
 };
 /* ------------------------------------
    DELETE SINGLE BE A MEMBER
@@ -128,4 +235,5 @@ exports.BeAMemberService = {
     createBeAMember,
     getBeAMembers,
     deleteBeAMember,
+    approveByAdmin,
 };

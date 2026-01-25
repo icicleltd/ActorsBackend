@@ -11,6 +11,8 @@ export interface IActorReference {
   actorId: Types.ObjectId;
   name?: string;
   idNo?: string;
+  status: "pending" | "approved" | "rejected";
+  respondedAt: Date;
 }
 
 export interface IBeAMember {

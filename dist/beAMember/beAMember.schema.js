@@ -88,20 +88,38 @@ const beAMemberSchema = new mongoose_1.Schema({
             actorId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Actor", required: true },
             name: { type: String },
             idNo: { type: String },
+            status: {
+                type: String,
+                enum: ["pending", "approved", "rejected"],
+                default: "pending",
+            },
+            respondedAt: {
+                type: Date,
+            },
         },
     ],
-    height: { type: String },
-    weight: { type: String },
     payment: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Payment",
     },
+    height: { type: String },
+    weight: { type: String },
     seq: { type: Number },
     status: {
         type: String,
         enum: ["pending", "approved", "rejected"],
         default: "pending",
     },
-}, { timestamps: true });
+}, {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+});
+// beAMemberSchema.virtual("payment", {
+//   ref: "Payment",
+//   localField: "_id",
+//   foreignField: "beAMember",
+//   justOne: true, // one-to-one
+// });
 const BeAMember = mongoose_1.default.model("BeAMember", beAMemberSchema);
 exports.default = BeAMember;

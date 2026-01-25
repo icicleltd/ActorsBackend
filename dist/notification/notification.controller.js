@@ -47,10 +47,14 @@ const createNotification = (0, catchAsync_1.default)(async (req, res, next) => {
 //   });
 // });
 const getNotification = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { recipient, recipientRole, notificationType } = req.query;
-    if (!(0, qureyCheck_1.isValidEnumValue)(recipientRole, notification_constant_1.RECIPIENT_ROLES)) {
-        throw new error_1.AppError(400, "Invalid recipientRole");
-    }
+    const { recipient, notificationType } = req.query;
+    const role = req.user.data.role;
+    const search = req.query.search;
+    const limit = parseInt(req.query?.limit) || 10;
+    const page = parseInt(req.query?.page) || 1;
+    const skip = (page - 1) * limit;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortWith = req.query.sortWith === "asc" ? 1 : -1;
     if (notificationType &&
         !(0, qureyCheck_1.isValidEnumValue)(notificationType, notification_constant_1.NOTIFICATION_TYPES)) {
         throw new error_1.AppError(400, "Invalid notificationType");
@@ -63,11 +67,17 @@ const getNotification = (0, catchAsync_1.default)(async (req, res, next) => {
         validatedNotificationType = notificationType;
     }
     const result = await notification_services_1.NotificationService.getNotification({
-        recipientRole,
+        role,
         recipient: recipient
             ? new mongoose_1.Types.ObjectId(recipient)
             : undefined,
         notificationType: validatedNotificationType,
+        page,
+        limit,
+        skip,
+        sortBy,
+        sortWith,
+        search,
     });
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
@@ -87,12 +97,30 @@ const getAdminNotification = (0, catchAsync_1.default)(async (req, res, next) =>
     });
 });
 const readNotificaton = (0, catchAsync_1.default)(async (req, res, next) => {
-    const notificatinId = req.params.id;
-    const result = await notification_services_1.NotificationService.readNotification(notificatinId);
+    const role = req.user.data.role;
+    const { notificationType, _id } = req.body;
+    console.log(req.body);
+    const result = await notification_services_1.NotificationService.readNotification(notificationType, _id);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
         message: "updated successfully",
+        data: result,
+    });
+});
+const unReadCountNotification = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { recipient } = req.query;
+    const role = req.user.data.role;
+    const result = await notification_services_1.NotificationService.unReadCountNotification({
+        role,
+        recipient: recipient
+            ? new mongoose_1.Types.ObjectId(recipient)
+            : undefined,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Notification get count successfully",
         data: result,
     });
 });
@@ -101,4 +129,5 @@ exports.NotificationController = {
     getNotification,
     getAdminNotification,
     readNotificaton,
+    unReadCountNotification,
 };

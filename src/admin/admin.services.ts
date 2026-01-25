@@ -247,7 +247,7 @@ const login = async (payload: PayloadLoign) => {
   };
 
   const existing = await Admin.findOne(filter)
-    .select("+password _id email fullName")
+    .select("+password _id email fullName role")
     .lean(false);
   
   if (!existing) {
@@ -261,7 +261,7 @@ const login = async (payload: PayloadLoign) => {
   const data: TokenPayload = {
     _id: existing._id,
     email: existing.email,
-    role,
+    role:existing.role,
     fullName: existing.fullName,
   };
   const accessToken = await jwtHelper.generateToken(

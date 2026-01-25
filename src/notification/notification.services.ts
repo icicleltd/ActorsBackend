@@ -1,38 +1,79 @@
+import { Types } from "mongoose";
 import { AppError } from "../middleware/error";
-import { INotificationQuery } from "./notification.interface";
+import {
+  IFetchNotification,
+  INotificationQuery,
+  NotificationType,
+} from "./notification.interface";
 import { Notification } from "./notification.schema";
-
 
 const createNotification = async () => {
   return {
     msg: "Notification created",
   };
 };
-const getNotification = async (queryPayload: INotificationQuery) => {
-  const { recipientRole, recipient, notificationType } = queryPayload;
-
+// const BE_A_MEMBER_TYPES = [
+//   "APPLICATION_SUBMITTED",
+//   "PAYMENT_SUBMITTED",
+//   "APPLICATION_APPROVED",
+//   "APPLICATION_REJECTED",
+// ];
+const getNotification = async (queryPayload: IFetchNotification) => {
+  const {
+    role,
+    recipient,
+    notificationType,
+    limit,
+    search,
+    skip,
+    sortBy,
+    sortWith,
+  } = queryPayload;
+  if (!role) {
+    throw new AppError(400, "Role is required");
+  }
   const filter: Partial<Record<string, unknown>> = {};
 
-  if (recipientRole === "member") {
+  if (role === "member") {
     if (!recipient) {
       throw new AppError(400, "Recipient is required for member notifications");
     }
     filter.recipient = recipient;
   }
 
-  if (recipientRole === "admin" || recipientRole === "superadmin") {
+  // 🔹 Admin / Superadmin inbox
+  if (role === "admin" || role === "superadmin") {
     filter.recipientRole = { $in: ["admin", "superadmin"] };
-  }
 
-  if (notificationType && notificationType !== "ALL") {
-    filter.type = notificationType;
+    // 👉 BE_A_MEMBER means group filter
+    if (notificationType === "BE_A_MEMBER") {
+      // filter.type = { $in: BE_A_MEMBER_TYPES };
+      filter.type = notificationType;
+    }
+
+    // 👉 Specific single notification
+    else if (notificationType && notificationType !== "ALL") {
+      filter.type = notificationType;
+    }
   }
 
   const notifications = await Notification.find(filter)
-    .sort({ createdAt: -1 })
+    .populate({
+      path: "application",
+      populate: {
+        path: "actorReference.actorId",
+        model: "Actor",
+      },
+    })
+    .populate({
+      path: "payment",
+    })
+    .skip(skip)
+    .limit(limit)
+    .sort({ [sortBy]: sortWith })
     .lean();
-  console.log("notifications", notifications.length);
-  return notifications;
+  const totalPages = Math.ceil( notifications.length / limit);
+  return { notifications, totalPages };
 };
 const getAdminNotification = async (adminId: string) => {
   if (!adminId) {
@@ -46,21 +87,116 @@ const getAdminNotification = async (adminId: string) => {
   }
   return notification;
 };
-const readNotification = async (notificatinId: string) => {
-  if (!notificatinId) {
-    throw new AppError(400, "No notification id provided");
+
+const readNotification = async (
+  notificationType: NotificationType,
+  id: string,
+) => {
+  if (!id) {
+    throw new AppError(400, "Notification id is required");
   }
+  // if (
+  //   notificationType === "BE_A_MEMBER" &&
+  //   (role === "admin" || role === "superadmin")
+  // ) {
+  //   await Notification.updateMany(
+  //     {
+  //       type: "APPLICATION_SUBMITTED",
+  //       recipientRole: { $in: ["admin", "superadmin"] },
+  //       isRead: false,
+  //     },
+  //     {
+  //       $set: { isRead: true },
+  //     },
+  //   );
+
+  //   return { success: true, bulkRead: true };
+  // }
+
+  // RULE 2: Member reading REFERENCE_REQUEST
+  if (notificationType === "REFERENCE_REQUEST") {
+    const notification = await Notification.findByIdAndUpdate(
+      id,
+      { isRead: true },
+      { new: true },
+    );
+
+    if (!notification) {
+      throw new AppError(404, "REFERENCE_REQUEST Notification not found");
+    }
+
+    return notification;
+  }
+
+  // DEFAULT: single notification read
   const notification = await Notification.findByIdAndUpdate(
-    notificatinId,
-    {
-      isRead: true,
-    },
+    id,
+    { isRead: true },
     { new: true },
   );
+
   if (!notification) {
     throw new AppError(404, "Notification not found");
   }
+
   return notification;
+};
+
+const unReadCountNotification = async (queryPayload: INotificationQuery) => {
+  const { role, recipient } = queryPayload;
+  if (!role) {
+    throw new AppError(400, "Role is required");
+  }
+  if (role === "member") {
+    if (!recipient) {
+      throw new AppError(400, "recipient id is required");
+    }
+    const referace = await Notification.countDocuments({
+      type: "REFERENCE_REQUEST",
+      recipient: recipient,
+      recipientRole: role,
+      isRead: false,
+    });
+    return { REFERENCE_REQUEST: referace };
+  }
+  const [all, contact, referace, payment, approved, submit] = await Promise.all(
+    [
+      Notification.countDocuments({
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "CONTACT",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "REFERENCE_REQUEST",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "PAYMENT_SUBMITTED",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "APPLICATION_APPROVED",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "BE_A_MEMBER",
+        isRead: false,
+      }),
+    ],
+  );
+
+  const adminNotification = submit + payment + contact;
+  return {
+    ALL: all,
+    BE_A_MEMBER: submit,
+    ADMIN_NOTIFICATION: adminNotification,
+    PAYMENT_SUBMITTED: payment,
+    REFERENCE_REQUEST: referace,
+    APPLICATION_APPROVED: approved,
+    CONTACT: contact,
+  };
 };
 
 export const NotificationService = {
@@ -68,4 +204,5 @@ export const NotificationService = {
   getNotification,
   getAdminNotification,
   readNotification,
+  unReadCountNotification,
 };

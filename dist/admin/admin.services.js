@@ -200,7 +200,7 @@ const login = async (payload) => {
         })),
     };
     const existing = await admin_schema_1.Admin.findOne(filter)
-        .select("+password _id email fullName")
+        .select("+password _id email fullName role")
         .lean(false);
     if (!existing) {
         throw new error_1.AppError(401, "Unauthorized");
@@ -212,7 +212,7 @@ const login = async (payload) => {
     const data = {
         _id: existing._id,
         email: existing.email,
-        role,
+        role: existing.role,
         fullName: existing.fullName,
     };
     const accessToken = await jwtHelper_1.jwtHelper.generateToken(data, process.env.ACCESS_TOKEN_SECRET_KEY, process.env.ACCESS_TOKEN_EXPIRE_IN);

@@ -14,6 +14,7 @@ router.post("/", BeAMemberController.createBeAMember);
 
 // Get all (Public/Admin)
 router.get("/", BeAMemberController.getBeAMembers);
+router.put("/update-status/:id",VerifyLogin,VerifyAdmin, BeAMemberController.approveByAdmin);
 
 // Delete (Admin)
 router.delete(

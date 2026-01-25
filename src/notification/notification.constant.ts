@@ -1,11 +1,11 @@
 export const RECIPIENT_ROLES = ["admin", "member", "superadmin"] as const;
 
 export const NOTIFICATION_TYPES = [
-  "APPLICATION_SUBMITTED",
+  "BE_A_MEMBER",
   "PAYMENT_SUBMITTED",
   "REFERENCE_REQUEST",
   "APPLICATION_APPROVED",
   "APPLICATION_REJECTED",
   "CONTACT",
-  "ALL"
+  "ALL",
 ] as const;

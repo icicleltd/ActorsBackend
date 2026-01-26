@@ -12,6 +12,8 @@ export interface IActorReference {
   name?: string;
   idNo?: string;
   status: "pending" | "approved" | "rejected";
+  isUpdated: boolean;
+  isMemberRead: boolean;
   respondedAt: Date;
 }
 
@@ -53,11 +55,12 @@ export interface IBeAMember {
   emergencyNumber: string;
   stageAndFilmAdditionalSkills: string;
 
-  actorReference?: IActorReference[];
+  actorReference: IActorReference[];
 
   height?: string;
   weight?: string;
   payment: Types.ObjectId;
+  isAdminRead: boolean;
 
   status: "pending" | "approved" | "rejected";
   seq: number;

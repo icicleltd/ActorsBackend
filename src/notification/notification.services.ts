@@ -12,12 +12,12 @@ const createNotification = async () => {
     msg: "Notification created",
   };
 };
-// const BE_A_MEMBER_TYPES = [
-//   "APPLICATION_SUBMITTED",
-//   "PAYMENT_SUBMITTED",
-//   "APPLICATION_APPROVED",
-//   "APPLICATION_REJECTED",
-// ];
+const BE_A_MEMBER_TYPES = [
+  "BE_A_MEMBER",
+  "PAYMENT_SUBMITTED",
+  "APPLICATION_APPROVED",
+  "APPLICATION_REJECTED",
+];
 const getNotification = async (queryPayload: IFetchNotification) => {
   const {
     role,
@@ -90,10 +90,9 @@ const getNotification = async (queryPayload: IFetchNotification) => {
 
           "application._id": 1,
           "application.fullName": 1,
-          "application.phoneNumber":1,
-          "application.email":1,
-          "application.actorReference.actorId":1,
-          
+          "application.phoneNumber": 1,
+          "application.email": 1,
+          "application.actorReference.actorId": 1,
 
           myReferenceStatus: "$myReference.status",
           respondedAt: "$myReference.respondedAt",
@@ -216,7 +215,7 @@ const readNotification = async (
 };
 
 const unReadCountNotification = async (queryPayload: INotificationQuery) => {
-  const { role, recipient } = queryPayload;
+  const { role, recipient, _id } = queryPayload;
   if (!role) {
     throw new AppError(400, "Role is required");
   }
@@ -271,6 +270,68 @@ const unReadCountNotification = async (queryPayload: INotificationQuery) => {
     CONTACT: contact,
   };
 };
+const unReadNotification = async (queryPayload: INotificationQuery) => {
+  const { role, recipient, _id } = queryPayload;
+  if (!role) {
+    throw new AppError(400, "Role is required");
+  }
+  if (role === "member") {
+    if (!recipient) {
+      throw new AppError(400, "recipient id is required");
+    }
+
+    if (!recipient.equals(_id)) {
+      throw new AppError(400, "recipient id not match");
+    }
+    const reference = await Notification.find({
+      type: "REFERENCE_REQUEST",
+      recipient: recipient,
+      recipientRole: role,
+      isRead: false,
+    });
+    return { notifications: reference };
+  }
+  const [all, contact, reference, payment, approved, submit, admin] =
+    await Promise.all([
+      Notification.find({
+        isRead: false,
+      }),
+      Notification.find({
+        type: "CONTACT",
+        isRead: false,
+      }),
+      Notification.find({
+        type: "REFERENCE_REQUEST",
+        isRead: false,
+      }),
+      Notification.find({
+        type: "PAYMENT_SUBMITTED",
+        isRead: false,
+      }),
+      Notification.find({
+        type: "APPLICATION_APPROVED",
+        isRead: false,
+      }),
+      Notification.find({
+        type: "BE_A_MEMBER",
+        isRead: false,
+      }),
+      Notification.find({
+        type: { $in: BE_A_MEMBER_TYPES },
+        isRead:false
+      }),
+    ]);
+  const adminNotification = { submit, payment, approved, contact };
+  return {
+    // ALL: all,
+    // BE_A_MEMBER: submit,
+    notifications: admin,
+    // PAYMENT_SUBMITTED: payment,
+    // REFERENCE_REQUEST: reference,
+    // APPLICATION_APPROVED: approved,
+    // CONTACT: contact,
+  };
+};
 
 export const NotificationService = {
   createNotification,
@@ -278,4 +339,5 @@ export const NotificationService = {
   getAdminNotification,
   readNotification,
   unReadCountNotification,
+  unReadNotification,
 };

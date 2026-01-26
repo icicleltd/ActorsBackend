@@ -150,14 +150,22 @@ const getBeAMembers = async (
   skip: number,
   sortBy: string,
   sortWith: 1 | -1,
+  id: string,
+  role: string,
 ) => {
-  const members = await BeAMember.find()
+  const filter: Record<string, any> = {};
+
+  // ✅ member can only see applications where they are a reference
+  if (role === "member") {
+    filter["actorReference.actorId"] = id;
+  }
+  const members = await BeAMember.find(filter)
     .populate({
       path: "actorReference.actorId",
     })
     .populate({
       path: "payment",
-      select: "method amount status verifiedAt",
+      select: "method amount status verifiedAt transactionId senderNumber",
     })
     .sort({ [sortBy]: sortWith })
     .limit(limit)
@@ -281,6 +289,109 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
   }
 };
 
+const approveByMember = async (payload: {
+  id: string;
+  actorId: string;
+  status: "approved" | "rejected";
+  message?: string;
+}) => {
+  const { id, actorId, status, message } = payload;
+
+  if (!id || !actorId) {
+    throw new AppError(400, "BeAMember ID and Actor ID are required");
+  }
+
+  if (!["approved", "rejected"].includes(status)) {
+    throw new AppError(400, "Invalid status value");
+  }
+
+  const session = await mongoose.startSession();
+
+  try {
+    let updatedBeAMember: any;
+
+    await session.withTransaction(async () => {
+      // 1️⃣ Fetch application
+      const existingBeAMember = await BeAMember.findById(id).session(session);
+
+      if (!existingBeAMember) {
+        throw new AppError(404, "Be A Member application not found");
+      }
+
+      // 2️⃣ Ensure actorReference exists
+      const referenceExists = existingBeAMember.actorReference.some(
+        (ref: any) => ref.actorId.toString() === actorId,
+      );
+
+      if (!referenceExists) {
+        throw new AppError(403, "You are not a reference for this application");
+      }
+
+      // 3️⃣ Update ONLY this actorReference
+      updatedBeAMember = await BeAMember.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            "actorReference.$[elem].status": status,
+            "actorReference.$[elem].isUpdated": true,
+            "actorReference.$[elem].isMemberRead": true,
+            "actorReference.$[elem].respondedAt": new Date(),
+          },
+        },
+        {
+          new: true,
+          session,
+          arrayFilters: [
+            { "elem.actorId": new mongoose.Types.ObjectId(actorId) },
+          ],
+        },
+      );
+
+      // 4️⃣ CREATE new notification (Admin + Superadmin)
+      await Notification.create(
+        [
+          {
+            recipientRole: ["admin", "superadmin"],
+            type:
+              status === "approved"
+                ? "REFERENCE_APPROVED"
+                : "REFERENCE_REJECTED",
+
+            title:
+              status === "approved"
+                ? "Reference Approved"
+                : "Reference Rejected",
+
+            message:
+              message ??
+              `${updatedBeAMember.fullName}'s reference was ${status}`,
+
+            application: updatedBeAMember._id,
+            isRead: false,
+          },
+        ],
+        { session },
+      );
+    });
+
+    return {
+      success: true,
+      message:
+        status === "approved"
+          ? "Reference approved successfully"
+          : "Reference rejected successfully",
+      data: updatedBeAMember,
+    };
+  } catch (error) {
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+
+
+
 /* ------------------------------------
    DELETE SINGLE BE A MEMBER
 ------------------------------------- */
@@ -311,4 +422,5 @@ export const BeAMemberService = {
   getBeAMembers,
   deleteBeAMember,
   approveByAdmin,
+  approveByMember
 };

@@ -141,6 +141,26 @@ const unReadCountNotification = catchAsync(
       recipient: recipient
         ? new Types.ObjectId(recipient as string)
         : undefined,
+        _id: new Types.ObjectId(req.user.data._id as string),
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Notification get count successfully",
+      data: result,
+    });
+  },
+);
+const unReadNotification = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const { recipient } = req.query;
+    const role = req.user.data.role;
+    const result = await NotificationService.unReadNotification({
+      role,
+      recipient: recipient
+        ? new Types.ObjectId(recipient as string)
+        : undefined,
+      _id: new Types.ObjectId(req.user.data._id as string),
     });
     sendResponse(res, {
       statusCode: 200,
@@ -157,4 +177,5 @@ export const NotificationController = {
   getAdminNotification,
   readNotificaton,
   unReadCountNotification,
+  unReadNotification,
 };

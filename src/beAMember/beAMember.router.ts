@@ -13,8 +13,9 @@ const router = express.Router();
 router.post("/", BeAMemberController.createBeAMember);
 
 // Get all (Public/Admin)
-router.get("/", BeAMemberController.getBeAMembers);
+router.get("/",VerifyLogin, BeAMemberController.getBeAMembers);
 router.put("/update-status/:id",VerifyLogin,VerifyAdmin, BeAMemberController.approveByAdmin);
+router.put("/update-status-member/:id",VerifyLogin, BeAMemberController.approveByMember);
 
 // Delete (Admin)
 router.delete(

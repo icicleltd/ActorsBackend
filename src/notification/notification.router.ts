@@ -10,6 +10,11 @@ notificationRouter.get(
   VerifyLogin,
   NotificationController.unReadCountNotification,
 );
+notificationRouter.get(
+  "/unread",
+  VerifyLogin,
+  NotificationController.unReadNotification,
+);
 notificationRouter.get("/",VerifyLogin, NotificationController.getNotification);
 notificationRouter.get(
   "/admin/:id",

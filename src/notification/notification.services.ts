@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { AppError } from "../middleware/error";
 import {
   IFetchNotification,
@@ -36,9 +36,78 @@ const getNotification = async (queryPayload: IFetchNotification) => {
 
   if (role === "member") {
     if (!recipient) {
-      throw new AppError(400, "Recipient is required for member notifications");
+      throw new AppError(400, "Recipient is required");
     }
-    filter.recipient = recipient;
+
+    const notifications = await Notification.aggregate([
+      // 1️⃣ Only notifications for this actor
+      {
+        $match: {
+          recipient: new mongoose.Types.ObjectId(recipient),
+          type: "REFERENCE_REQUEST",
+        },
+      },
+
+      // 2️⃣ Join application
+      {
+        $lookup: {
+          from: "beamembers",
+          localField: "application",
+          foreignField: "_id",
+          as: "application",
+        },
+      },
+      { $unwind: "$application" },
+
+      // 3️⃣ Extract ONLY my reference
+      {
+        $addFields: {
+          myReference: {
+            $first: {
+              $filter: {
+                input: "$application.actorReference",
+                as: "ref",
+                cond: {
+                  $eq: [
+                    "$$ref.actorId",
+                    new mongoose.Types.ObjectId(recipient),
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+
+      // 4️⃣ Shape response
+      {
+        $project: {
+          title: 1,
+          message: 1,
+          type: 1,
+          isRead: 1,
+          createdAt: 1,
+
+          "application._id": 1,
+          "application.fullName": 1,
+          "application.phoneNumber":1,
+          "application.email":1,
+          "application.actorReference.actorId":1,
+          
+
+          myReferenceStatus: "$myReference.status",
+          respondedAt: "$myReference.respondedAt",
+        },
+      },
+
+      // 5️⃣ Sorting & pagination
+      { $sort: { [sortBy]: sortWith } },
+      { $skip: skip },
+      { $limit: limit },
+    ]);
+
+    const totalPages = Math.ceil(notifications.length / limit);
+    return { notifications, totalPages };
   }
 
   // 🔹 Admin / Superadmin inbox
@@ -68,11 +137,15 @@ const getNotification = async (queryPayload: IFetchNotification) => {
     .populate({
       path: "payment",
     })
+    .populate({
+      path: "recipient",
+    })
     .skip(skip)
     .limit(limit)
     .sort({ [sortBy]: sortWith })
     .lean();
-  const totalPages = Math.ceil( notifications.length / limit);
+
+  const totalPages = Math.ceil(notifications.length / limit);
   return { notifications, totalPages };
 };
 const getAdminNotification = async (adminId: string) => {

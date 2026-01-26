@@ -1,6 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationService = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
 const error_1 = require("../middleware/error");
 const notification_schema_1 = require("./notification.schema");
 const createNotification = async () => {
@@ -22,9 +26,69 @@ const getNotification = async (queryPayload) => {
     const filter = {};
     if (role === "member") {
         if (!recipient) {
-            throw new error_1.AppError(400, "Recipient is required for member notifications");
+            throw new error_1.AppError(400, "Recipient is required");
         }
-        filter.recipient = recipient;
+        const notifications = await notification_schema_1.Notification.aggregate([
+            // 1️⃣ Only notifications for this actor
+            {
+                $match: {
+                    recipient: new mongoose_1.default.Types.ObjectId(recipient),
+                    type: "REFERENCE_REQUEST",
+                },
+            },
+            // 2️⃣ Join application
+            {
+                $lookup: {
+                    from: "beamembers",
+                    localField: "application",
+                    foreignField: "_id",
+                    as: "application",
+                },
+            },
+            { $unwind: "$application" },
+            // 3️⃣ Extract ONLY my reference
+            {
+                $addFields: {
+                    myReference: {
+                        $first: {
+                            $filter: {
+                                input: "$application.actorReference",
+                                as: "ref",
+                                cond: {
+                                    $eq: [
+                                        "$$ref.actorId",
+                                        new mongoose_1.default.Types.ObjectId(recipient),
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            // 4️⃣ Shape response
+            {
+                $project: {
+                    title: 1,
+                    message: 1,
+                    type: 1,
+                    isRead: 1,
+                    createdAt: 1,
+                    "application._id": 1,
+                    "application.fullName": 1,
+                    "application.phoneNumber": 1,
+                    "application.email": 1,
+                    "application.actorReference.actorId": 1,
+                    myReferenceStatus: "$myReference.status",
+                    respondedAt: "$myReference.respondedAt",
+                },
+            },
+            // 5️⃣ Sorting & pagination
+            { $sort: { [sortBy]: sortWith } },
+            { $skip: skip },
+            { $limit: limit },
+        ]);
+        const totalPages = Math.ceil(notifications.length / limit);
+        return { notifications, totalPages };
     }
     // 🔹 Admin / Superadmin inbox
     if (role === "admin" || role === "superadmin") {
@@ -49,6 +113,9 @@ const getNotification = async (queryPayload) => {
     })
         .populate({
         path: "payment",
+    })
+        .populate({
+        path: "recipient",
     })
         .skip(skip)
         .limit(limit)

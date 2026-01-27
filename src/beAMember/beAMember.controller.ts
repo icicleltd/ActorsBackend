@@ -86,7 +86,7 @@ const approveByAdmin = catchAsync(
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Be a Member deleted successfully",
+      message: "Admin Approved successfully ",
       data: result,
     });
   },
@@ -107,7 +107,7 @@ const approveByMember = catchAsync(
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Be a Member deleted successfully",
+      message: "Member Approved successfully",
       data: result,
     });
   },

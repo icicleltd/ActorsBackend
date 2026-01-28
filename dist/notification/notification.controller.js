@@ -96,11 +96,11 @@ const getAdminNotification = (0, catchAsync_1.default)(async (req, res, next) =>
         data: result,
     });
 });
-const readNotificaton = (0, catchAsync_1.default)(async (req, res, next) => {
+const readNotification = (0, catchAsync_1.default)(async (req, res, next) => {
     const role = req.user.data.role;
-    const { notificationType, _id } = req.body;
-    console.log(req.body);
-    const result = await notification_services_1.NotificationService.readNotification(notificationType, _id);
+    const id = req.user.data._id;
+    const { notificationType, recipient, applicantId } = req.body;
+    const result = await notification_services_1.NotificationService.readNotification(notificationType, recipient, applicantId, role, id);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -116,6 +116,7 @@ const unReadCountNotification = (0, catchAsync_1.default)(async (req, res, next)
         recipient: recipient
             ? new mongoose_1.Types.ObjectId(recipient)
             : undefined,
+        _id: new mongoose_1.Types.ObjectId(req.user.data._id),
     });
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
@@ -124,10 +125,38 @@ const unReadCountNotification = (0, catchAsync_1.default)(async (req, res, next)
         data: result,
     });
 });
+const unReadNotification = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { recipient } = req.query;
+    const role = req.user.data.role;
+    const result = await notification_services_1.NotificationService.unReadNotification({
+        role,
+        recipient: recipient
+            ? new mongoose_1.Types.ObjectId(recipient)
+            : undefined,
+        _id: new mongoose_1.Types.ObjectId(req.user.data._id),
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Notification get count successfully",
+        data: result,
+    });
+});
+const allNo = (0, catchAsync_1.default)(async (req, res, next) => {
+    const result = await notification_services_1.NotificationService.allNo();
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "all get  successfully",
+        data: result,
+    });
+});
 exports.NotificationController = {
     createNotification,
     getNotification,
     getAdminNotification,
-    readNotificaton,
+    readNotification,
     unReadCountNotification,
+    unReadNotification,
+    allNo
 };

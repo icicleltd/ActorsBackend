@@ -6,18 +6,20 @@ import {
   NotificationType,
 } from "./notification.interface";
 import { Notification } from "./notification.schema";
+import BeAMember from "../beAMember/beAMember.schema";
 
 const createNotification = async () => {
   return {
     msg: "Notification created",
   };
 };
-// const BE_A_MEMBER_TYPES = [
-//   "APPLICATION_SUBMITTED",
-//   "PAYMENT_SUBMITTED",
-//   "APPLICATION_APPROVED",
-//   "APPLICATION_REJECTED",
-// ];
+const BE_A_MEMBER_TYPES = [
+  "BE_A_MEMBER",
+  "PAYMENT_SUBMITTED",
+  // "APPLICATION_APPROVED",
+  // "APPLICATION_REJECTED",
+  "CONTACT",
+];
 const getNotification = async (queryPayload: IFetchNotification) => {
   const {
     role,
@@ -90,10 +92,9 @@ const getNotification = async (queryPayload: IFetchNotification) => {
 
           "application._id": 1,
           "application.fullName": 1,
-          "application.phoneNumber":1,
-          "application.email":1,
-          "application.actorReference.actorId":1,
-          
+          "application.phoneNumber": 1,
+          "application.email": 1,
+          "application.actorReference.actorId": 1,
 
           myReferenceStatus: "$myReference.status",
           respondedAt: "$myReference.respondedAt",
@@ -160,14 +161,23 @@ const getAdminNotification = async (adminId: string) => {
   }
   return notification;
 };
-
+const allNo = async () => {
+  const result = await Notification.find();
+  return result;
+};
 const readNotification = async (
   notificationType: NotificationType,
+  recipient: string,
+  applicantId: string,
+  role: string,
   id: string,
 ) => {
-  if (!id) {
-    throw new AppError(400, "Notification id is required");
-  }
+  // if (!id) {
+  //   throw new AppError(400, "Notification id is required");
+  // }
+  // if (id !== _id) {
+  //   throw new AppError(400, "Notification id not match");
+  // }
   // if (
   //   notificationType === "BE_A_MEMBER" &&
   //   (role === "admin" || role === "superadmin")
@@ -185,21 +195,108 @@ const readNotification = async (
 
   //   return { success: true, bulkRead: true };
   // }
+  if (role === "member") {
+    const session = await mongoose.startSession();
 
-  // RULE 2: Member reading REFERENCE_REQUEST
-  if (notificationType === "REFERENCE_REQUEST") {
-    const notification = await Notification.findByIdAndUpdate(
-      id,
-      { isRead: true },
-      { new: true },
-    );
+    let notification;
 
-    if (!notification) {
-      throw new AppError(404, "REFERENCE_REQUEST Notification not found");
-    }
+    await session.withTransaction(async () => {
+      // 1️⃣ Mark notification as read
+      notification = await Notification.findOneAndUpdate(
+        {
+          application: new Types.ObjectId(applicantId),
+          recipient: new Types.ObjectId(recipient),
+          type: notificationType,
+        },
+        { $set: { isRead: true } },
+        {
+          new: true,
+          session,
+        },
+      );
+
+      if (!notification) {
+        throw new AppError(404, "Notification not found");
+      }
+
+      // 2️⃣ Update actorReference read flag
+      const beAMember = await BeAMember.findByIdAndUpdate(
+        applicantId,
+        {
+          $set: {
+            "actorReference.$[elem].isMemberRead": true,
+          },
+        },
+        {
+          new: true,
+          session,
+          arrayFilters: [
+            { "elem.actorId": new Types.ObjectId(recipient) }, // ✅ FIXED
+          ],
+        },
+      );
+
+      if (!beAMember) {
+        throw new AppError(404, "Be A Member application not found");
+      }
+    });
+
+    session.endSession();
 
     return notification;
   }
+
+  if (role && role !== "member") {
+    const session = await mongoose.startSession();
+    let notification;
+    await session.withTransaction(async () => {
+      notification = await Notification.updateMany(
+        {
+          application: new Types.ObjectId(applicantId),
+          type: { $in: BE_A_MEMBER_TYPES },
+        },
+        { $set: { isRead: true } },
+        {
+          session,
+        },
+      );
+      if (!notification) {
+        throw new AppError(404, "Notificationnnn not found");
+      }
+      // update be a member isAdmin
+      const beAMember = await BeAMember.findByIdAndUpdate(
+        applicantId,
+        {
+          $set: { isAdminRead: true },
+        },
+        { new: true, session },
+      );
+      if (!beAMember) {
+        throw new AppError(404, "Be A Member application not found");
+      }
+    });
+    session.endSession();
+    return notification;
+    // const notifications = await Notification.findOneAndUpdate(
+    //   {
+    //     application: new Types.ObjectId(applicantId),
+    //     type: { $in: BE_A_MEMBER_TYPES },
+    //   },
+    //   { $set: { isRead: true } },
+    //   {
+    //     new: true,
+    //   },
+    // );
+
+    // const beAMembers = await BeAMember.findByIdAndUpdate(
+    //   applicantId,
+    //   {
+    //     $set: { isAdminRead: true },
+    //   },
+    //   { new: true },
+    // );
+  }
+  // RULE 2: Member reading REFERENCE_REQUEST
 
   // DEFAULT: single notification read
   const notification = await Notification.findByIdAndUpdate(
@@ -216,7 +313,7 @@ const readNotification = async (
 };
 
 const unReadCountNotification = async (queryPayload: INotificationQuery) => {
-  const { role, recipient } = queryPayload;
+  const { role, recipient, _id } = queryPayload;
   if (!role) {
     throw new AppError(400, "Role is required");
   }
@@ -271,6 +368,74 @@ const unReadCountNotification = async (queryPayload: INotificationQuery) => {
     CONTACT: contact,
   };
 };
+const unReadNotification = async (queryPayload: INotificationQuery) => {
+  const { role, recipient, _id } = queryPayload;
+  if (!role) {
+    throw new AppError(400, "Role is required");
+  }
+  if (role === "member") {
+    if (!recipient) {
+      throw new AppError(400, "recipient id is required");
+    }
+
+    if (!recipient.equals(_id)) {
+      throw new AppError(400, "recipient id not match");
+    }
+    const reference = await Notification.find({
+      type: "REFERENCE_REQUEST",
+      recipient: recipient,
+      recipientRole: role,
+      isRead: false,
+    });
+    const referenceCount = reference.length;
+      // const memberUnRead = referenceCount + payment;
+    return { notifications: reference, referenceCount };
+  }
+  const [all, contact, reference, payment, approved, beMember, admin] =
+    await Promise.all([
+      Notification.find({
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "CONTACT",
+        isRead: false,
+      }),
+      Notification.find({
+        type: "REFERENCE_REQUEST",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "PAYMENT_SUBMITTED",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "APPLICATION_APPROVED",
+        isRead: false,
+      }),
+      Notification.countDocuments({
+        type: "BE_A_MEMBER",
+        isRead: false,
+      }),
+      Notification.find({
+        type: { $in: BE_A_MEMBER_TYPES },
+        isRead: false,
+      }),
+    ]);
+  const newMemberCount = beMember + approved;
+  const adminUnRead = beMember + payment + contact;
+  return {
+    // ALL: all,
+    BE_A_MEMBER: beMember,
+    notifications: admin,
+    adminUnRead: adminUnRead,
+    // payment,
+    // contact,
+    PAYMENT_SUBMITTED: payment,
+    // REFERENCE_REQUEST: reference,
+    // APPLICATION_APPROVED: approved,
+    CONTACT: contact,
+  };
+};
 
 export const NotificationService = {
   createNotification,
@@ -278,4 +443,6 @@ export const NotificationService = {
   getAdminNotification,
   readNotification,
   unReadCountNotification,
+  unReadNotification,
+  allNo,
 };

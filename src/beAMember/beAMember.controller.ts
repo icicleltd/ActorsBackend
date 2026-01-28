@@ -27,17 +27,21 @@ const createBeAMember = catchAsync(
    GET ALL BE A MEMBERS (Frontend/Admin)
 ------------------------------------- */
 const getBeAMembers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const limit = parseInt(req.query?.limit as string) || 10;
     const page = parseInt(req.query?.page as string) || 1;
     const skip = (page - 1) * limit;
-    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortBy = (req.query.sortBy as string) || "updatedAt";
     const sortWith: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
+    const id = req.user.data._id;
+    const role = req.user.data.role;
     const result = await BeAMemberService.getBeAMembers(
       limit,
       skip,
       sortBy,
       sortWith,
+      id,
+      role,
     );
 
     sendResponse(res, {
@@ -69,21 +73,44 @@ const deleteBeAMember = catchAsync(
 const approveByAdmin = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { status, rejectionReason,message } = req.body;
+    const { status, rejectionReason, message } = req.body;
     const adminId = req.user._id;
     const result = await BeAMemberService.approveByAdmin({
       id,
       status,
       rejectionReason,
       adminId,
-      message
-
+      message,
     });
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Be a Member deleted successfully",
+      message: "Admin Approved successfully ",
+      data: result,
+    });
+  },
+);
+
+const approveByMember = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const applicantId = req.params.id;
+    const { status, rejectionReason, message, notificationType, recipient } =
+      req.body;
+    const actorId = req.user.data._id;
+    const result = await BeAMemberService.approveByMember({
+      applicantId,
+      status,
+      actorId,
+      message,
+      notificationType,
+      recipient,
+    });
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Member Approved successfully",
       data: result,
     });
   },
@@ -97,4 +124,5 @@ export const BeAMemberController = {
   getBeAMembers,
   deleteBeAMember,
   approveByAdmin,
+  approveByMember,
 };

@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const emailHelper_1 = require("../helper/emailHelper");
 const error_1 = require("../middleware/error");
+const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
 const router = express_1.default.Router();
 // router.post("/upcomming", EventController.createEvent);
 // router.get("/migrate", async (req, res) => {
@@ -79,8 +80,27 @@ router.post("/pull-duplicate-rank/:id", async (req, res) => {
     });
     res.send(result);
 });
+router.post("/fix-actor", async (req, res) => {
+    const result = await actor_schema_1.default.updateMany({ isModified: { $exists: false } }, { $set: { isModified: false } });
+    res.json(result);
+});
+router.post("/be-a-mem", async (req, res) => {
+    const result = await beAMember_schema_1.default.updateMany({ "actorReference.status": { $exists: false } }, {
+        $set: {
+            "actorReference.$[elem].status": "pending",
+        },
+    }, {
+        arrayFilters: [
+            { "elem.status": { $exists: false } },
+        ],
+    });
+    res.json({
+        success: true,
+        modifiedCount: result.modifiedCount,
+    });
+});
 router.post("/fix-roles", async (req, res) => {
-    const result = await actor_schema_1.default.updateMany({ role: { $exists: false } }, { $set: { role: "member" } });
+    const result = await beAMember_schema_1.default.updateMany({ role: { $exists: false } }, { $set: { role: "member" } });
     res.json(result);
 });
 // test mail

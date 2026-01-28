@@ -38,6 +38,7 @@ export interface INotificationQuery {
   role: RecipientRole;
   recipient?: Types.ObjectId;
   notificationType?: NotificationType;
+  _id:Types.ObjectId
 }
 export interface IFetchNotification {
    role: RecipientRole;

@@ -93,6 +93,15 @@ const beAMemberSchema = new mongoose_1.Schema({
                 enum: ["pending", "approved", "rejected"],
                 default: "pending",
             },
+            isUpdated: {
+                type: Boolean,
+                default: false,
+            },
+            isMemberRead: {
+                type: Boolean,
+                default: false,
+            },
+            // required: true,
             respondedAt: {
                 type: Date,
             },
@@ -101,6 +110,10 @@ const beAMemberSchema = new mongoose_1.Schema({
     payment: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Payment",
+    },
+    isAdminRead: {
+        type: Boolean,
+        default: false,
     },
     height: { type: String },
     weight: { type: String },
@@ -112,8 +125,8 @@ const beAMemberSchema = new mongoose_1.Schema({
     },
 }, {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    // toJSON: { virtuals: true },
+    // toObject: { virtuals: true },
 });
 // beAMemberSchema.virtual("payment", {
 //   ref: "Payment",

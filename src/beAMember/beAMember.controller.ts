@@ -31,7 +31,7 @@ const getBeAMembers = catchAsync(
     const limit = parseInt(req.query?.limit as string) || 10;
     const page = parseInt(req.query?.page as string) || 1;
     const skip = (page - 1) * limit;
-    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortBy = (req.query.sortBy as string) || "updatedAt";
     const sortWith: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
     const id = req.user.data._id;
     const role = req.user.data.role;
@@ -94,14 +94,17 @@ const approveByAdmin = catchAsync(
 
 const approveByMember = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-    const { status, rejectionReason, message } = req.body;
+    const applicantId = req.params.id;
+    const { status, rejectionReason, message, notificationType, recipient } =
+      req.body;
     const actorId = req.user.data._id;
     const result = await BeAMemberService.approveByMember({
-      id,
+      applicantId,
       status,
       actorId,
       message,
+      notificationType,
+      recipient,
     });
 
     sendResponse(res, {

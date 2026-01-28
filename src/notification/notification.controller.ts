@@ -114,15 +114,19 @@ const getAdminNotification = catchAsync(
     });
   },
 );
-const readNotificaton = catchAsync(
+const readNotification = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const role = req.user.data.role;
-    const { notificationType, _id } = req.body;
-    console.log(req.body);
+    const id = req.user.data._id;
+    const { notificationType, recipient, applicantId } = req.body;
     const result = await NotificationService.readNotification(
       notificationType,
-      _id,
+      recipient,
+      applicantId,
+      role,
+      id,
     );
+    
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -141,7 +145,7 @@ const unReadCountNotification = catchAsync(
       recipient: recipient
         ? new Types.ObjectId(recipient as string)
         : undefined,
-        _id: new Types.ObjectId(req.user.data._id as string),
+      _id: new Types.ObjectId(req.user.data._id as string),
     });
     sendResponse(res, {
       statusCode: 200,
@@ -170,12 +174,24 @@ const unReadNotification = catchAsync(
     });
   },
 );
+const allNo = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const result = await NotificationService.allNo();
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "all get  successfully",
+      data: result,
+    });
+  },
+);
 
 export const NotificationController = {
   createNotification,
   getNotification,
   getAdminNotification,
-  readNotificaton,
+  readNotification,
   unReadCountNotification,
   unReadNotification,
+  allNo
 };

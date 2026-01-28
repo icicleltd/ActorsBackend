@@ -20,6 +20,12 @@ export interface approveByAdminPayload {
   rejectionReason?: string;
   message?: string;
 }
+const BE_A_MEMBER_TYPES = [
+  "BE_A_MEMBER",
+  "PAYMENT_SUBMITTED",
+  "APPLICATION_APPROVED",
+  "APPLICATION_REJECTED",
+];
 
 /* ------------------------------------
    CREATE BE A MEMBER
@@ -182,14 +188,13 @@ const getBeAMembersss = async (
   return members;
 };
 
-
 const getBeAMemberss = async (
   limit: number,
   skip: number,
   sortBy: string,
   sortWith: 1 | -1,
   id: string,
-  role: string
+  role: string,
 ) => {
   const objectId = new Types.ObjectId(id); // Convert id to ObjectId
 
@@ -306,7 +311,7 @@ const getBeAMembers = async (
   sortBy: string,
   sortWith: 1 | -1,
   id: string,
-  role: string
+  role: string,
 ) => {
   const query: any = {}; // Initialize an empty query object
 
@@ -314,7 +319,6 @@ const getBeAMembers = async (
   if (role === "member") {
     query["actorReference.actorId"] = new Types.ObjectId(id);
   }
-
   // Perform the query with common logic for both roles
   const members = await BeAMember.find(query)
     .populate({
@@ -327,12 +331,8 @@ const getBeAMembers = async (
     .sort({ [sortBy]: sortWith })
     .limit(limit)
     .skip(skip);
-
   return members;
 };
-
-
-
 
 const approveByAdmin = async (payload: approveByAdminPayload) => {
   const { id, status, adminId, rejectionReason, message } = payload;
@@ -365,7 +365,7 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
       // 2️⃣ Update Be A Member status
       updatedBeAMember = await BeAMember.findByIdAndUpdate(
         id,
-        { $set: { status } },
+        { $set: { status, isAdminRead: true } },
         { new: true, runValidators: true, session },
       );
 
@@ -391,27 +391,28 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
       const updatedNotification = await Notification.findOneAndUpdate(
         {
           application: updatedBeAMember._id,
+          type: { $in: BE_A_MEMBER_TYPES },
         },
         {
           $set: {
-            recipientRole: ["admin", "superadmin"],
-            type:
-              status === "approved"
-                ? "APPLICATION_APPROVED"
-                : "APPLICATION_REJECTED",
+            // recipientRole: ["admin", "superadmin"],
+            // type:
+            //   status === "approved"
+            //     ? "APPLICATION_APPROVED"
+            //     : "APPLICATION_REJECTED",
 
-            title:
-              status === "approved"
-                ? "Membership Application Approved"
-                : "Membership Application Rejected",
+            // title:
+            //   status === "approved"
+            //     ? "Membership Application Approved"
+            //     : "Membership Application Rejected",
 
-            message:
-              status === "approved"
-                ? `${updatedBeAMember.fullName}'s membership application has been approved`
-                : `${updatedBeAMember.fullName}'s membership application has been rejected`,
+            // message:
+            //   status === "approved"
+            //     ? `${updatedBeAMember.fullName}'s membership application has been approved`
+            //     : `${updatedBeAMember.fullName}'s membership application has been rejected`,
 
-            payment: updatedPayment._id,
-            isRead: false,
+            // payment: updatedPayment._id,
+            isRead: true,
           },
         },
         { new: true, session },
@@ -451,14 +452,16 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
 };
 
 const approveByMember = async (payload: {
-  id: string;
+  applicantId: string;
   actorId: string;
   status: "approved" | "rejected";
   message?: string;
+  notificationType: string;
+  recipient: string;
 }) => {
-  const { id, actorId, status } = payload;
+  const { applicantId, actorId, status, notificationType, recipient } = payload;
 
-  if (!id || !actorId) {
+  if (!applicantId || !actorId) {
     throw new AppError(400, "BeAMember ID and Actor ID are required");
   }
 
@@ -473,7 +476,8 @@ const approveByMember = async (payload: {
 
     await session.withTransaction(async () => {
       // 1️⃣ Fetch application
-      const existingBeAMember = await BeAMember.findById(id).session(session);
+      const existingBeAMember =
+        await BeAMember.findById(applicantId).session(session);
       if (!existingBeAMember) {
         throw new AppError(404, "Be A Member application not found");
       }
@@ -489,7 +493,7 @@ const approveByMember = async (payload: {
 
       // 3️⃣ Update ONLY this actorReference
       updatedBeAMember = await BeAMember.findByIdAndUpdate(
-        id,
+        applicantId,
         {
           $set: {
             "actorReference.$[elem].status": status,
@@ -507,13 +511,24 @@ const approveByMember = async (payload: {
         },
       );
 
+      await Notification.findOneAndUpdate(
+        {
+          application: new Types.ObjectId(applicantId),
+          recipient: new Types.ObjectId(recipient),
+          type: notificationType,
+          // recipientRole: { $in: role },
+        },
+        { $set: { isRead: true } },
+        { new: true, session },
+      );
+
       // 4️⃣ CREATE new notification (Admin + Superadmin)
       await Notification.create(
         [
           {
             recipientRole: ["admin", "superadmin"],
             type:
-                status === "approved"
+              status === "approved"
                 ? "APPLICATION_APPROVED"
                 : "APPLICATION_REJECTED",
 
@@ -522,8 +537,7 @@ const approveByMember = async (payload: {
                 ? "Reference Approved successfully"
                 : "Reference Rejected successfully",
 
-            message:
-              `${updatedBeAMember.fullName}'s reference was ${status}`,
+            message: `${updatedBeAMember.fullName}'s reference was ${status}`,
 
             application: updatedBeAMember._id,
             isRead: false,

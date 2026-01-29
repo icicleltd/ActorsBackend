@@ -27,9 +27,11 @@ const getBeAMembers = (0, catchAsync_1.default)(async (req, res, next) => {
     const limit = parseInt(req.query?.limit) || 10;
     const page = parseInt(req.query?.page) || 1;
     const skip = (page - 1) * limit;
-    const sortBy = req.query.sortBy || "createdAt";
+    const sortBy = req.query.sortBy || "updatedAt";
     const sortWith = req.query.sortWith === "asc" ? 1 : -1;
-    const result = await beAMember_services_1.BeAMemberService.getBeAMembers(limit, skip, sortBy, sortWith);
+    const id = req.user.data._id;
+    const role = req.user.data.role;
+    const result = await beAMember_services_1.BeAMemberService.getBeAMembers(limit, skip, sortBy, sortWith, id, role);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -59,12 +61,31 @@ const approveByAdmin = (0, catchAsync_1.default)(async (req, res, next) => {
         status,
         rejectionReason,
         adminId,
-        message
+        message,
     });
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "Be a Member deleted successfully",
+        message: "Admin Approved successfully ",
+        data: result,
+    });
+});
+const approveByMember = (0, catchAsync_1.default)(async (req, res, next) => {
+    const applicantId = req.params.id;
+    const { status, rejectionReason, message, notificationType, recipient } = req.body;
+    const actorId = req.user.data._id;
+    const result = await beAMember_services_1.BeAMemberService.approveByMember({
+        applicantId,
+        status,
+        actorId,
+        message,
+        notificationType,
+        recipient,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Member Approved successfully",
         data: result,
     });
 });
@@ -76,4 +97,5 @@ exports.BeAMemberController = {
     getBeAMembers,
     deleteBeAMember,
     approveByAdmin,
+    approveByMember,
 };

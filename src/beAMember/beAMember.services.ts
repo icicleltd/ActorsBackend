@@ -20,6 +20,12 @@ export interface approveByAdminPayload {
   rejectionReason?: string;
   message?: string;
 }
+const BE_A_MEMBER_TYPES = [
+  "BE_A_MEMBER",
+  "PAYMENT_SUBMITTED",
+  "APPLICATION_APPROVED",
+  "APPLICATION_REJECTED",
+];
 
 /* ------------------------------------
    CREATE BE A MEMBER
@@ -145,19 +151,182 @@ const createBeAMember = async (payload: IBeAMemberPayload) => {
 /* ------------------------------------
    GET ALL BE A MEMBERS
 ------------------------------------- */
-const getBeAMembers = async (
+const getBeAMembersss = async (
   limit: number,
   skip: number,
   sortBy: string,
   sortWith: 1 | -1,
+  id: string,
+  role: string,
 ) => {
+  // ✅ member can only see applications where they are a reference
+  if (role === "member") {
+    const members = await BeAMember.aggregate([
+      { $unwind: "$actorReference" },
+      {
+        $match: {
+          ["actorReference.actorId"]: new Types.ObjectId(id),
+        },
+      },
+    ])
+      .sort({ [sortBy]: sortWith })
+      .limit(limit)
+      .skip(skip);
+    return members;
+  }
   const members = await BeAMember.find()
     .populate({
       path: "actorReference.actorId",
     })
     .populate({
       path: "payment",
-      select: "method amount status verifiedAt",
+      select: "method amount status verifiedAt transactionId senderNumber",
+    })
+    .sort({ [sortBy]: sortWith })
+    .limit(limit)
+    .skip(skip);
+  return members;
+};
+
+const getBeAMemberss = async (
+  limit: number,
+  skip: number,
+  sortBy: string,
+  sortWith: 1 | -1,
+  id: string,
+  role: string,
+) => {
+  const objectId = new Types.ObjectId(id); // Convert id to ObjectId
+
+  if (role === "member") {
+    // Aggregation for member role
+    const members = await BeAMember.aggregate([
+      {
+        $match: {
+          "actorReference.actorId": objectId, // Match documents where actorReference.actorId matches the member id
+        },
+      },
+      {
+        $addFields: {
+          actorReference: {
+            $map: {
+              input: "$actorReference", // Iterate over the actorReference array
+              as: "ref",
+              in: {
+                $mergeObjects: [
+                  "$$ref", // Keep all existing fields in actorReference
+                  {
+                    isMatchingReference: {
+                      $eq: ["$$ref.actorId", objectId], // Add a flag if actorId matches the member id
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      // Populate actorReference.actorId
+      {
+        $lookup: {
+          from: "actors", // The collection name for the actor model
+          localField: "actorReference.actorId",
+          foreignField: "_id",
+          as: "actorReferencePopulated",
+        },
+      },
+      {
+        $addFields: {
+          actorReference: {
+            $map: {
+              input: "$actorReference", // Iterate over the actorReference array
+              as: "ref",
+              in: {
+                $mergeObjects: [
+                  "$$ref",
+                  {
+                    actorId: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$actorReferencePopulated",
+                            as: "populatedRef",
+                            cond: {
+                              $eq: ["$$populatedRef._id", "$$ref.actorId"],
+                            },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      // Remove the temporary populated field
+      {
+        $unset: "actorReferencePopulated",
+      },
+      // Populate payment field
+      {
+        $lookup: {
+          from: "payments", // The collection name for the payment model
+          localField: "payment",
+          foreignField: "_id",
+          as: "payment",
+        },
+      },
+      {
+        $sort: { [sortBy]: sortWith }, // Sort by the specified field
+      },
+      { $skip: skip }, // Skip the first N documents
+      { $limit: limit }, // Limit the number of documents returned
+    ]);
+
+    return members;
+  }
+
+  // For non-member roles, return all applicants with population
+  const members = await BeAMember.find()
+    .populate({
+      path: "actorReference.actorId",
+    })
+    .populate({
+      path: "payment",
+      select: "method amount status verifiedAt transactionId senderNumber",
+    })
+    .sort({ [sortBy]: sortWith })
+    .limit(limit)
+    .skip(skip);
+
+  return members;
+};
+
+const getBeAMembers = async (
+  limit: number,
+  skip: number,
+  sortBy: string,
+  sortWith: 1 | -1,
+  id: string,
+  role: string,
+) => {
+  const query: any = {}; // Initialize an empty query object
+
+  // If the role is "member", filter by actorReference.actorId
+  if (role === "member") {
+    query["actorReference.actorId"] = new Types.ObjectId(id);
+  }
+  // Perform the query with common logic for both roles
+  const members = await BeAMember.find(query)
+    .populate({
+      path: "actorReference.actorId",
+    })
+    .populate({
+      path: "payment",
+      select: "method amount status verifiedAt transactionId senderNumber",
     })
     .sort({ [sortBy]: sortWith })
     .limit(limit)
@@ -196,7 +365,7 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
       // 2️⃣ Update Be A Member status
       updatedBeAMember = await BeAMember.findByIdAndUpdate(
         id,
-        { $set: { status } },
+        { $set: { status, isAdminRead: true } },
         { new: true, runValidators: true, session },
       );
 
@@ -222,27 +391,28 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
       const updatedNotification = await Notification.findOneAndUpdate(
         {
           application: updatedBeAMember._id,
+          type: { $in: BE_A_MEMBER_TYPES },
         },
         {
           $set: {
-            recipientRole: ["admin", "superadmin"],
-            type:
-              status === "approved"
-                ? "APPLICATION_APPROVED"
-                : "APPLICATION_REJECTED",
+            // recipientRole: ["admin", "superadmin"],
+            // type:
+            //   status === "approved"
+            //     ? "APPLICATION_APPROVED"
+            //     : "APPLICATION_REJECTED",
 
-            title:
-              status === "approved"
-                ? "Membership Application Approved"
-                : "Membership Application Rejected",
+            // title:
+            //   status === "approved"
+            //     ? "Membership Application Approved"
+            //     : "Membership Application Rejected",
 
-            message:
-              status === "approved"
-                ? `${updatedBeAMember.fullName}'s membership application has been approved`
-                : `${updatedBeAMember.fullName}'s membership application has been rejected`,
+            // message:
+            //   status === "approved"
+            //     ? `${updatedBeAMember.fullName}'s membership application has been approved`
+            //     : `${updatedBeAMember.fullName}'s membership application has been rejected`,
 
-            payment: updatedPayment._id,
-            isRead: false,
+            // payment: updatedPayment._id,
+            isRead: true,
           },
         },
         { new: true, session },
@@ -281,6 +451,117 @@ const approveByAdmin = async (payload: approveByAdminPayload) => {
   }
 };
 
+const approveByMember = async (payload: {
+  applicantId: string;
+  actorId: string;
+  status: "approved" | "rejected";
+  message?: string;
+  notificationType: string;
+  recipient: string;
+}) => {
+  const { applicantId, actorId, status, notificationType, recipient } = payload;
+
+  if (!applicantId || !actorId) {
+    throw new AppError(400, "BeAMember ID and Actor ID are required");
+  }
+
+  if (!["approved", "rejected"].includes(status)) {
+    throw new AppError(400, "Invalid status value");
+  }
+
+  const session = await mongoose.startSession();
+
+  try {
+    let updatedBeAMember: any;
+
+    await session.withTransaction(async () => {
+      // 1️⃣ Fetch application
+      const existingBeAMember =
+        await BeAMember.findById(applicantId).session(session);
+      if (!existingBeAMember) {
+        throw new AppError(404, "Be A Member application not found");
+      }
+
+      // 2️⃣ Ensure actorReference exists
+      const referenceExists = existingBeAMember.actorReference.some(
+        (ref: any) => ref.actorId.toString() === actorId,
+      );
+
+      if (!referenceExists) {
+        throw new AppError(403, "You are not a reference for this application");
+      }
+
+      // 3️⃣ Update ONLY this actorReference
+      updatedBeAMember = await BeAMember.findByIdAndUpdate(
+        applicantId,
+        {
+          $set: {
+            "actorReference.$[elem].status": status,
+            "actorReference.$[elem].isUpdated": true,
+            "actorReference.$[elem].isMemberRead": true,
+            "actorReference.$[elem].respondedAt": new Date(),
+          },
+        },
+        {
+          new: true,
+          session,
+          arrayFilters: [
+            { "elem.actorId": new mongoose.Types.ObjectId(actorId) },
+          ],
+        },
+      );
+
+      await Notification.findOneAndUpdate(
+        {
+          application: new Types.ObjectId(applicantId),
+          recipient: new Types.ObjectId(recipient),
+          type: notificationType,
+          // recipientRole: { $in: role },
+        },
+        { $set: { isRead: true } },
+        { new: true, session },
+      );
+
+      // 4️⃣ CREATE new notification (Admin + Superadmin)
+      await Notification.create(
+        [
+          {
+            recipientRole: ["admin", "superadmin"],
+            type:
+              status === "approved"
+                ? "APPLICATION_APPROVED"
+                : "APPLICATION_REJECTED",
+
+            title:
+              status === "approved"
+                ? "Reference Approved successfully"
+                : "Reference Rejected successfully",
+
+            message: `${updatedBeAMember.fullName}'s reference was ${status}`,
+
+            application: updatedBeAMember._id,
+            isRead: false,
+          },
+        ],
+        { session },
+      );
+    });
+
+    return {
+      success: true,
+      message:
+        status === "approved"
+          ? "Reference approved successfully"
+          : "Reference rejected successfully",
+      data: updatedBeAMember,
+    };
+  } catch (error) {
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
 /* ------------------------------------
    DELETE SINGLE BE A MEMBER
 ------------------------------------- */
@@ -311,4 +592,5 @@ export const BeAMemberService = {
   getBeAMembers,
   deleteBeAMember,
   approveByAdmin,
+  approveByMember,
 };

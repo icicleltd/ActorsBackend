@@ -10,6 +10,12 @@ notificationRouter.get(
   VerifyLogin,
   NotificationController.unReadCountNotification,
 );
+notificationRouter.get('/all',NotificationController.allNo)
+notificationRouter.get(
+  "/unread",
+  VerifyLogin,
+  NotificationController.unReadNotification,
+);
 notificationRouter.get("/",VerifyLogin, NotificationController.getNotification);
 notificationRouter.get(
   "/admin/:id",
@@ -18,6 +24,6 @@ notificationRouter.get(
 notificationRouter.put(
   "/read",
   VerifyLogin,
-  NotificationController.readNotificaton,
+  NotificationController.readNotification,
 );
 export default notificationRouter;

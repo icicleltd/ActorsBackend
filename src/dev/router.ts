@@ -2,6 +2,7 @@ import express from "express";
 import Actor from "../actor/actor.schema";
 import { sendMail } from "../helper/emailHelper";
 import { AppError } from "../middleware/error";
+import BeAMember from "../beAMember/beAMember.schema";
 
 const router = express.Router();
 
@@ -90,8 +91,38 @@ router.post("/pull-duplicate-rank/:id", async (req, res) => {
   );
   res.send(result);
 });
-router.post("/fix-roles", async (req, res) => {
+router.post("/fix-actor", async (req, res) => {
   const result = await Actor.updateMany(
+    { isModified: { $exists: false } },
+    { $set: { isModified: false } },
+  );
+
+  res.json(result);
+});
+
+router.post("/be-a-mem", async (req, res) => {
+  const result = await BeAMember.updateMany(
+    { "actorReference.status": { $exists: false } },
+    {
+      $set: {
+        "actorReference.$[elem].status": "pending",
+      },
+    },
+    {
+      arrayFilters: [
+        { "elem.status": { $exists: false } },
+      ],
+    }
+  );
+
+  res.json({
+    success: true,
+    modifiedCount: result.modifiedCount,
+  });
+});
+
+router.post("/fix-roles", async (req, res) => {
+  const result = await BeAMember.updateMany(
     { role: { $exists: false } },
     { $set: { role: "member" } },
   );
@@ -99,6 +130,8 @@ router.post("/fix-roles", async (req, res) => {
   res.json(result);
 });
 // test mail
+
+
 
 router.post("/test-mail", async (req, res) => {
   const { email } = req.body;

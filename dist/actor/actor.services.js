@@ -8,6 +8,7 @@ const fileUpload_1 = require("../helper/fileUpload");
 const actor_schema_1 = __importDefault(require("./actor.schema"));
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("../admin/admin.schema");
+const mongoose_1 = require("mongoose");
 const createActor = async (files, data) => {
     const uploadArray = async (fileArr) => {
         if (!fileArr || fileArr.length === 0)
@@ -63,7 +64,7 @@ const getSingleActor = async (actorId) => {
     if (!actorId) {
         throw new Error("No actor id provided");
     }
-    const actor = await actor_schema_1.default.findById(actorId);
+    const actor = await actor_schema_1.default.findById(actorId).lean();
     if (!actor) {
         throw new Error("Actor not found");
     }
@@ -547,6 +548,37 @@ const updateActor = async (payload, files, id) => {
     const newActor = await actor_schema_1.default.findByIdAndUpdate(id, { $set: updateData }, { new: true });
     return newActor;
 };
+const getActorForModal = async (id, search, limit, sortBy, sortWith, alive) => {
+    let filter = {};
+    const fields = ["email", "idNo", "phoneNumber", "fullName"];
+    if (id) {
+        filter._id = { $nin: new mongoose_1.Types.ObjectId(id) };
+    }
+    if (alive?.trim() === "alive") {
+        filter["rankHistory.rank"] = { $nin: ["pastWay"] };
+    }
+    // if (search) {
+    //   const trimSearchValue = search.trim();
+    //   filter.$or = fields.map((field) => ({
+    //     [field]: { $regex: `^${trimSearchValue}`, $options: "i" },
+    //   }));
+    // }
+    if (search?.trim()) {
+        const value = search.trim();
+        filter.$or = [
+            { fullName: { $regex: `^${value}`, $options: "i" } },
+            { email: { $regex: `^${value}`, $options: "i" } },
+            { idNo: { $regex: `^${value}`, $options: "i" } },
+            { phoneNumber: { $regex: `^${value}`, $options: "i" } },
+        ];
+    }
+    const actors = await actor_schema_1.default.find(filter)
+        .select("fullName idNo photo email _id dob")
+        .lean()
+        .limit(limit)
+        .sort({ [sortBy]: sortWith });
+    return { actors };
+};
 exports.default = {
     updateActor,
 };
@@ -556,4 +588,5 @@ exports.ActorService = {
     getAllActor,
     filterByRank,
     updateActor,
+    getActorForModal,
 };

@@ -19,7 +19,7 @@ const createActor = catchAsync(
       message: "Actors retrieved successfully",
       data: result,
     });
-  }
+  },
 );
 
 const getSingleActor = catchAsync(
@@ -32,7 +32,7 @@ const getSingleActor = catchAsync(
       message: "Single actor fetch successfully",
       data: result,
     });
-  }
+  },
 );
 const getAllActor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -53,8 +53,8 @@ const getAllActor = catchAsync(
     const defaultYearRange = `${startYear}-${endYear}`;
 
     // Use the dynamic year range if searchYearRange is not provided
-    const searchYearRange = req.query.searchYearRange as string ;
-    const advisorYearRange = req.query.advisorYearRange as string ;
+    const searchYearRange = req.query.searchYearRange as string;
+    const advisorYearRange = req.query.advisorYearRange as string;
     const result = await ActorService.getAllActor(
       search,
       page,
@@ -66,7 +66,7 @@ const getAllActor = catchAsync(
       executiveRank,
       rankGroup,
       searchYearRange,
-      advisorYearRange
+      advisorYearRange,
     );
     sendResponse(res, {
       statusCode: 200,
@@ -74,7 +74,7 @@ const getAllActor = catchAsync(
       message: "All actor fetch successfully",
       data: result,
     });
-  }
+  },
 );
 const filterByRank = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -86,7 +86,7 @@ const filterByRank = catchAsync(
       message: "Get data by rank successfully",
       data: result,
     });
-  }
+  },
 );
 
 const updateActor = catchAsync(
@@ -107,7 +107,32 @@ const updateActor = catchAsync(
       message: "Actor updated successfully",
       data: updatedActor,
     });
-  }
+  },
+);
+const getActorForModal = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.query.id as string;
+    const search = req.query.search as string;
+    const alive = req.query.alive as string;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortWith: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
+
+    const result = await ActorService.getActorForModal(
+      id,
+      search,
+      limit,
+      sortBy,
+      sortWith,
+      alive,
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Actor get successfully",
+      data: result,
+    });
+  },
 );
 // const test = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
@@ -129,4 +154,5 @@ export const ActorController = {
   getAllActor,
   filterByRank,
   updateActor,
+  getActorForModal,
 };

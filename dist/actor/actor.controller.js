@@ -83,6 +83,21 @@ const updateActor = (0, catchAsync_1.default)(async (req, res, next) => {
         data: updatedActor,
     });
 });
+const getActorForModal = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.query.id;
+    const search = req.query.search;
+    const alive = req.query.alive;
+    const limit = parseInt(req.query.limit) || 20;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortWith = req.query.sortWith === "asc" ? 1 : -1;
+    const result = await actor_services_1.ActorService.getActorForModal(id, search, limit, sortBy, sortWith, alive);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Actor get successfully",
+        data: result,
+    });
+});
 // const test = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
 //     let a: any;
@@ -102,4 +117,5 @@ exports.ActorController = {
     getAllActor,
     filterByRank,
     updateActor,
+    getActorForModal,
 };

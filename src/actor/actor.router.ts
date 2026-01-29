@@ -21,6 +21,7 @@ actorRouter.put(
   ActorController.updateActor
 );
 
+actorRouter.get('/modal',ActorController.getActorForModal);
 actorRouter.get('/',ActorController.getAllActor);
 actorRouter.get('/:id',ActorController.getSingleActor)
 actorRouter.get('/rank/:rank',ActorController.filterByRank)

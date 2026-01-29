@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const error_1 = require("./middleware/error");
 dotenv_1.default.config();
 let isConnected = false;
 const connectDB = async () => {
@@ -22,6 +23,7 @@ const connectDB = async () => {
     }
     catch (error) {
         console.error("MongoDB connection failed:", error);
+        throw new error_1.AppError(500, "Mongodb connect error");
     }
 };
 exports.connectDB = connectDB;

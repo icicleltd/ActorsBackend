@@ -2,7 +2,7 @@ import { fileUploader } from "../helper/fileUpload";
 import Actor from "./actor.schema";
 import { AppError } from "../middleware/error";
 import { Admin } from "../admin/admin.schema";
-import type { PipelineStage, SortOrder } from "mongoose";
+import { Types, type PipelineStage, type SortOrder } from "mongoose";
 
 const createActor = async (files: any, data: any) => {
   const uploadArray = async (fileArr: any[]) => {
@@ -62,7 +62,7 @@ const getSingleActor = async (actorId: string) => {
   if (!actorId) {
     throw new Error("No actor id provided");
   }
-  const actor = await Actor.findById(actorId);
+  const actor = await Actor.findById(actorId).lean();
   if (!actor) {
     throw new Error("Actor not found");
   }
@@ -170,7 +170,7 @@ export const ROLE_ORDER = [
   // newly added (snake_case)
   "law_secretary",
   "social_welfare_secretary",
-  
+
   "law_welfare_secretary",
   "publicity_secretary",
   "it_secretary",
@@ -188,7 +188,7 @@ const getAllActor = async (
   executiveRank: string,
   rankGroup: string,
   searchYearRange: string,
-  advisorYearRange: string
+  advisorYearRange: string,
 ) => {
   const pipeline: PipelineStage[] = [];
 
@@ -209,8 +209,6 @@ const getAllActor = async (
       },
     });
   }
-
-  
 
   if (rankGroup === "all") {
     /* ---------------------------------------
@@ -373,8 +371,6 @@ const getAllActor = async (
     });
   }
 
- 
-
   // ==================== CATEGORY FILTERS ====================
   if (category) {
     pipeline.push({
@@ -440,7 +436,6 @@ const getAllActor = async (
     });
     pipeline.push({ $sort: { "rankHistory.end": -1, roleOrder: 1 } });
   } else if (rankGroup === "advisor") {
-    
     pipeline.push({
       $sort: { "rankHistory.end": -1, idNo: 1 },
     });
@@ -487,7 +482,7 @@ const getAllActor = async (
 
   // ==================== EXECUTE PIPELINE ====================
   const result = await Actor.aggregate(pipeline);
-  
+
   const aggregationResult = result[0] || {};
 
   return {
@@ -497,12 +492,11 @@ const getAllActor = async (
     categoryCCount: reportActor[0]?.categoryCCount || 0,
     categoryACount: reportActor[0]?.categoryACount || 0,
     totalPage: Math.ceil(
-      (aggregationResult.filteredTotal?.[0]?.count || 0) / limit
+      (aggregationResult.filteredTotal?.[0]?.count || 0) / limit,
     ),
   };
 };
 const filterByRank = async (rank: string) => {
-
   if (!rank) {
     throw new Error("No rank provided");
   }
@@ -572,9 +566,8 @@ const filterByRank = async (rank: string) => {
 const updateActor = async (
   payload: any,
   files: { [fieldname: string]: Express.Multer.File[] },
-  id: string
+  id: string,
 ) => {
- 
   if (!id) {
     throw new AppError(400, "Actor ID is required");
   }
@@ -596,7 +589,7 @@ const updateActor = async (
   // Handle uploaded cover images
   if (files?.coverImages) {
     const coverImages = await fileUploader.CloudinaryUploadMultiple(
-      files.coverImages
+      files.coverImages,
     );
     updateData.coverImages = coverImages.map((img) => {
       const uploaded = img as { secure_url: string };
@@ -619,10 +612,49 @@ const updateActor = async (
   const newActor = await Actor.findByIdAndUpdate(
     id,
     { $set: updateData },
-    { new: true }
+    { new: true },
   );
- 
+
   return newActor;
+};
+const getActorForModal = async (
+  id: string,
+  search: string,
+  limit: number,
+  sortBy: string,
+  sortWith: 1 | -1,
+  alive: string,
+) => {
+  let filter: Partial<Record<string, unknown>> = {};
+  const fields = ["email", "idNo", "phoneNumber", "fullName"];
+  if (id) {
+    filter._id = { $nin: new Types.ObjectId(id) };
+  }
+  if(alive?.trim() ==="alive"){
+    filter["rankHistory.rank"]={ $nin: ["pastWay"] };
+  }
+  // if (search) {
+  //   const trimSearchValue = search.trim();
+  //   filter.$or = fields.map((field) => ({
+  //     [field]: { $regex: `^${trimSearchValue}`, $options: "i" },
+  //   }));
+  // }
+  if (search?.trim()) {
+    const value = search.trim();
+    filter.$or = [
+      { fullName: { $regex: `^${value}`, $options: "i" } },
+      { email: { $regex: `^${value}`, $options: "i" } },
+      { idNo: { $regex: `^${value}`, $options: "i" } },
+      { phoneNumber: { $regex: `^${value}`, $options: "i" } },
+    ];
+  }
+
+  const actors = await Actor.find(filter)
+    .select("fullName idNo photo email _id dob")
+    .lean()
+    .limit(limit)
+    .sort({ [sortBy]: sortWith });
+  return {actors};
 };
 
 export default {
@@ -635,4 +667,5 @@ export const ActorService = {
   getAllActor,
   filterByRank,
   updateActor,
+  getActorForModal,
 };

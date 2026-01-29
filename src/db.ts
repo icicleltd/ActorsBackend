@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import { AppError } from "./middleware/error";
 dotenv.config();
 
 let isConnected = false;
@@ -19,13 +20,11 @@ export const connectDB = async () => {
     console.log("MongoDB connected");
   } catch (error) {
     console.error("MongoDB connection failed:", error);
+    throw new AppError(500, "Mongodb connect error");
   }
 };
 
-
-
 // fix bufferCommands
-
 
 // import mongoose from "mongoose";
 
@@ -69,5 +68,3 @@ export const connectDB = async () => {
 //     throw error;
 //   }
 // };
-
-

@@ -23,13 +23,13 @@ const actorSchema = new Schema<IActor>(
     },
 
     // Contact
-    email: { type: String, trim: true, },
+    email: { type: String, trim: true },
     password: {
       type: String,
       minlength: 6,
       select: false, // 🔐 do not return password by default
     },
-    phoneNumber: { type: String, unique: true , trim: true,},
+    phoneNumber: { type: String, unique: true, trim: true },
     whatsApp: { type: String },
     nid: { type: String },
     passport: { type: String },
@@ -65,7 +65,7 @@ const actorSchema = new Schema<IActor>(
 
     coverImages: [{ type: String }],
 
-    idNo: { type: String, unique: true , trim: true,},
+    idNo: { type: String, unique: true, trim: true },
     rank: { type: String },
     rankHistory: [
       {
@@ -146,6 +146,18 @@ const actorSchema = new Schema<IActor>(
   },
   { timestamps: true },
 );
+// Text / search helpers
+actorSchema.index({ fullName: 1 });
+actorSchema.index({ email: 1 });
+
+// Already covered by `unique: true`
+/*
+actorSchema.index({ idNo: 1 });
+actorSchema.index({ phoneNumber: 1 });
+*/
+
+// Sorting
+actorSchema.index({ createdAt: -1 });
 
 // add gard for rank history duplicate added
 actorSchema.pre<IActor>("save", async function () {

@@ -64,7 +64,7 @@ const getSingleActor = async (actorId) => {
     if (!actorId) {
         throw new Error("No actor id provided");
     }
-    const actor = await actor_schema_1.default.findById(actorId).lean();
+    const actor = await actor_schema_1.default.findOne({ idNo: actorId }).lean();
     if (!actor) {
         throw new Error("Actor not found");
     }

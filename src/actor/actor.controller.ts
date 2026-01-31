@@ -25,6 +25,7 @@ const createActor = catchAsync(
 const getSingleActor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const actorId = req.params.id;
+    console.log(actorId)
     const result = await ActorService.getSingleActor(actorId);
     sendResponse(res, {
       statusCode: 200,

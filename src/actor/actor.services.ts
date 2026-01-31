@@ -62,7 +62,7 @@ const getSingleActor = async (actorId: string) => {
   if (!actorId) {
     throw new Error("No actor id provided");
   }
-  const actor = await Actor.findById(actorId).lean();
+  const actor = await Actor.findOne({ idNo: actorId }).lean();
   if (!actor) {
     throw new Error("Actor not found");
   }
@@ -630,8 +630,8 @@ const getActorForModal = async (
   if (id) {
     filter._id = { $nin: new Types.ObjectId(id) };
   }
-  if(alive?.trim() ==="alive"){
-    filter["rankHistory.rank"]={ $nin: ["pastWay"] };
+  if (alive?.trim() === "alive") {
+    filter["rankHistory.rank"] = { $nin: ["pastWay"] };
   }
   // if (search) {
   //   const trimSearchValue = search.trim();
@@ -654,7 +654,7 @@ const getActorForModal = async (
     .lean()
     .limit(limit)
     .sort({ [sortBy]: sortWith });
-  return {actors};
+  return { actors };
 };
 
 export default {

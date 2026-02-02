@@ -21,6 +21,7 @@ const youtube_router_1 = __importDefault(require("./youtube/youtube.router"));
 const sponcer_router_1 = __importDefault(require("./sponcer/sponcer.router"));
 const serialCounter_router_1 = __importDefault(require("./serialCounter/serialCounter.router"));
 const beAMember_router_1 = __importDefault(require("./beAMember/beAMember.router"));
+const siteManagement_router_1 = __importDefault(require("./siteManagement/siteManagement.router"));
 const verifyLogin_1 = require("./middleware/verifyLogin");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -88,6 +89,7 @@ app.use("/api/v1/youtube", youtube_router_1.default);
 app.use("/api/v1/sponcer", sponcer_router_1.default);
 app.use("/api/v1/counter", serialCounter_router_1.default);
 app.use("/api/v1/be-a-member", beAMember_router_1.default);
+app.use("/api/v1/site-management", siteManagement_router_1.default);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

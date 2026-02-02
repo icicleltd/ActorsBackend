@@ -90,7 +90,11 @@ const actorSchema = new mongoose_1.Schema({
             idNo: { type: String },
         },
     ],
-    coverImages: [{ type: String }],
+    coverImages: [
+        {
+            url: { type: String, trim: true },
+        },
+    ],
     idNo: { type: String, unique: true, trim: true },
     rank: { type: String },
     rankHistory: [
@@ -109,13 +113,26 @@ const actorSchema = new mongoose_1.Schema({
     fromActive: { type: String },
     endActive: { type: String, default: null },
     presentActive: { type: String, default: null },
-    height: { type: String },
+    height: {
+        feet: { type: Number },
+        inches: { type: Number },
+    },
     weight: { type: String },
-    workExperience: { type: String },
+    drama: { type: Number },
+    serial: { type: Number },
+    film: { type: Number },
+    award: { type: Number },
+    workExperience: { type: Number },
     workSocialMediaInfo: { type: String },
     educationInfo: { type: String },
     personalInfo: { type: String },
     basicInfo: { type: String },
+    performanceInfo: [
+        {
+            caption: { type: String },
+            url: { type: String },
+        },
+    ],
     // rankYearRange: {
     //   yearRange: { type: String },
     //   start: { type: Number },

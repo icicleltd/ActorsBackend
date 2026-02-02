@@ -1,4 +1,7 @@
 import type { Document, Types } from "mongoose";
+export interface IImage {
+  url: string;
+}
 
 export interface IActor extends Document {
   // =========================
@@ -86,7 +89,7 @@ export interface IActor extends Document {
       yearRange: String;
       start: Number;
       end: Number;
-    }
+    },
   ];
   // entiry?: {
   //   rank: String;
@@ -108,15 +111,23 @@ export interface IActor extends Document {
   // =========================
   // Physical Info
   // =========================
-  height?: string;
+  height?: {
+    feet?: number;
+    inches?: number;
+  };
+  // experienceYears?: number;
   weight?: string;
+  drama?: number;
+  serial?: number;
+  film?: number;
+  award?: number;
   isProfilePublic: boolean;
   isActive: boolean;
 
   // =========================
   // Work / Personal Info
   // =========================
-  workExperience?: string;
+  workExperience?: number;
   workSocialMediaInfo?: string;
   educationInfo?: string;
   personalInfo?: string;
@@ -138,6 +149,15 @@ export interface IActor extends Document {
 
   photo?: string;
   characterPhoto?: string[];
+  heightFeet?: string;
+  heightInch?: string;
+
+  performanceInfo?: [
+    {
+      caption: string;
+      url: string;
+    },
+  ];
 
   // =========================
   // Intro Video
@@ -153,7 +173,7 @@ export interface IActor extends Document {
   // =========================
   category?: "A" | "B";
   status: "pending" | "approved" | "rejected";
-  coverImages?: string[];
+  coverImages?: IImage[];
   activity?: {
     all?: string[];
     drama?: string[];
@@ -183,3 +203,20 @@ export type AllowedActorPayload = Pick<
   | "bio"
   | "presentAddress"
 >;
+
+export type ActorPayloadForProfileUpdate = Pick<
+  IActor,
+  | "birthPlace"
+  | "workExperience"
+  | "bloodGroup"
+  | "heightInch"
+  | "heightFeet"
+  | "weight"
+  | "dob"
+  | "bio"
+  | "drama"
+  | "serial"
+  | "film"
+  | "award"
+>;
+export type ActorPayloadForPerformance = Pick<IActor, "performanceInfo">;

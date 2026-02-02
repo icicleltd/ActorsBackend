@@ -1,0 +1,96 @@
+import { NextFunction, Request, Response } from "express";
+import sendResponse from "../shared/sendResponse";
+import catchAsync from "../shared/catchAsync";
+import { SiteManagementService } from "./siteManagement.services";
+
+const uploadCoverImages = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { urls, idNo } = req.body;
+    console.log(req.body);
+    const result = await SiteManagementService.uploadCoverImages({
+      urls,
+      idNo,
+    });
+
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Banner created successfully",
+      data: result,
+    });
+  },
+);
+
+const getBanners = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const sortBy = (req.query?.sortBy as string) || "order";
+    const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
+
+    const result = await SiteManagementService.getBanners(sortBy, sortWith);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Banners fetched successfully",
+      data: result,
+    });
+  },
+);
+
+/* ------------------------------------
+   DELETE SINGLE BANNER (Admin)
+------------------------------------- */
+const deleteCoverPhoto = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { imageId, id } = req.params;
+    const result = await SiteManagementService.deleteCoverPhoto(imageId, id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Cover photo deleted successfully",
+      data: result,
+    });
+  },
+);
+const updateProfileAbout = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const idNo = req.params.id;
+    const { profileData } = req.body;
+    const result = await SiteManagementService.updateProfileAbout(
+      profileData,
+      idNo,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Profile updated successfully",
+      data: result,
+    });
+  },
+);
+const addProfilePerformance = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const idNo = req.params.id;
+    const result = await SiteManagementService.addProfilePerformance(
+      req.body,
+      idNo,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Performance added successfully",
+      data: result,
+    });
+  },
+);
+
+export const SiteManagementController = {
+  uploadCoverImages,
+  getBanners,
+  deleteCoverPhoto,
+  updateProfileAbout,
+  addProfilePerformance,
+};

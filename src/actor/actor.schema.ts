@@ -2,6 +2,7 @@ import mongoose, { Query, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import type { IActor } from "./actor.interface.js";
 import { AppError } from "../middleware/error";
+import { url } from "inspector";
 
 const actorSchema = new Schema<IActor>(
   {
@@ -63,7 +64,11 @@ const actorSchema = new Schema<IActor>(
       },
     ],
 
-    coverImages: [{ type: String }],
+    coverImages: [
+      {
+        url: { type: String, trim: true },
+      },
+    ],
 
     idNo: { type: String, unique: true, trim: true },
     rank: { type: String },
@@ -85,14 +90,27 @@ const actorSchema = new Schema<IActor>(
     endActive: { type: String, default: null },
     presentActive: { type: String, default: null },
 
-    height: { type: String },
+    height: {
+      feet: { type: Number },
+      inches: { type: Number },
+    },
     weight: { type: String },
+    drama: { type: Number },
+    serial: { type: Number },
+    film: { type: Number },
+    award: { type: Number },
 
-    workExperience: { type: String },
+    workExperience: { type: Number },
     workSocialMediaInfo: { type: String },
     educationInfo: { type: String },
     personalInfo: { type: String },
     basicInfo: { type: String },
+    performanceInfo: [
+      {
+        caption: { type: String },
+        url: { type: String },
+      },
+    ],
 
     // rankYearRange: {
     //   yearRange: { type: String },

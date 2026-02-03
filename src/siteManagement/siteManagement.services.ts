@@ -1,5 +1,6 @@
 import { error } from "console";
 import {
+  ActorPayloadForMediaArchives,
   ActorPayloadForPerformance,
   ActorPayloadForProfileUpdate,
 } from "../actor/actor.interface";
@@ -94,6 +95,31 @@ const addProfilePerformance = async (
   }
   return result;
 };
+const addProfileMediaArchives = async (
+  payloadMediaArchives: ActorPayloadForMediaArchives,
+  idNo: string,
+) => {
+    console.log("media archives", payloadMediaArchives);
+  if (!idNo) {
+    throw new AppError(400, "ID No is required");
+  }
+
+  const sanitize = sanitizePayload(payloadMediaArchives);
+  console.log(sanitize);
+  const updateSanitize = {
+    ...sanitize,
+  };
+  const result = await Actor.findOneAndUpdate(
+    { idNo },
+    { $addToSet: { mediaArchives: updateSanitize } },
+    { new: true, runValidators: true },
+  );
+  console.log("result", result);
+  if (!result) {
+    throw new AppError(404, "Profile not updated");
+  }
+  return result;
+};
 
 /* ------------------------------------
    DELETE SINGLE BANNER
@@ -123,6 +149,56 @@ const deleteCoverPhoto = async (imageId: string, id: string) => {
 
   return banner;
 };
+const deleteProfilePerformance = async (imageId: string, id: string) => {
+  console.log(imageId, id);
+  if (!imageId || !id) {
+    throw new AppError(400, "Profile performance imageId and id are required");
+  }
+
+  const performance = await Actor.findOneAndUpdate(
+    {
+      idNo: id,
+    },
+    {
+      $pull: {
+        performanceInfo: { _id: imageId },
+      },
+    },
+  );
+
+  if (!performance) {
+    throw new AppError(404, "Performance not found");
+  }
+
+  // await deleteFromCloudinary(performance.publicId);
+
+  return performance;
+};
+const deleteProfileMediaArchives = async (imageId: string, id: string) => {
+  console.log(imageId, id);
+  if (!imageId || !id) {
+    throw new AppError(400, "Profile media archives imageId and id are required");
+  }
+
+  const performance = await Actor.findOneAndUpdate(
+    {
+      idNo: id,
+    },
+    {
+      $pull: {
+        mediaArchives: { _id: imageId },
+      },
+    },
+  );
+
+  if (!performance) {
+    throw new AppError(404, "Media archives not found");
+  }
+
+  // await deleteFromCloudinary(performance.publicId);
+
+  return performance;
+};
 
 export const SiteManagementService = {
   uploadCoverImages,
@@ -130,4 +206,7 @@ export const SiteManagementService = {
   deleteCoverPhoto,
   updateProfileAbout,
   addProfilePerformance,
+  deleteProfilePerformance,
+  addProfileMediaArchives,
+  deleteProfileMediaArchives
 };

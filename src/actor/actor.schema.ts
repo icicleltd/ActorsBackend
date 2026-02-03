@@ -42,6 +42,12 @@ const actorSchema = new Schema<IActor>(
     youtubeLink: { type: String },
 
     youtubeVideos: [{ type: String }],
+    mediaArchives: [
+      {
+        link: { type: String },
+        title: { type: String },
+      },
+    ],
 
     actedDramaAndFilmDetails: [
       {

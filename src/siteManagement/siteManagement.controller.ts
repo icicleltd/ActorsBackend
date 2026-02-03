@@ -53,6 +53,32 @@ const deleteCoverPhoto = catchAsync(
     });
   },
 );
+const deleteProfilePerformance = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { imageId, id } = req.params;
+    const result = await SiteManagementService.deleteProfilePerformance(imageId, id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Profile performance deleted successfully",
+      data: result,
+    });
+  },
+);
+const deleteProfileMediaArchives = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { imageId, id } = req.params;
+    const result = await SiteManagementService.deleteProfileMediaArchives(imageId, id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Profile media archives deleted successfully",
+      data: result,
+    });
+  },
+);
 const updateProfileAbout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const idNo = req.params.id;
@@ -86,6 +112,22 @@ const addProfilePerformance = catchAsync(
     });
   },
 );
+const addProfileMediaArchives = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const idNo = req.params.id;
+    const result = await SiteManagementService.addProfileMediaArchives(
+      req.body,
+      idNo,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Media archives added successfully",
+      data: result,
+    });
+  },
+);
 
 export const SiteManagementController = {
   uploadCoverImages,
@@ -93,4 +135,7 @@ export const SiteManagementController = {
   deleteCoverPhoto,
   updateProfileAbout,
   addProfilePerformance,
+  deleteProfilePerformance,
+  addProfileMediaArchives,
+  deleteProfileMediaArchives
 };

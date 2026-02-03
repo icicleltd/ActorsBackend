@@ -51,6 +51,7 @@ export interface IActor extends Document {
   // YouTube Videos
   // =========================
   youtubeVideos?: string[];
+  mediaArchives?: {link: string; title?: string}[];
 
   // =========================
   // Drama / Film Acted Details
@@ -220,3 +221,4 @@ export type ActorPayloadForProfileUpdate = Pick<
   | "award"
 >;
 export type ActorPayloadForPerformance = Pick<IActor, "performanceInfo">;
+export type ActorPayloadForMediaArchives = Pick<IActor, "mediaArchives">;

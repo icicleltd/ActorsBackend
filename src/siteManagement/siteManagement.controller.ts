@@ -56,7 +56,10 @@ const deleteCoverPhoto = catchAsync(
 const deleteProfilePerformance = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { imageId, id } = req.params;
-    const result = await SiteManagementService.deleteProfilePerformance(imageId, id);
+    const result = await SiteManagementService.deleteProfilePerformance(
+      imageId,
+      id,
+    );
 
     sendResponse(res, {
       statusCode: 200,
@@ -69,12 +72,31 @@ const deleteProfilePerformance = catchAsync(
 const deleteProfileMediaArchives = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { imageId, id } = req.params;
-    const result = await SiteManagementService.deleteProfileMediaArchives(imageId, id);
+    const result = await SiteManagementService.deleteProfileMediaArchives(
+      imageId,
+      id,
+    );
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
       message: "Profile media archives deleted successfully",
+      data: result,
+    });
+  },
+);
+const deleteProfileNews = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { newsId, id } = req.params;
+    const result = await SiteManagementService.deleteProfileNews(
+      newsId,
+      id,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Profile news deleted successfully",
       data: result,
     });
   },
@@ -128,6 +150,34 @@ const addProfileMediaArchives = catchAsync(
     });
   },
 );
+const addProfileNews = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const idNo = req.params.id;
+    const payload = req.body;
+    const result = await SiteManagementService.addProfileNews(payload, idNo);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "News added successfully",
+      data: result,
+    });
+  },
+);
+const editProfileNews = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const idNo = req.params.id;
+    const payload = req.body;
+    const result = await SiteManagementService.editProfileNews(payload, idNo);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "News edited successfully",
+      data: result,
+    });
+  },
+);
 
 export const SiteManagementController = {
   uploadCoverImages,
@@ -137,5 +187,8 @@ export const SiteManagementController = {
   addProfilePerformance,
   deleteProfilePerformance,
   addProfileMediaArchives,
-  deleteProfileMediaArchives
+  deleteProfileMediaArchives,
+  addProfileNews,
+  deleteProfileNews,
+  editProfileNews
 };

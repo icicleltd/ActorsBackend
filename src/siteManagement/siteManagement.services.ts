@@ -1,19 +1,24 @@
+import { News } from "./../news/news.schema";
 import { error } from "console";
 import {
   ActorPayloadForMediaArchives,
+  ActorPayloadForNews,
   ActorPayloadForPerformance,
   ActorPayloadForProfileUpdate,
 } from "../actor/actor.interface";
 import Actor from "../actor/actor.schema";
 import { sanitizePayload } from "../helper/senitizePayload";
 import { AppError } from "../middleware/error";
+import {
+  PickActorPayloadEditNews,
+  PickActorPayloadForNews,
+} from "./siteManagement.interface";
 
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
 const uploadCoverImages = async (payload: { urls: string; idNo: string }) => {
   const { urls, idNo } = payload;
-  console.log(payload);
   if (!urls) {
     throw new AppError(400, "Urls and idNo required");
   }
@@ -74,13 +79,11 @@ const addProfilePerformance = async (
   payloadPerformance: ActorPayloadForPerformance,
   idNo: string,
 ) => {
-    console.log("performance", payloadPerformance);
   if (!idNo) {
     throw new AppError(400, "ID No is required");
   }
 
   const sanitize = sanitizePayload(payloadPerformance);
-  console.log(sanitize);
   const updateSanitize = {
     ...sanitize,
   };
@@ -89,7 +92,6 @@ const addProfilePerformance = async (
     { $addToSet: { performanceInfo: updateSanitize } },
     { new: true, runValidators: true },
   );
-  console.log("result", result);
   if (!result) {
     throw new AppError(404, "Profile not updated");
   }
@@ -99,13 +101,11 @@ const addProfileMediaArchives = async (
   payloadMediaArchives: ActorPayloadForMediaArchives,
   idNo: string,
 ) => {
-    console.log("media archives", payloadMediaArchives);
   if (!idNo) {
     throw new AppError(400, "ID No is required");
   }
 
   const sanitize = sanitizePayload(payloadMediaArchives);
-  console.log(sanitize);
   const updateSanitize = {
     ...sanitize,
   };
@@ -114,18 +114,65 @@ const addProfileMediaArchives = async (
     { $addToSet: { mediaArchives: updateSanitize } },
     { new: true, runValidators: true },
   );
-  console.log("result", result);
   if (!result) {
     throw new AppError(404, "Profile not updated");
   }
   return result;
+};
+const addProfileNews = async (
+  payloadMediaNews: PickActorPayloadForNews,
+  idNo: string,
+) => {
+  if (!idNo) {
+    throw new AppError(400, "ID No is required");
+  }
+
+  const sanitize = sanitizePayload(payloadMediaNews);
+  const { idNo: _remove, published, ...rest } = sanitize;
+  const updateSanitize = {
+    ...rest,
+    published: published ? new Date(published) : undefined,
+  };
+  const result = await Actor.findOneAndUpdate(
+    { idNo },
+    { $addToSet: { news: updateSanitize } },
+    { new: true, runValidators: true },
+  );
+  if (!result) {
+    throw new AppError(404, "Profile not updated");
+  }
+  return sanitize;
+};
+const editProfileNews = async (
+  payloadEditNews: PickActorPayloadEditNews,
+  idNo: string,
+) => {
+  if (!idNo) {
+    throw new AppError(400, "ID No is required");
+  }
+
+  const sanitize = sanitizePayload(payloadEditNews);
+  const { idNo: _remove, _id, published, ...rest } = sanitize;
+
+  const updateSanitize = {
+    ...rest,
+    published: published ? new Date(published) : undefined,
+  };
+  const result = await Actor.findOneAndUpdate(
+    { idNo, "news._id": _id },
+    { $set: { "news.$": { _id, ...updateSanitize } } },
+    { new: true, runValidators: true },
+  );
+  if (!result) {
+    throw new AppError(404, "Profile not updated");
+  }
+  return sanitize;
 };
 
 /* ------------------------------------
    DELETE SINGLE BANNER
 ------------------------------------- */
 const deleteCoverPhoto = async (imageId: string, id: string) => {
-  console.log(imageId, id);
   if (!imageId || !id) {
     throw new AppError(400, "Cover imageId and id are required");
   }
@@ -150,7 +197,6 @@ const deleteCoverPhoto = async (imageId: string, id: string) => {
   return banner;
 };
 const deleteProfilePerformance = async (imageId: string, id: string) => {
-  console.log(imageId, id);
   if (!imageId || !id) {
     throw new AppError(400, "Profile performance imageId and id are required");
   }
@@ -175,9 +221,11 @@ const deleteProfilePerformance = async (imageId: string, id: string) => {
   return performance;
 };
 const deleteProfileMediaArchives = async (imageId: string, id: string) => {
-  console.log(imageId, id);
   if (!imageId || !id) {
-    throw new AppError(400, "Profile media archives imageId and id are required");
+    throw new AppError(
+      400,
+      "Profile media archives imageId and id are required",
+    );
   }
 
   const performance = await Actor.findOneAndUpdate(
@@ -199,6 +247,30 @@ const deleteProfileMediaArchives = async (imageId: string, id: string) => {
 
   return performance;
 };
+const deleteProfileNews = async (NewsId: string, id: string) => {
+  if (!NewsId || !id) {
+    throw new AppError(400, "Profile news NewsId and id are required");
+  }
+
+  const performance = await Actor.findOneAndUpdate(
+    {
+      idNo: id,
+    },
+    {
+      $pull: {
+        news: { _id: NewsId },
+      },
+    },
+  );
+
+  if (!performance) {
+    throw new AppError(404, "News not found");
+  }
+
+  // await deleteFromCloudinary(performance.publicId);
+
+  return performance;
+};
 
 export const SiteManagementService = {
   uploadCoverImages,
@@ -208,5 +280,8 @@ export const SiteManagementService = {
   addProfilePerformance,
   deleteProfilePerformance,
   addProfileMediaArchives,
-  deleteProfileMediaArchives
+  deleteProfileMediaArchives,
+  addProfileNews,
+  deleteProfileNews,
+  editProfileNews
 };

@@ -117,6 +117,16 @@ const actorSchema = new Schema<IActor>(
         url: { type: String },
       },
     ],
+    news: [
+      {
+        title: { type: String },
+        link: { type: String },
+        image: { type: String },
+        details: { type: String },
+        published: { type: Date },
+        category: { type: String },
+      },
+    ],
 
     // rankYearRange: {
     //   yearRange: { type: String },

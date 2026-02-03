@@ -45,6 +45,36 @@ const deleteCoverPhoto = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const deleteProfilePerformance = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { imageId, id } = req.params;
+    const result = await siteManagement_services_1.SiteManagementService.deleteProfilePerformance(imageId, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Profile performance deleted successfully",
+        data: result,
+    });
+});
+const deleteProfileMediaArchives = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { imageId, id } = req.params;
+    const result = await siteManagement_services_1.SiteManagementService.deleteProfileMediaArchives(imageId, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Profile media archives deleted successfully",
+        data: result,
+    });
+});
+const deleteProfileNews = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { newsId, id } = req.params;
+    const result = await siteManagement_services_1.SiteManagementService.deleteProfileNews(newsId, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Profile news deleted successfully",
+        data: result,
+    });
+});
 const updateProfileAbout = (0, catchAsync_1.default)(async (req, res, next) => {
     const idNo = req.params.id;
     const { profileData } = req.body;
@@ -66,10 +96,48 @@ const addProfilePerformance = (0, catchAsync_1.default)(async (req, res, next) =
         data: result,
     });
 });
+const addProfileMediaArchives = (0, catchAsync_1.default)(async (req, res, next) => {
+    const idNo = req.params.id;
+    const result = await siteManagement_services_1.SiteManagementService.addProfileMediaArchives(req.body, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Media archives added successfully",
+        data: result,
+    });
+});
+const addProfileNews = (0, catchAsync_1.default)(async (req, res, next) => {
+    const idNo = req.params.id;
+    const payload = req.body;
+    const result = await siteManagement_services_1.SiteManagementService.addProfileNews(payload, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "News added successfully",
+        data: result,
+    });
+});
+const editProfileNews = (0, catchAsync_1.default)(async (req, res, next) => {
+    const idNo = req.params.id;
+    const payload = req.body;
+    const result = await siteManagement_services_1.SiteManagementService.editProfileNews(payload, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "News edited successfully",
+        data: result,
+    });
+});
 exports.SiteManagementController = {
     uploadCoverImages,
     getBanners,
     deleteCoverPhoto,
     updateProfileAbout,
     addProfilePerformance,
+    deleteProfilePerformance,
+    addProfileMediaArchives,
+    deleteProfileMediaArchives,
+    addProfileNews,
+    deleteProfileNews,
+    editProfileNews
 };

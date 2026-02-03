@@ -72,6 +72,12 @@ const actorSchema = new mongoose_1.Schema({
     tiktokLink: { type: String },
     youtubeLink: { type: String },
     youtubeVideos: [{ type: String }],
+    mediaArchives: [
+        {
+            link: { type: String },
+            title: { type: String },
+        },
+    ],
     actedDramaAndFilmDetails: [
         {
             filmAndDramaName: { type: String },
@@ -131,6 +137,16 @@ const actorSchema = new mongoose_1.Schema({
         {
             caption: { type: String },
             url: { type: String },
+        },
+    ],
+    news: [
+        {
+            title: { type: String },
+            link: { type: String },
+            image: { type: String },
+            details: { type: String },
+            published: { type: Date },
+            category: { type: String },
         },
     ],
     // rankYearRange: {

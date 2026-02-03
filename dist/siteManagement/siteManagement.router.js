@@ -19,8 +19,14 @@ router.get("/", siteManagement_controller_1.SiteManagementController.getBanners)
  */
 router.put("/profile-about/:id", siteManagement_controller_1.SiteManagementController.updateProfileAbout);
 router.put("/profile-performance/:id", siteManagement_controller_1.SiteManagementController.addProfilePerformance);
+router.put("/profile-media-archives/:id", siteManagement_controller_1.SiteManagementController.addProfileMediaArchives);
+router.put("/profile-news/:id", siteManagement_controller_1.SiteManagementController.addProfileNews);
+router.put("/profile-edit-news/:id", siteManagement_controller_1.SiteManagementController.editProfileNews);
 /**
  * Delete site Management all module
  */
 router.delete("/cover-image/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteCoverPhoto);
+router.delete("/profile-performance/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteProfilePerformance);
+router.delete("/profile-media-archives/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteProfileMediaArchives);
+router.delete("/profile-news/:newsId/:id", siteManagement_controller_1.SiteManagementController.deleteProfileNews);
 exports.default = router;

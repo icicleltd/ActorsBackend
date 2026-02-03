@@ -12,7 +12,6 @@ const error_1 = require("../middleware/error");
 ------------------------------------- */
 const uploadCoverImages = async (payload) => {
     const { urls, idNo } = payload;
-    console.log(payload);
     if (!urls) {
         throw new error_1.AppError(400, "Urls and idNo required");
     }
@@ -59,27 +58,69 @@ const updateProfileAbout = async (profileData, idNo) => {
     }
 };
 const addProfilePerformance = async (payloadPerformance, idNo) => {
-    console.log("performance", payloadPerformance);
     if (!idNo) {
         throw new error_1.AppError(400, "ID No is required");
     }
     const sanitize = (0, senitizePayload_1.sanitizePayload)(payloadPerformance);
-    console.log(sanitize);
     const updateSanitize = {
         ...sanitize,
     };
     const result = await actor_schema_1.default.findOneAndUpdate({ idNo }, { $addToSet: { performanceInfo: updateSanitize } }, { new: true, runValidators: true });
-    console.log("result", result);
     if (!result) {
         throw new error_1.AppError(404, "Profile not updated");
     }
     return result;
 };
+const addProfileMediaArchives = async (payloadMediaArchives, idNo) => {
+    if (!idNo) {
+        throw new error_1.AppError(400, "ID No is required");
+    }
+    const sanitize = (0, senitizePayload_1.sanitizePayload)(payloadMediaArchives);
+    const updateSanitize = {
+        ...sanitize,
+    };
+    const result = await actor_schema_1.default.findOneAndUpdate({ idNo }, { $addToSet: { mediaArchives: updateSanitize } }, { new: true, runValidators: true });
+    if (!result) {
+        throw new error_1.AppError(404, "Profile not updated");
+    }
+    return result;
+};
+const addProfileNews = async (payloadMediaNews, idNo) => {
+    if (!idNo) {
+        throw new error_1.AppError(400, "ID No is required");
+    }
+    const sanitize = (0, senitizePayload_1.sanitizePayload)(payloadMediaNews);
+    const { idNo: _remove, published, ...rest } = sanitize;
+    const updateSanitize = {
+        ...rest,
+        published: published ? new Date(published) : undefined,
+    };
+    const result = await actor_schema_1.default.findOneAndUpdate({ idNo }, { $addToSet: { news: updateSanitize } }, { new: true, runValidators: true });
+    if (!result) {
+        throw new error_1.AppError(404, "Profile not updated");
+    }
+    return sanitize;
+};
+const editProfileNews = async (payloadEditNews, idNo) => {
+    if (!idNo) {
+        throw new error_1.AppError(400, "ID No is required");
+    }
+    const sanitize = (0, senitizePayload_1.sanitizePayload)(payloadEditNews);
+    const { idNo: _remove, _id, published, ...rest } = sanitize;
+    const updateSanitize = {
+        ...rest,
+        published: published ? new Date(published) : undefined,
+    };
+    const result = await actor_schema_1.default.findOneAndUpdate({ idNo, "news._id": _id }, { $set: { "news.$": { _id, ...updateSanitize } } }, { new: true, runValidators: true });
+    if (!result) {
+        throw new error_1.AppError(404, "Profile not updated");
+    }
+    return sanitize;
+};
 /* ------------------------------------
    DELETE SINGLE BANNER
 ------------------------------------- */
 const deleteCoverPhoto = async (imageId, id) => {
-    console.log(imageId, id);
     if (!imageId || !id) {
         throw new error_1.AppError(400, "Cover imageId and id are required");
     }
@@ -96,10 +137,67 @@ const deleteCoverPhoto = async (imageId, id) => {
     // await deleteFromCloudinary(banner.publicId);
     return banner;
 };
+const deleteProfilePerformance = async (imageId, id) => {
+    if (!imageId || !id) {
+        throw new error_1.AppError(400, "Profile performance imageId and id are required");
+    }
+    const performance = await actor_schema_1.default.findOneAndUpdate({
+        idNo: id,
+    }, {
+        $pull: {
+            performanceInfo: { _id: imageId },
+        },
+    });
+    if (!performance) {
+        throw new error_1.AppError(404, "Performance not found");
+    }
+    // await deleteFromCloudinary(performance.publicId);
+    return performance;
+};
+const deleteProfileMediaArchives = async (imageId, id) => {
+    if (!imageId || !id) {
+        throw new error_1.AppError(400, "Profile media archives imageId and id are required");
+    }
+    const performance = await actor_schema_1.default.findOneAndUpdate({
+        idNo: id,
+    }, {
+        $pull: {
+            mediaArchives: { _id: imageId },
+        },
+    });
+    if (!performance) {
+        throw new error_1.AppError(404, "Media archives not found");
+    }
+    // await deleteFromCloudinary(performance.publicId);
+    return performance;
+};
+const deleteProfileNews = async (NewsId, id) => {
+    if (!NewsId || !id) {
+        throw new error_1.AppError(400, "Profile news NewsId and id are required");
+    }
+    const performance = await actor_schema_1.default.findOneAndUpdate({
+        idNo: id,
+    }, {
+        $pull: {
+            news: { _id: NewsId },
+        },
+    });
+    if (!performance) {
+        throw new error_1.AppError(404, "News not found");
+    }
+    // await deleteFromCloudinary(performance.publicId);
+    return performance;
+};
 exports.SiteManagementService = {
     uploadCoverImages,
     getBanners,
     deleteCoverPhoto,
     updateProfileAbout,
     addProfilePerformance,
+    deleteProfilePerformance,
+    addProfileMediaArchives,
+    deleteProfileMediaArchives,
+    addProfileNews,
+    deleteProfileNews,
+    editProfileNews
 };

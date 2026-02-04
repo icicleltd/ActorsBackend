@@ -13,6 +13,7 @@ import {
   PickActorPayloadEditNews,
   PickActorPayloadForNews,
 } from "./siteManagement.interface";
+import Portfolio from "./protfolio.schems";
 
 /* ------------------------------------
    CREATE BANNER
@@ -272,6 +273,79 @@ const deleteProfileNews = async (NewsId: string, id: string) => {
   return performance;
 };
 
+const createTabs = async (payload: any, idNo: string) => {
+  const { id, label } = payload;
+  if (!idNo) {
+    throw new AppError(400, "Actor ID No is required");
+  }
+  if (!id || !label) {
+    throw new AppError(400, "Tab id and label are required");
+  }
+  const actor = await Actor.findOne({ idNo: idNo });
+  if (!actor) {
+    throw new AppError(404, "Actor not found");
+  }
+  const existingTab = await Portfolio.findOne({
+    actorId: actor._id,
+    tabs: { $elemMatch: { id: id } },
+  });
+  if (existingTab) {
+    throw new AppError(400, `Tab with id "${id}" already exists`);
+  }
+  const tab = {
+    id,
+    label,
+  };
+  const result = await Portfolio.findOneAndUpdate(
+    { actorId: actor._id },
+    { $addToSet: { tabs: tab } },
+    { new: true, upsert: true },
+  );
+  if (!result) {
+    throw new AppError(500, "Failed to create tab");
+  }
+  return result;
+};
+const uploadWorks = async (payload: any, idNo: string) => {
+  const { image, description, _id } = payload;
+  if (!idNo) {
+    throw new AppError(400, "Actor ID No is required");
+  }
+  if (!image) {
+    throw new AppError(400, "Image is required");
+  }
+  if (!_id) {
+    throw new AppError(400, "Tab _id is required");
+  }
+
+  const actor = await Actor.findOne({ idNo: idNo });
+  if (!actor) {
+    throw new AppError(404, "Actor not found");
+  }
+  const existingTab = await Portfolio.findOne({
+    actorId: actor._id,
+    tabs: { $elemMatch: { _id: _id } },
+  });
+  if (!existingTab) {
+    throw new AppError(400, `This tab not exists`);
+  }
+  const works = {
+    image,
+    description,
+  };
+  console.log(works) 
+  // output = >{ image: 'image1', description: 'description1' }
+  const result = await Portfolio.findOneAndUpdate(
+    { actorId: actor._id, "tabs._id": _id },
+    { $push: { "tabs.$.works": works } },
+    { new: true },
+  );
+  if (!result) {
+    throw new AppError(500, "Failed to Upload work");
+  }
+  return result;
+};
+
 export const SiteManagementService = {
   uploadCoverImages,
   getBanners,
@@ -283,5 +357,7 @@ export const SiteManagementService = {
   deleteProfileMediaArchives,
   addProfileNews,
   deleteProfileNews,
-  editProfileNews
+  editProfileNews,
+  createTabs,
+  uploadWorks
 };

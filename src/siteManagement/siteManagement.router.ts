@@ -7,6 +7,8 @@ const router = express.Router();
  * Create site Management all module
  */
 router.post("/upload-cover-images", SiteManagementController.uploadCoverImages);
+router.post("/create-tab/:id", SiteManagementController.createTabs);
+router.post("/upload-work/:id", SiteManagementController.uploadWork);
 
 /**
  * Get site Management all module

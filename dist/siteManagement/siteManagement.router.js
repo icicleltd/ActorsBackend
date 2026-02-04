@@ -10,6 +10,8 @@ const router = express_1.default.Router();
  * Create site Management all module
  */
 router.post("/upload-cover-images", siteManagement_controller_1.SiteManagementController.uploadCoverImages);
+router.post("/create-tab/:id", siteManagement_controller_1.SiteManagementController.createTabs);
+router.post("/upload-work/:id", siteManagement_controller_1.SiteManagementController.uploadWork);
 /**
  * Get site Management all module
  */

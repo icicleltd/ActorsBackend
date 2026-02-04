@@ -128,6 +128,28 @@ const editProfileNews = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const createTabs = (0, catchAsync_1.default)(async (req, res, next) => {
+    const idNo = req.params.id;
+    const payload = req.body;
+    const result = await siteManagement_services_1.SiteManagementService.createTabs(payload, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "News edited successfully",
+        data: result,
+    });
+});
+const uploadWork = (0, catchAsync_1.default)(async (req, res, next) => {
+    const idNo = req.params.id;
+    const payload = req.body;
+    const result = await siteManagement_services_1.SiteManagementService.uploadWorks(payload, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "News edited successfully",
+        data: result,
+    });
+});
 exports.SiteManagementController = {
     uploadCoverImages,
     getBanners,
@@ -139,5 +161,7 @@ exports.SiteManagementController = {
     deleteProfileMediaArchives,
     addProfileNews,
     deleteProfileNews,
-    editProfileNews
+    editProfileNews,
+    createTabs,
+    uploadWork
 };

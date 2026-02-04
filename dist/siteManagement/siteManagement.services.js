@@ -7,6 +7,7 @@ exports.SiteManagementService = void 0;
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
+const protfolio_schems_1 = __importDefault(require("./protfolio.schems"));
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
@@ -188,6 +189,69 @@ const deleteProfileNews = async (NewsId, id) => {
     // await deleteFromCloudinary(performance.publicId);
     return performance;
 };
+const createTabs = async (payload, idNo) => {
+    const { id, label } = payload;
+    if (!idNo) {
+        throw new error_1.AppError(400, "Actor ID No is required");
+    }
+    if (!id || !label) {
+        throw new error_1.AppError(400, "Tab id and label are required");
+    }
+    const actor = await actor_schema_1.default.findOne({ idNo: idNo });
+    if (!actor) {
+        throw new error_1.AppError(404, "Actor not found");
+    }
+    const existingTab = await protfolio_schems_1.default.findOne({
+        actorId: actor._id,
+        tabs: { $elemMatch: { id: id } },
+    });
+    if (existingTab) {
+        throw new error_1.AppError(400, `Tab with id "${id}" already exists`);
+    }
+    const tab = {
+        id,
+        label,
+    };
+    const result = await protfolio_schems_1.default.findOneAndUpdate({ actorId: actor._id }, { $addToSet: { tabs: tab } }, { new: true, upsert: true });
+    if (!result) {
+        throw new error_1.AppError(500, "Failed to create tab");
+    }
+    return result;
+};
+const uploadWorks = async (payload, idNo) => {
+    const { image, description, _id } = payload;
+    if (!idNo) {
+        throw new error_1.AppError(400, "Actor ID No is required");
+    }
+    if (!image) {
+        throw new error_1.AppError(400, "Image is required");
+    }
+    if (!_id) {
+        throw new error_1.AppError(400, "Tab _id is required");
+    }
+    const actor = await actor_schema_1.default.findOne({ idNo: idNo });
+    if (!actor) {
+        throw new error_1.AppError(404, "Actor not found");
+    }
+    const existingTab = await protfolio_schems_1.default.findOne({
+        actorId: actor._id,
+        tabs: { $elemMatch: { _id: _id } },
+    });
+    if (!existingTab) {
+        throw new error_1.AppError(400, `This tab not exists`);
+    }
+    const works = {
+        image,
+        description,
+    };
+    console.log(works);
+    // output = >{ image: 'image1', description: 'description1' }
+    const result = await protfolio_schems_1.default.findOneAndUpdate({ actorId: actor._id, "tabs._id": _id }, { $push: { "tabs.$.works": works } }, { new: true });
+    if (!result) {
+        throw new error_1.AppError(500, "Failed to Upload work");
+    }
+    return result;
+};
 exports.SiteManagementService = {
     uploadCoverImages,
     getBanners,
@@ -199,5 +263,7 @@ exports.SiteManagementService = {
     deleteProfileMediaArchives,
     addProfileNews,
     deleteProfileNews,
-    editProfileNews
+    editProfileNews,
+    createTabs,
+    uploadWorks
 };

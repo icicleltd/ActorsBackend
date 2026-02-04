@@ -32,6 +32,18 @@ const getBanners = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const getPortfolio = (0, catchAsync_1.default)(async (req, res, next) => {
+    const idNo = req.params.id;
+    // const sortBy = (req.query?.sortBy as string) || "order";
+    // const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
+    const result = await siteManagement_services_1.SiteManagementService.getPortfolio(idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Portfolio fetched successfully",
+        data: result,
+    });
+});
 /* ------------------------------------
    DELETE SINGLE BANNER (Admin)
 ------------------------------------- */
@@ -68,6 +80,27 @@ const deleteProfileMediaArchives = (0, catchAsync_1.default)(async (req, res, ne
 const deleteProfileNews = (0, catchAsync_1.default)(async (req, res, next) => {
     const { newsId, id } = req.params;
     const result = await siteManagement_services_1.SiteManagementService.deleteProfileNews(newsId, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Profile news deleted successfully",
+        data: result,
+    });
+});
+const deleteTab = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { tabId, id } = req.params;
+    console.log(req.params);
+    const result = await siteManagement_services_1.SiteManagementService.deleteTab(tabId, id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Portfolio news deleted successfully",
+        data: result,
+    });
+});
+const deleteWork = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { tabId, workId, id } = req.params;
+    const result = await siteManagement_services_1.SiteManagementService.deleteWork(tabId, workId, id);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -163,5 +196,8 @@ exports.SiteManagementController = {
     deleteProfileNews,
     editProfileNews,
     createTabs,
-    uploadWork
+    uploadWork,
+    getPortfolio,
+    deleteWork,
+    deleteTab,
 };

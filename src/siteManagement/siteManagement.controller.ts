@@ -36,6 +36,22 @@ const getBanners = catchAsync(
     });
   },
 );
+const getPortfolio = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const idNo = req.params.id;
+    // const sortBy = (req.query?.sortBy as string) || "order";
+    // const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
+
+    const result = await SiteManagementService.getPortfolio(idNo);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Portfolio fetched successfully",
+      data: result,
+    });
+  },
+);
 
 /* ------------------------------------
    DELETE SINGLE BANNER (Admin)
@@ -88,10 +104,34 @@ const deleteProfileMediaArchives = catchAsync(
 const deleteProfileNews = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { newsId, id } = req.params;
-    const result = await SiteManagementService.deleteProfileNews(
-      newsId,
-      id,
-    );
+    const result = await SiteManagementService.deleteProfileNews(newsId, id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Profile news deleted successfully",
+      data: result,
+    });
+  },
+);
+const deleteTab = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { tabId, id } = req.params;
+    console.log(req.params);
+    const result = await SiteManagementService.deleteTab(tabId, id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Portfolio news deleted successfully",
+      data: result,
+    });
+  },
+);
+const deleteWork = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { tabId, workId, id } = req.params;
+    const result = await SiteManagementService.deleteWork(tabId, workId, id);
 
     sendResponse(res, {
       statusCode: 200,
@@ -220,5 +260,8 @@ export const SiteManagementController = {
   deleteProfileNews,
   editProfileNews,
   createTabs,
-  uploadWork
+  uploadWork,
+  getPortfolio,
+  deleteWork,
+  deleteTab,
 };

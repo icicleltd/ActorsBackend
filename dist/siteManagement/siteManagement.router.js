@@ -15,6 +15,7 @@ router.post("/upload-work/:id", siteManagement_controller_1.SiteManagementContro
 /**
  * Get site Management all module
  */
+router.get("/portfolio/:id", siteManagement_controller_1.SiteManagementController.getPortfolio);
 router.get("/", siteManagement_controller_1.SiteManagementController.getBanners);
 /**
  * update site Management all module
@@ -27,6 +28,8 @@ router.put("/profile-edit-news/:id", siteManagement_controller_1.SiteManagementC
 /**
  * Delete site Management all module
  */
+router.delete("/portfolio-work/:tabId/:workId/:id", siteManagement_controller_1.SiteManagementController.deleteWork);
+router.delete("/portfolio-tab/:tabId/:id", siteManagement_controller_1.SiteManagementController.deleteTab);
 router.delete("/cover-image/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteCoverPhoto);
 router.delete("/profile-performance/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteProfilePerformance);
 router.delete("/profile-media-archives/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteProfileMediaArchives);

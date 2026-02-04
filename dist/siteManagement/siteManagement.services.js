@@ -35,6 +35,14 @@ const getBanners = async (sortBy = "order", sortWith = 1) => {
     const banners = await actor_schema_1.default.find().sort({ [sortBy]: sortWith });
     return banners;
 };
+const getPortfolio = async (idNo) => {
+    const actorId = await actor_schema_1.default.findOne({ idNo: idNo }).select("_id").lean();
+    if (!actorId) {
+        throw new error_1.AppError(400, "This actor not found");
+    }
+    const result = await protfolio_schems_1.default.findOne({ actorId }).lean();
+    return result;
+};
 const updateProfileAbout = async (profileData, idNo) => {
     if (!idNo) {
         throw new error_1.AppError(400, "ID No is required");
@@ -172,6 +180,50 @@ const deleteProfileMediaArchives = async (imageId, id) => {
     // await deleteFromCloudinary(performance.publicId);
     return performance;
 };
+const deleteTab = async (tabId, id) => {
+    if (!tabId || !id) {
+        throw new error_1.AppError(400, " tabId and id are required");
+    }
+    const actor = await actor_schema_1.default.findOne({ idNo: id });
+    if (!actor) {
+        throw new error_1.AppError(404, "Actor not found");
+    }
+    const existingTab = await protfolio_schems_1.default.findOne({
+        actorId: actor._id,
+        tabs: { $elemMatch: { _id: tabId } },
+    });
+    if (!existingTab) {
+        throw new error_1.AppError(400, `This tab not exists`);
+    }
+    const result = await protfolio_schems_1.default.findOneAndUpdate({ actorId: actor._id }, { $pull: { tabs: { _id: tabId } } }, { new: true });
+    if (!result) {
+        throw new error_1.AppError(404, "work not found");
+    }
+    // await deleteFromCloudinary(performance.publicId);
+    return result;
+};
+const deleteWork = async (tabId, workId, id) => {
+    if (!tabId || !workId || !id) {
+        throw new error_1.AppError(400, "Profile news NewsId and id are required");
+    }
+    const actor = await actor_schema_1.default.findOne({ idNo: id });
+    if (!actor) {
+        throw new error_1.AppError(404, "Actor not found");
+    }
+    const existingTab = await protfolio_schems_1.default.findOne({
+        actorId: actor._id,
+        tabs: { $elemMatch: { _id: tabId } },
+    });
+    if (!existingTab) {
+        throw new error_1.AppError(400, `This tab not exists`);
+    }
+    const result = await protfolio_schems_1.default.findOneAndUpdate({ actorId: actor._id, "tabs._id": tabId }, { $pull: { "tabs.$.works": { _id: workId } } }, { new: true });
+    if (!result) {
+        throw new error_1.AppError(404, "work not found");
+    }
+    // await deleteFromCloudinary(performance.publicId);
+    return result;
+};
 const deleteProfileNews = async (NewsId, id) => {
     if (!NewsId || !id) {
         throw new error_1.AppError(400, "Profile news NewsId and id are required");
@@ -244,7 +296,6 @@ const uploadWorks = async (payload, idNo) => {
         image,
         description,
     };
-    console.log(works);
     // output = >{ image: 'image1', description: 'description1' }
     const result = await protfolio_schems_1.default.findOneAndUpdate({ actorId: actor._id, "tabs._id": _id }, { $push: { "tabs.$.works": works } }, { new: true });
     if (!result) {
@@ -265,5 +316,8 @@ exports.SiteManagementService = {
     deleteProfileNews,
     editProfileNews,
     createTabs,
-    uploadWorks
+    uploadWorks,
+    getPortfolio,
+    deleteWork,
+    deleteTab
 };

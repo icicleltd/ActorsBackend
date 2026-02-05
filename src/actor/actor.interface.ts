@@ -45,7 +45,8 @@ export interface IActor extends Document {
   facebookLink?: string;
   instagramLink?: string;
   tiktokLink?: string;
-  youtubeLink?: string; // main profile link
+  youtubeLink?: string;
+  twitterLink?: string;
 
   // =========================
   // YouTube Videos
@@ -229,6 +230,11 @@ export type ActorPayloadForProfileUpdate = Pick<
   | "serial"
   | "film"
   | "award"
+  | "facebookLink"
+  | "instagramLink"
+  | "twitterLink"
+  | "tiktokLink"
+  | "youtubeLink"
 >;
 export type ActorPayloadForPerformance = Pick<IActor, "performanceInfo">;
 export type ActorPayloadForNews = Pick<IActor, "news">;

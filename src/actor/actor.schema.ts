@@ -40,6 +40,7 @@ const actorSchema = new Schema<IActor>(
     instagramLink: { type: String },
     tiktokLink: { type: String },
     youtubeLink: { type: String },
+    twitterLink:{type: String},
 
     youtubeVideos: [{ type: String }],
     mediaArchives: [

@@ -71,6 +71,7 @@ const actorSchema = new mongoose_1.Schema({
     instagramLink: { type: String },
     tiktokLink: { type: String },
     youtubeLink: { type: String },
+    twitterLink: { type: String },
     youtubeVideos: [{ type: String }],
     mediaArchives: [
         {

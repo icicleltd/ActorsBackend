@@ -55,6 +55,7 @@ const updateProfileAbout = async (profileData, idNo) => {
             inches: Number(sanitize.heightInch),
         },
     };
+    console.log(updateSanitize);
     try {
         const result = await actor_schema_1.default.findOneAndUpdate({ idNo }, { $set: updateSanitize }, { new: true, runValidators: true });
         if (!result) {

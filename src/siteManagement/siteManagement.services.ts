@@ -69,6 +69,7 @@ const updateProfileAbout = async (
       inches: Number(sanitize.heightInch),
     },
   };
+  console.log(updateSanitize)
   try {
     const result = await Actor.findOneAndUpdate(
       { idNo },

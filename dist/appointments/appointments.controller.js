@@ -27,7 +27,8 @@ const createSchedule = (0, catchAsync_1.default)(async (req, res, next) => {
 const getSchedules = (0, catchAsync_1.default)(async (req, res, next) => {
     const sortBy = req.query?.sortBy || "order";
     const sortWith = req.query?.sortWith === "asc" ? 1 : -1;
-    const result = await appointments_services_1.ScheduleService.getSchedules(sortBy, sortWith);
+    const approver = req.query?.approver;
+    const result = await appointments_services_1.ScheduleService.getSchedules(sortBy, sortWith, approver);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

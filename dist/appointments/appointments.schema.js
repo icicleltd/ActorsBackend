@@ -92,6 +92,10 @@ const scheduleSchema = new mongoose_1.Schema({
         enum: ["pending", "approved", "rejected"],
         default: "pending",
     },
+    isView: {
+        type: Boolean,
+        default: false,
+    },
     // optional (admin / user)
     createdBy: {
         type: mongoose_1.Schema.Types.ObjectId,

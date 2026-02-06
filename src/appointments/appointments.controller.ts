@@ -10,7 +10,6 @@ const createSchedule = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload = req.body;
     const files = req.files;
-   
 
     const result = await ScheduleService.createSchedule(payload, files);
 
@@ -20,7 +19,7 @@ const createSchedule = catchAsync(
       message: "Schedule created successfully",
       data: result,
     });
-  }
+  },
 );
 
 /* ------------------------------------
@@ -30,8 +29,12 @@ const getSchedules = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const sortBy = (req.query?.sortBy as string) || "order";
     const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
-
-    const result = await ScheduleService.getSchedules(sortBy, sortWith);
+    const approver = req.query?.approver as string;
+    const result = await ScheduleService.getSchedules(
+      sortBy,
+      sortWith,
+      approver,
+    );
 
     sendResponse(res, {
       statusCode: 200,
@@ -39,7 +42,7 @@ const getSchedules = catchAsync(
       message: "Schedules fetched successfully",
       data: result,
     });
-  }
+  },
 );
 
 /* ------------------------------------
@@ -89,7 +92,7 @@ const reorderSchedules = catchAsync(
       message: "Schedule order updated successfully",
       data: result,
     });
-  }
+  },
 );
 
 export const ScheduleController = {

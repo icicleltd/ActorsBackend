@@ -9,6 +9,11 @@ const notificationSchema = new mongoose_1.Schema({
         enum: notification_constant_1.RECIPIENT_ROLES,
         required: true,
     },
+    contact: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Contact",
+        required: false,
+    },
     recipient: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Actor",
@@ -23,7 +28,7 @@ const notificationSchema = new mongoose_1.Schema({
     application: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "BeAMember",
-        required: true,
+        required: false,
     },
     payment: {
         type: mongoose_1.Schema.Types.ObjectId,

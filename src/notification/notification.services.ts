@@ -19,6 +19,15 @@ const BE_A_MEMBER_TYPES = [
   // "APPLICATION_APPROVED",
   // "APPLICATION_REJECTED",
   "CONTACT",
+  "SCHEDULE",
+];
+const MEMBER_TYPES = [
+  // "BE_A_MEMBER",
+  // "PAYMENT_SUBMITTED",
+  // "APPLICATION_APPROVED",
+  // "APPLICATION_REJECTED",
+  "REFERENCE_REQUEST",
+  "SCHEDULE",
 ];
 const getNotification = async (queryPayload: IFetchNotification) => {
   const {
@@ -382,13 +391,13 @@ const unReadNotification = async (queryPayload: INotificationQuery) => {
       throw new AppError(400, "recipient id not match");
     }
     const reference = await Notification.find({
-      type: "REFERENCE_REQUEST",
+      type: { $in: MEMBER_TYPES },
       recipient: recipient,
       recipientRole: role,
       isRead: false,
     });
     const referenceCount = reference.length;
-      // const memberUnRead = referenceCount + payment;
+    // const memberUnRead = referenceCount + payment;
     return { notifications: reference, referenceCount };
   }
   const [all, contact, reference, payment, approved, beMember, admin] =

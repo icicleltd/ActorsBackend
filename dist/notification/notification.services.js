@@ -52,6 +52,15 @@ const BE_A_MEMBER_TYPES = [
     // "APPLICATION_APPROVED",
     // "APPLICATION_REJECTED",
     "CONTACT",
+    "SCHEDULE",
+];
+const MEMBER_TYPES = [
+    // "BE_A_MEMBER",
+    // "PAYMENT_SUBMITTED",
+    // "APPLICATION_APPROVED",
+    // "APPLICATION_REJECTED",
+    "REFERENCE_REQUEST",
+    "SCHEDULE",
 ];
 const getNotification = async (queryPayload) => {
     const { role, recipient, notificationType, limit, search, skip, sortBy, sortWith, } = queryPayload;
@@ -348,7 +357,7 @@ const unReadNotification = async (queryPayload) => {
             throw new error_1.AppError(400, "recipient id not match");
         }
         const reference = await notification_schema_1.Notification.find({
-            type: "REFERENCE_REQUEST",
+            type: { $in: MEMBER_TYPES },
             recipient: recipient,
             recipientRole: role,
             isRead: false,

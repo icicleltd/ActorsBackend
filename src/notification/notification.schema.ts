@@ -6,8 +6,14 @@ const notificationSchema = new Schema<INotification>(
   {
     recipientRole: {
       type: [String],
-      enum:  RECIPIENT_ROLES,
+      enum: RECIPIENT_ROLES,
       required: true,
+    },
+
+    contact: {
+      type: Schema.Types.ObjectId,
+      ref: "Contact",
+      required: false,
     },
 
     recipient: {
@@ -17,7 +23,7 @@ const notificationSchema = new Schema<INotification>(
 
     type: {
       type: String,
-      enum:  NOTIFICATION_TYPES,
+      enum: NOTIFICATION_TYPES,
       required: true,
     },
 
@@ -27,7 +33,7 @@ const notificationSchema = new Schema<INotification>(
     application: {
       type: Schema.Types.ObjectId,
       ref: "BeAMember",
-      required: true,
+      required: false,
     },
 
     payment: {

@@ -24,6 +24,7 @@ const beAMember_router_1 = __importDefault(require("./beAMember/beAMember.router
 const siteManagement_router_1 = __importDefault(require("./siteManagement/siteManagement.router"));
 const verifyLogin_1 = require("./middleware/verifyLogin");
 const dotenv_1 = __importDefault(require("dotenv"));
+const contact_router_1 = require("./contact/contact.router");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
@@ -90,6 +91,7 @@ app.use("/api/v1/sponcer", sponcer_router_1.default);
 app.use("/api/v1/counter", serialCounter_router_1.default);
 app.use("/api/v1/be-a-member", beAMember_router_1.default);
 app.use("/api/v1/site-management", siteManagement_router_1.default);
+app.use("/api/v1/contact", contact_router_1.ContactRoutes);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

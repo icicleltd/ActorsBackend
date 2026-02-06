@@ -24,7 +24,8 @@ export interface INotification {
   title: string;
   message: string;
 
-  application: Types.ObjectId;
+  application?: Types.ObjectId;
+  contact?: Types.ObjectId;
   payment?: Types.ObjectId;
 
   isRead: boolean;

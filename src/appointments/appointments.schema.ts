@@ -68,6 +68,10 @@ const scheduleSchema = new Schema<ISchedule>(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    isView: {
+      type: Boolean,
+      default: false,
+    },
 
     // optional (admin / user)
     createdBy: {
@@ -77,7 +81,7 @@ const scheduleSchema = new Schema<ISchedule>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 /* ===============================

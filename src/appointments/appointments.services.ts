@@ -1,37 +1,41 @@
+import mongoose from "mongoose";
 import { deleteFromCloudinary, fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
 import Schedule from "./appointments.schema";
+import { Notification } from "../notification/notification.schema";
+import Actor from "../actor/actor.schema";
 
 /* ------------------------------------
    CREATE / UPDATE SCHEDULE BANNER
 ------------------------------------- */
-const createSchedule = async (payload: any, files: any) => {
-  const appointmentInfo = JSON.parse(payload.appointment);
-  const member = JSON.parse(payload.member);
-  if (!appointmentInfo || !member) {
-    throw new AppError(400, "Appointment info required");
-  }
-  let uploaded;
-  if (files) {
-    uploaded = await fileUploader.CloudinaryUploadMultiplePDF(files);
-  }
-  const pdfLinks = uploaded?.map((pdf: any) => pdf.secure_url as string);
-  const { date, phone, email, message, name } = appointmentInfo;
-  const appointmentData = {
-    date: new Date(date),
-    name,
-    phone,
-    email,
-    message,
-    approver: member.memberId,
-    pdfLinks,
-  };
-  const result = await Schedule.create(appointmentData);
-  if (!result) {
-    throw new AppError(500, "Not created appointmentData");
-  }
-  return result;
-};
+// const createSchedule = async (payload: any, files: any) => {
+//   const appointmentInfo = JSON.parse(payload.appointment);
+//   const member = JSON.parse(payload.member);
+//   if (!appointmentInfo || !member) {
+//     throw new AppError(400, "Appointment info required");
+//   }
+//   let uploaded;
+//   if (files) {
+//     uploaded = await fileUploader.CloudinaryUploadMultiplePDF(files);
+//   }
+//   const pdfLinks = uploaded?.map((pdf: any) => pdf.secure_url as string);
+//   const { date, phone, email, message, name } = appointmentInfo;
+//   const appointmentData = {
+//     date: new Date(date),
+//     name,
+//     phone,
+//     email,
+//     message,
+//     approver: member.memberId,
+//     pdfLinks,
+//   };
+
+//   const result = await Schedule.create(appointmentData);
+//   if (!result) {
+//     throw new AppError(500, "Not created appointmentData");
+//   }
+//   return result;
+// };
 
 // Upload image (if provided)
 //   const uploadResult = await fileUploader.CloudinaryUpload(file);
@@ -53,11 +57,89 @@ const createSchedule = async (payload: any, files: any) => {
 //   return schedule;
 // };
 
+const createSchedule = async (payload: any, files: any) => {
+  const session = await mongoose.startSession(); // Start a new session for the transaction
+  session.startTransaction();
+
+  try {
+    const appointmentInfo = JSON.parse(payload.appointment);
+    const member = JSON.parse(payload.member);
+
+    if (!appointmentInfo || !member) {
+      throw new AppError(400, "appointmentInfo not found");
+    }
+
+    let uploaded;
+    if (files) {
+      uploaded = await fileUploader.CloudinaryUploadMultiplePDF(files);
+    }
+
+    const pdfLinks = uploaded?.map((pdf: any) => pdf.secure_url as string);
+    const { date, phone, email, message, name } = appointmentInfo;
+
+    const appointmentData = {
+      date: new Date(date),
+      name,
+      phone,
+      email,
+      message,
+      approver: member.memberId,
+      pdfLinks,
+    };
+
+    // Create the schedule inside the transaction
+    const result = await Schedule.create([appointmentData], { session });
+    if (!result || result.length === 0) {
+      throw new AppError(500, "Appointment create Failed");
+    }
+
+    const notificationResult = await Notification.create(
+      [
+        {
+          recipientRole: ["member", "admin", "superadmin"],
+          type: "SCHEDULE",
+          title: "New Schedule Created",
+          message: `A new schedule has been created for ${name} on ${date}.`,
+          recipient: member.memberId,
+        },
+      ],
+      {
+        session,
+      },
+    );
+    if (!notificationResult || notificationResult.length === 0) {
+      throw new AppError(500, "Notification not created");
+    }
+
+    // Commit the transaction if everything succeeds
+    await session.commitTransaction();
+    session.endSession();
+
+    return result[0]; // Return the created schedule
+  } catch (error) {
+    // Rollback the transaction if any operation fails
+    await session.abortTransaction();
+    session.endSession();
+
+    throw error; // Re-throw the error to handle it in the caller
+  }
+};
+
 /* ------------------------------------
    GET ALL SCHEDULES
 ------------------------------------- */
-const getSchedules = async (sortBy: string = "order", sortWith: 1 | -1 = 1) => {
-  const schedules = await Schedule.find().sort({ [sortBy]: sortWith });
+const getSchedules = async (
+  sortBy: string = "order",
+  sortWith: 1 | -1 = 1,
+  approver: string,
+) => {
+  const actorId = await Actor.findOne({ idNo: approver }).select("_id").lean();
+  if (!actorId) {
+    throw new AppError(400, "This actor not found");
+  }
+  const schedules = await Schedule.find({ approver: actorId }).sort({
+    [sortBy]: sortWith,
+  });
   return schedules;
 };
 

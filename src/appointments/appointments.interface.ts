@@ -21,6 +21,7 @@ export interface ISchedule {
   scheduleType?: "shooting" | "rehearsal" | "meeting" | "event";
 
   status: "pending" | "approved" | "rejected";
+  isView: boolean
 
   createdBy?: Types.ObjectId;
 }

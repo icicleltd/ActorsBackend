@@ -21,6 +21,7 @@ import siteManagementRouter from "./siteManagement/siteManagement.router";
 import { VerifyLogin } from "./middleware/verifyLogin";
 import { VerifyAdmin } from "./middleware/verifyAdmin";
 import dotenv from "dotenv";
+import { ContactRoutes } from "./contact/contact.router";
 dotenv.config();
 
 const app = express();
@@ -103,6 +104,7 @@ app.use("/api/v1/sponcer", sponcerRouter);
 app.use("/api/v1/counter", counterRouter);
 app.use("/api/v1/be-a-member", beAMemberRouter);
 app.use("/api/v1/site-management", siteManagementRouter);
+app.use("/api/v1/contact", ContactRoutes);
 app.use(globalErrorHandler);
 
 // Test route

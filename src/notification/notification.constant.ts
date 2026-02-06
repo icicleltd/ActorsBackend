@@ -8,4 +8,5 @@ export const NOTIFICATION_TYPES = [
   "APPLICATION_REJECTED",
   "CONTACT",
   "ALL",
+  "SCHEDULE"
 ] as const;

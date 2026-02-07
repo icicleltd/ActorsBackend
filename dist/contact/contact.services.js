@@ -14,7 +14,7 @@ const notification_schema_1 = require("../notification/notification.schema");
 const createContact = async (payload) => {
     const { name, email, phone, message } = payload;
     if (!email)
-        throw new error_1.AppError(400, "Email is required");
+        throw new error_1.AppError(400, "Valid  Email is required");
     if (!message)
         throw new error_1.AppError(400, "Message is required");
     const session = await mongoose_1.default.startSession();

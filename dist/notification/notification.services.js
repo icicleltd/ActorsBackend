@@ -52,7 +52,7 @@ const BE_A_MEMBER_TYPES = [
     // "APPLICATION_APPROVED",
     // "APPLICATION_REJECTED",
     "CONTACT",
-    "SCHEDULE",
+    // "SCHEDULE",
 ];
 const MEMBER_TYPES = [
     // "BE_A_MEMBER",
@@ -393,7 +393,7 @@ const unReadNotification = async (queryPayload) => {
         notification_schema_1.Notification.find({
             type: { $in: BE_A_MEMBER_TYPES },
             isRead: false,
-        }),
+        }).sort({ "createdAt": -1 }),
     ]);
     const newMemberCount = beMember + approved;
     const adminUnRead = beMember + payment + contact;

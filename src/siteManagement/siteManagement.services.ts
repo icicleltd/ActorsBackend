@@ -45,14 +45,75 @@ const getBanners = async (sortBy: string = "order", sortWith: 1 | -1 = 1) => {
   const banners = await Actor.find().sort({ [sortBy]: sortWith });
   return banners;
 };
-const getPortfolio = async (idNo: string) => {
+
+const getPortfolio = async (idNo: string, page: number = 1, limit: number = 12, tabId: string = "ALL") => {
   const actorId = await Actor.findOne({ idNo: idNo }).select("_id").lean();
   if (!actorId) {
     throw new AppError(400, "This actor not found");
   }
-  const result = await Portfolio.findOne({ actorId }).lean();
-  return result;
+  const skip = (page - 1) * limit;
+    // Fetch the portfolio for the actor
+  const portfolio = await Portfolio.findOne({ actorId: actorId._id }).select("tabs").lean();
+
+  if (!portfolio) {
+    throw new AppError(404, "Portfolio not found");
+  }
+
+  // Build aggregation pipeline
+  let pipeline: any[] = [
+    // Match the portfolio by actorId
+    { $match: { actorId: actorId._id } },
+
+    // Unwind the tabs array to allow filtering by tab ID
+    { $unwind: "$tabs" },
+  ];
+
+  // If a specific tab is selected, filter by tab ID
+  if (tabId !== "ALL") {
+    pipeline.push({ $match: { "tabs._id": tabId } });
+  }
+
+  // Unwind the works array so we can paginate it
+  // pipeline.push(
+  //   { $unwind: "$tabs.works" },
+
+  //   // Add a new field for the tab label
+  //   {
+  //     $addFields: {
+  //       "tabs.works.tabLabel": "$tabs.label",
+  //     },
+  //   },
+
+  //   // Replace the root document with just the works
+  //   { $replaceRoot: { newRoot: "$tabs.works" } }
+  // );
+
+  // Count the total number of works (for pagination metadata)
+  const countPipeline = [...pipeline, { $count: "total" }];
+
+  // Add pagination stage
+  pipeline.push(
+    { $skip: skip },
+    { $limit: limit }
+  );
+
+  // Execute both pipelines
+  const [works, totalCountResult] = await Promise.all([
+    Portfolio.aggregate(pipeline),
+    Portfolio.aggregate(countPipeline),
+  ]);
+
+  const totalWorks = totalCountResult.length > 0 ? totalCountResult[0].total : 0;
+
+  return {
+    tabs: portfolio.tabs,
+    works,
+    totalWorks,
+    totalPages: Math.ceil(totalWorks / limit),
+    currentPage: page,
+  };
 };
+
 
 const updateProfileAbout = async (
   profileData: ActorPayloadForProfileUpdate,

@@ -40,9 +40,12 @@ const getPortfolio = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const idNo = req.params.id;
     // const sortBy = (req.query?.sortBy as string) || "order";
+    const page = parseInt(req.query?.page as string) || 1;
+    const limit = parseInt(req.query?.limit as string) || 12;
     // const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
+    const tabId = req.query?.tabId as string;
 
-    const result = await SiteManagementService.getPortfolio(idNo);
+    const result = await SiteManagementService.getPortfolio(idNo,page,limit,tabId);
 
     sendResponse(res, {
       statusCode: 200,

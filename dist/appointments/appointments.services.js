@@ -91,12 +91,13 @@ const createSchedule = async (payload, files) => {
                 recipientRole: ["member", "admin", "superadmin"],
                 type: "SCHEDULE",
                 title: "New Schedule Created",
-                message: `A new schedule has been created for ${name} on ${date}.`,
+                message: `A new schedule has been created for ${name} on ${new Date(date).toLocaleDateString()}.`,
                 recipient: member.memberId,
             },
         ], {
             session,
         });
+        console.log("notificationResult", notificationResult);
         if (!notificationResult || notificationResult.length === 0) {
             throw new error_1.AppError(500, "Notification not created");
         }

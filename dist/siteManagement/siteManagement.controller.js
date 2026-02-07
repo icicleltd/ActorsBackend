@@ -35,8 +35,11 @@ const getBanners = (0, catchAsync_1.default)(async (req, res, next) => {
 const getPortfolio = (0, catchAsync_1.default)(async (req, res, next) => {
     const idNo = req.params.id;
     // const sortBy = (req.query?.sortBy as string) || "order";
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 12;
     // const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
-    const result = await siteManagement_services_1.SiteManagementService.getPortfolio(idNo);
+    const tabId = req.query?.tabId;
+    const result = await siteManagement_services_1.SiteManagementService.getPortfolio(idNo, page, limit, tabId);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

@@ -21,10 +21,10 @@ const router = express_1.default.Router();
 //       rankYearRange: { $exists: true },
 //       rankHistory: { $exists: false },
 //     });
-//     
+//
 //     for (const actor of actors) {
 //       const { rank, rankYearRange } = actor as any;
-//       
+//
 //       //   if (!rank || !rankYearRange) continue;
 //       actor.rankHistory = [
 //         {
@@ -34,9 +34,9 @@ const router = express_1.default.Router();
 //           end: rankYearRange.end,
 //         },
 //       ];
-//       
+//
 //       //  return res.send(actor)
-//       //   
+//       //
 //       await actor.save();
 //     }
 //     let updatedCount = 0;
@@ -60,7 +60,7 @@ const router = express_1.default.Router();
 //     const oldIdNo = actor.idNo;
 //     const newIDNo = `${actor.category}-${actor.idNo}`;
 //     actor.idNo = newIDNo;
-//     
+//
 //     await actor.save();
 //   }
 //   // return res.send({ actor: actor });
@@ -90,9 +90,7 @@ router.post("/be-a-mem", async (req, res) => {
             "actorReference.$[elem].status": "pending",
         },
     }, {
-        arrayFilters: [
-            { "elem.status": { $exists: false } },
-        ],
+        arrayFilters: [{ "elem.status": { $exists: false } }],
     });
     res.json({
         success: true,
@@ -148,5 +146,27 @@ router.post("/test-mail", async (req, res) => {
   `,
     });
     res.send({ success: true });
+});
+router.get("/agg", async (req, res) => {
+    // const result = await Actor.aggregate([
+    //   {
+    //     $match: { isActive: true },
+    //   },
+    //   {
+    //     $group: {
+    //       _id: "$status",
+    //       total: { $sum: 1 },
+    //     },
+    //   },
+    // ]);
+    // console.log(result);
+    // Top 5 newest actors
+    const result = await actor_schema_1.default.aggregate([{ $sort: { createdAt: -1 } }, { $limit: 5 }, { $project: {
+                fullName: 1,
+                createdAt: 1,
+                _id: 0
+            } }]);
+    console.log(result);
+    res.send({ data: result });
 });
 exports.default = router;

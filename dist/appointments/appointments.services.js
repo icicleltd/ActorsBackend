@@ -1,15 +1,50 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ScheduleService = void 0;
-const mongoose_1 = __importDefault(require("mongoose"));
+exports.ScheduleService = exports.getMyMonthlyApprovedSchedules = void 0;
+const mongoose_1 = __importStar(require("mongoose"));
 const fileUpload_1 = require("../helper/fileUpload");
 const error_1 = require("../middleware/error");
 const appointments_schema_1 = __importDefault(require("./appointments.schema"));
 const notification_schema_1 = require("../notification/notification.schema");
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
+const scheduleApproved_1 = require("../helper/mailTempate/scheduleApproved");
+const emailHelper_1 = require("../helper/emailHelper");
 /* ------------------------------------
    CREATE / UPDATE SCHEDULE BANNER
 ------------------------------------- */
@@ -93,11 +128,11 @@ const createSchedule = async (payload, files) => {
                 title: "New Schedule Created",
                 message: `A new schedule has been created for ${name} on ${new Date(date).toLocaleDateString()}.`,
                 recipient: member.memberId,
+                schedule: result[0]._id,
             },
         ], {
             session,
         });
-        console.log("notificationResult", notificationResult);
         if (!notificationResult || notificationResult.length === 0) {
             throw new error_1.AppError(500, "Notification not created");
         }
@@ -116,16 +151,107 @@ const createSchedule = async (payload, files) => {
 /* ------------------------------------
    GET ALL SCHEDULES
 ------------------------------------- */
-const getSchedules = async (sortBy = "order", sortWith = 1, approver) => {
+const getSchedules = async (sortBy = "order", sortWith = 1, approver, skip, limit) => {
     const actorId = await actor_schema_1.default.findOne({ idNo: approver }).select("_id").lean();
     if (!actorId) {
         throw new error_1.AppError(400, "This actor not found");
     }
-    const schedules = await appointments_schema_1.default.find({ approver: actorId }).sort({
-        [sortBy]: sortWith,
-    });
-    return schedules;
+    const [schedules, total] = await Promise.all([
+        appointments_schema_1.default.find({ approver: actorId })
+            .sort({
+            [sortBy]: sortWith,
+        })
+            .skip(skip)
+            .limit(limit),
+        appointments_schema_1.default.countDocuments({ approver: actorId }),
+    ]);
+    const totalPages = Math.ceil(total / limit);
+    return { schedules, total, totalPages };
 };
+// approve request
+const approve = async (id, userId, date, email, memberName) => {
+    if (!id) {
+        throw new error_1.AppError(400, "Id is required");
+    }
+    // const { subject, text, html } = scheduleApprovedTemplate(name, new Date(date));
+    // console.log("schedule", email);
+    //   await sendMail({ to: email, subject, text, html });
+    const schedule = await appointments_schema_1.default.findById(id).select("name date").lean();
+    if (!schedule) {
+        throw new error_1.AppError(400, "Schedule not found");
+    }
+    const session = await mongoose_1.default.startSession();
+    try {
+        await session.withTransaction(async () => {
+            const viewSchedule = await appointments_schema_1.default.findByIdAndUpdate(id, {
+                $set: {
+                    status: "approved",
+                    isView: true,
+                },
+            }, { new: true, session });
+            if (!viewSchedule) {
+                throw new error_1.AppError(400, "Schedule not update");
+            }
+            const viewNotification = await notification_schema_1.Notification.findOneAndUpdate({ schedule: id, recipient: userId }, { $set: { isRead: true } }, { new: true, session });
+            if (!viewNotification) {
+                throw new error_1.AppError(400, "Notification not update");
+            }
+        });
+        const { subject, text, html } = (0, scheduleApproved_1.scheduleApprovedTemplate)(schedule?.name, schedule?.date, schedule?.message, memberName);
+        await (0, emailHelper_1.sendMail)({ to: email, subject, text, html });
+    }
+    catch (error) {
+        console.log("be a member tarasation error", error);
+        throw new error_1.AppError(400, `${error}`);
+    }
+    finally {
+        session.endSession();
+    }
+};
+const getMyMonthlyApprovedSchedules = async (actorId, month, year) => {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 1);
+    const schedules = await appointments_schema_1.default.aggregate([
+        {
+            $match: {
+                approver: new mongoose_1.Types.ObjectId(actorId), // 🔥 only MY approvals
+                status: "approved",
+                date: {
+                    $gte: startDate,
+                    $lt: endDate,
+                },
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                title: 1,
+                name: 1, // user name
+                phone: 1, // user phone
+                email: 1, // user email
+                date: 1,
+                startTime: 1,
+                endTime: 1,
+                location: 1,
+                scheduleType: 1,
+                message: 1,
+                createdAt: 1,
+                approver: 1
+            },
+        },
+        {
+            $sort: {
+                date: 1,
+                startTime: 1,
+            },
+        },
+    ]);
+    return {
+        totalApproved: schedules.length,
+        schedules,
+    };
+};
+exports.getMyMonthlyApprovedSchedules = getMyMonthlyApprovedSchedules;
 /* ------------------------------------
    DELETE SINGLE SCHEDULE
 ------------------------------------- */
@@ -176,4 +302,6 @@ exports.ScheduleService = {
     createSchedule,
     getSchedules,
     reorderSchedules,
+    approve,
+    getMyMonthlyApprovedSchedules: exports.getMyMonthlyApprovedSchedules
 };

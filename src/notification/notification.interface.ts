@@ -26,6 +26,7 @@ export interface INotification {
 
   application?: Types.ObjectId;
   contact?: Types.ObjectId;
+  schedule?: Types.ObjectId;
   payment?: Types.ObjectId;
 
   isRead: boolean;
@@ -39,10 +40,10 @@ export interface INotificationQuery {
   role: RecipientRole;
   recipient?: Types.ObjectId;
   notificationType?: NotificationType;
-  _id:Types.ObjectId
+  _id: Types.ObjectId;
 }
 export interface IFetchNotification {
-   role: RecipientRole;
+  role: RecipientRole;
   recipient?: Types.ObjectId;
   notificationType?: NotificationType;
   page: number;

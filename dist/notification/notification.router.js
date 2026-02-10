@@ -13,5 +13,10 @@ notificationRouter.get('/all', notification_controller_1.NotificationController.
 notificationRouter.get("/unread", verifyLogin_1.VerifyLogin, notification_controller_1.NotificationController.unReadNotification);
 notificationRouter.get("/", verifyLogin_1.VerifyLogin, notification_controller_1.NotificationController.getNotification);
 notificationRouter.get("/admin/:id", notification_controller_1.NotificationController.getAdminNotification);
-notificationRouter.put("/read", verifyLogin_1.VerifyLogin, notification_controller_1.NotificationController.readNotification);
+// notificationRouter.put(
+//   "/read",
+//   VerifyLogin,
+//   NotificationController.readNotification,
+// );
+notificationRouter.put("/read/:id", verifyLogin_1.VerifyLogin, notification_controller_1.NotificationController.read);
 exports.default = notificationRouter;

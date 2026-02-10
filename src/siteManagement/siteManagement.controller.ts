@@ -6,7 +6,6 @@ import { SiteManagementService } from "./siteManagement.services";
 const uploadCoverImages = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { urls, idNo } = req.body;
-    console.log(req.body);
     const result = await SiteManagementService.uploadCoverImages({
       urls,
       idNo,
@@ -120,7 +119,6 @@ const deleteProfileNews = catchAsync(
 const deleteTab = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { tabId, id } = req.params;
-    console.log(req.params);
     const result = await SiteManagementService.deleteTab(tabId, id);
 
     sendResponse(res, {

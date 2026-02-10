@@ -15,6 +15,11 @@ const notificationSchema = new Schema<INotification>(
       ref: "Contact",
       required: false,
     },
+    schedule: {
+      type: Schema.Types.ObjectId,
+      ref: "Schedule",
+      required: false,
+    },
 
     recipient: {
       type: Schema.Types.ObjectId,

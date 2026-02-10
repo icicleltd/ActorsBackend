@@ -1,9 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { deleteFromCloudinary, fileUploader } from "../helper/fileUpload";
 import { AppError } from "../middleware/error";
 import Schedule from "./appointments.schema";
 import { Notification } from "../notification/notification.schema";
 import Actor from "../actor/actor.schema";
+import { scheduleApprovedTemplate } from "../helper/mailTempate/scheduleApproved";
+import { sendMail } from "../helper/emailHelper";
 
 /* ------------------------------------
    CREATE / UPDATE SCHEDULE BANNER
@@ -92,7 +94,6 @@ const createSchedule = async (payload: any, files: any) => {
     if (!result || result.length === 0) {
       throw new AppError(500, "Appointment create Failed");
     }
-
     const notificationResult = await Notification.create(
       [
         {
@@ -101,13 +102,13 @@ const createSchedule = async (payload: any, files: any) => {
           title: "New Schedule Created",
           message: `A new schedule has been created for ${name} on ${new Date(date).toLocaleDateString()}.`,
           recipient: member.memberId,
+          schedule: result[0]._id,
         },
       ],
       {
         session,
       },
     );
-    console.log("notificationResult",notificationResult)
     if (!notificationResult || notificationResult.length === 0) {
       throw new AppError(500, "Notification not created");
     }
@@ -133,16 +134,138 @@ const getSchedules = async (
   sortBy: string = "order",
   sortWith: 1 | -1 = 1,
   approver: string,
+  skip: number,
+  limit: number,
 ) => {
   const actorId = await Actor.findOne({ idNo: approver }).select("_id").lean();
   if (!actorId) {
     throw new AppError(400, "This actor not found");
   }
-  const schedules = await Schedule.find({ approver: actorId }).sort({
-    [sortBy]: sortWith,
-  });
-  return schedules;
+
+  const [schedules, total] = await Promise.all([
+    Schedule.find({ approver: actorId })
+      .sort({
+        [sortBy]: sortWith,
+      })
+      .skip(skip)
+      .limit(limit),
+    Schedule.countDocuments({ approver: actorId }),
+  ]);
+  const totalPages = Math.ceil(total / limit);
+  return { schedules, total, totalPages };
 };
+
+// approve request
+
+const approve = async (
+  id: string,
+  userId: string,
+  date: string,
+  email: string,
+  memberName: string,
+) => {
+  if (!id) {
+    throw new AppError(400, "Id is required");
+  }
+  // const { subject, text, html } = scheduleApprovedTemplate(name, new Date(date));
+  // console.log("schedule", email);
+  //   await sendMail({ to: email, subject, text, html });
+  const schedule = await Schedule.findById(id).select("name date").lean();
+  if (!schedule) {
+    throw new AppError(400, "Schedule not found");
+  }
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const viewSchedule = await Schedule.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            status: "approved",
+            isView: true,
+          },
+        },
+        { new: true, session },
+      );
+      if (!viewSchedule) {
+        throw new AppError(400, "Schedule not update");
+      }
+      const viewNotification = await Notification.findOneAndUpdate(
+        { schedule: id, recipient: userId },
+        { $set: { isRead: true } },
+        { new: true, session },
+      );
+      if (!viewNotification) {
+        throw new AppError(400, "Notification not update");
+      }
+    });
+    const { subject, text, html } = scheduleApprovedTemplate(
+      schedule?.name,
+      schedule?.date,
+      schedule?.message,
+      memberName,
+    );
+
+    await sendMail({ to: email, subject, text, html });
+  } catch (error) {
+    console.log("be a member tarasation error", error);
+    throw new AppError(400, `${error}`);
+  } finally {
+    session.endSession();
+  }
+};
+
+
+export const getMyMonthlyApprovedSchedules = async (
+  actorId: Types.ObjectId,
+  month: number,
+  year: number,
+) => {
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+  const schedules = await Schedule.aggregate([
+    {
+      $match: {
+        approver: new Types.ObjectId(actorId),       // 🔥 only MY approvals
+        status: "approved",
+        date: {
+          $gte: startDate,
+          $lt: endDate,
+        },
+      },
+    },
+
+    {
+      $project: {
+        _id: 1,
+        title: 1,
+        name: 1,        // user name
+        phone: 1,       // user phone
+        email: 1,       // user email
+        date: 1,
+        startTime: 1,
+        endTime: 1,
+        location: 1,
+        scheduleType: 1,
+        message: 1,
+        createdAt: 1,
+        approver:1
+      },
+    },
+
+    {
+      $sort: {
+        date: 1,
+        startTime: 1,
+      },
+    },
+  ]);
+  return {
+    totalApproved: schedules.length,
+    schedules,
+  };
+};
+
 
 /* ------------------------------------
    DELETE SINGLE SCHEDULE
@@ -206,4 +329,6 @@ export const ScheduleService = {
   createSchedule,
   getSchedules,
   reorderSchedules,
+  approve,
+  getMyMonthlyApprovedSchedules
 };

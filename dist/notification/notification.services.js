@@ -41,6 +41,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const error_1 = require("../middleware/error");
 const notification_schema_1 = require("./notification.schema");
 const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
+const detectTarget_1 = require("./hepler/detectTarget");
 const createNotification = async () => {
     return {
         msg: "Notification created",
@@ -356,15 +357,15 @@ const unReadNotification = async (queryPayload) => {
         if (!recipient.equals(_id)) {
             throw new error_1.AppError(400, "recipient id not match");
         }
-        const reference = await notification_schema_1.Notification.find({
+        const member = await notification_schema_1.Notification.find({
             type: { $in: MEMBER_TYPES },
             recipient: recipient,
             recipientRole: role,
             isRead: false,
-        });
-        const referenceCount = reference.length;
+        }).sort({ createdAt: -1 });
+        const referenceCount = member.length;
         // const memberUnRead = referenceCount + payment;
-        return { notifications: reference, referenceCount };
+        return { notifications: member, referenceCount };
     }
     const [all, contact, reference, payment, approved, beMember, admin] = await Promise.all([
         notification_schema_1.Notification.find({
@@ -393,7 +394,7 @@ const unReadNotification = async (queryPayload) => {
         notification_schema_1.Notification.find({
             type: { $in: BE_A_MEMBER_TYPES },
             isRead: false,
-        }).sort({ "createdAt": -1 }),
+        }).sort({ createdAt: -1 }),
     ]);
     const newMemberCount = beMember + approved;
     const adminUnRead = beMember + payment + contact;
@@ -410,6 +411,62 @@ const unReadNotification = async (queryPayload) => {
         CONTACT: contact,
     };
 };
+const read = async (role, recipient, schedule, contact, payment, application, isRead, notificationId, type) => {
+    if (!notificationId) {
+        throw new error_1.AppError(400, "Notification id not found");
+    }
+    if (!role) {
+        throw new error_1.AppError(400, "Role is not found");
+    }
+    const target = (0, detectTarget_1.getTarget)({ schedule, application, contact, payment });
+    if (!target) {
+        throw new error_1.AppError(400, "No valid notification reference found");
+    }
+    const config = detectTarget_1.MODEL_MAP[target.key];
+    const session = await mongoose_1.default.startSession();
+    try {
+        await session.withTransaction(async () => {
+            // 1️⃣ Update notification
+            const notification = await notification_schema_1.Notification.findOneAndUpdate({
+                _id: notificationId,
+                recipient,
+                type,
+                isRead: false,
+            }, { $set: { isRead: true } }, { new: true, session });
+            if (!notification) {
+                throw new error_1.AppError(404, "Notification not found");
+            }
+            // 2️⃣ Resolve entity update
+            let updateConfig;
+            if (config.resolveUpdate) {
+                updateConfig = config.resolveUpdate({ type, role, recipient });
+                if (!updateConfig) {
+                    throw new error_1.AppError(400, "Invalid notification type for application");
+                }
+            }
+            else {
+                updateConfig = { update: config.defaultUpdate };
+            }
+            // 3️⃣ Update related entity
+            const updated = await config.model.findByIdAndUpdate(target.id, { $set: updateConfig.update }, {
+                new: true,
+                session,
+                ...(updateConfig.arrayFilters && {
+                    arrayFilters: updateConfig.arrayFilters,
+                }),
+            });
+            if (!updated) {
+                throw new error_1.AppError(404, `${target.key} not updated`);
+            }
+        });
+    }
+    catch (error) {
+        throw new error_1.AppError(500, error.message || "Transaction failed");
+    }
+    finally {
+        session.endSession();
+    }
+};
 exports.NotificationService = {
     createNotification,
     getNotification,
@@ -418,4 +475,5 @@ exports.NotificationService = {
     unReadCountNotification,
     unReadNotification,
     allNo,
+    read,
 };

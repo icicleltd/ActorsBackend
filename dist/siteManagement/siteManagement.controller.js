@@ -9,7 +9,6 @@ const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const siteManagement_services_1 = require("./siteManagement.services");
 const uploadCoverImages = (0, catchAsync_1.default)(async (req, res, next) => {
     const { urls, idNo } = req.body;
-    console.log(req.body);
     const result = await siteManagement_services_1.SiteManagementService.uploadCoverImages({
         urls,
         idNo,
@@ -92,7 +91,6 @@ const deleteProfileNews = (0, catchAsync_1.default)(async (req, res, next) => {
 });
 const deleteTab = (0, catchAsync_1.default)(async (req, res, next) => {
     const { tabId, id } = req.params;
-    console.log(req.params);
     const result = await siteManagement_services_1.SiteManagementService.deleteTab(tabId, id);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,

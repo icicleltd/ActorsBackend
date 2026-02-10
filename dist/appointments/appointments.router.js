@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const fileUpload_1 = require("../helper/fileUpload");
 const appointments_controller_1 = require("./appointments.controller");
+const verifyLogin_1 = require("../middleware/verifyLogin");
 const router = express_1.default.Router();
 /**
  * Create / Update Schedule
@@ -15,17 +16,8 @@ router.post("/", fileUpload_1.fileUploader.upload.array("pdf"), appointments_con
 /**
  * Get all schedules (sorted)
  */
+router.get("/report", verifyLogin_1.VerifyLogin, appointments_controller_1.ScheduleController.getMyMonthlyApprovedSchedules);
 router.get("/", appointments_controller_1.ScheduleController.getSchedules);
-/**
- * Delete single schedule
- */
-// router.delete("/:id", ScheduleController.deleteSchedule);
-/**
- * Delete all schedules
- */
-// router.delete("/", ScheduleController.deleteAllSchedules);
-/**
- * Reorder schedules (drag & drop)
- */
 router.put("/reorder", appointments_controller_1.ScheduleController.reorderSchedules);
+router.put("/:id", verifyLogin_1.VerifyLogin, appointments_controller_1.ScheduleController.approve);
 exports.default = router;

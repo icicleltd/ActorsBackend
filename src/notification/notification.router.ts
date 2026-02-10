@@ -21,9 +21,14 @@ notificationRouter.get(
   "/admin/:id",
   NotificationController.getAdminNotification,
 );
+// notificationRouter.put(
+//   "/read",
+//   VerifyLogin,
+//   NotificationController.readNotification,
+// );
 notificationRouter.put(
-  "/read",
+  "/read/:id",
   VerifyLogin,
-  NotificationController.readNotification,
+  NotificationController.read,
 );
 export default notificationRouter;

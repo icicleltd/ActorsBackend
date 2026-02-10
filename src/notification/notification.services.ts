@@ -7,6 +7,9 @@ import {
 } from "./notification.interface";
 import { Notification } from "./notification.schema";
 import BeAMember from "../beAMember/beAMember.schema";
+import { notDeepEqual } from "assert";
+import Schedule from "../appointments/appointments.schema";
+import { getTarget, MODEL_MAP } from "./hepler/detectTarget";
 
 const createNotification = async () => {
   return {
@@ -390,15 +393,15 @@ const unReadNotification = async (queryPayload: INotificationQuery) => {
     if (!recipient.equals(_id)) {
       throw new AppError(400, "recipient id not match");
     }
-    const reference = await Notification.find({
+    const member = await Notification.find({
       type: { $in: MEMBER_TYPES },
       recipient: recipient,
       recipientRole: role,
       isRead: false,
-    });
-    const referenceCount = reference.length;
+    }).sort({ createdAt: -1 });
+    const referenceCount = member.length;
     // const memberUnRead = referenceCount + payment;
-    return { notifications: reference, referenceCount };
+    return { notifications: member, referenceCount };
   }
   const [all, contact, reference, payment, approved, beMember, admin] =
     await Promise.all([
@@ -428,7 +431,7 @@ const unReadNotification = async (queryPayload: INotificationQuery) => {
       Notification.find({
         type: { $in: BE_A_MEMBER_TYPES },
         isRead: false,
-      }).sort({"createdAt":-1}),
+      }).sort({ createdAt: -1 }),
     ]);
   const newMemberCount = beMember + approved;
   const adminUnRead = beMember + payment + contact;
@@ -446,6 +449,89 @@ const unReadNotification = async (queryPayload: INotificationQuery) => {
   };
 };
 
+const read = async (
+  role: string,
+  recipient: string,
+  schedule: string,
+  contact: string,
+  payment: string,
+  application: string,
+  isRead: boolean,
+  notificationId: string,
+  type: NotificationType,
+) => {
+  if (!notificationId) {
+    throw new AppError(400, "Notification id not found");
+  }
+  if (!role) {
+    throw new AppError(400, "Role is not found");
+  }
+  const target = getTarget({ schedule, application, contact, payment });
+  if (!target) {
+    throw new AppError(400, "No valid notification reference found");
+  }
+
+  const config = MODEL_MAP[target.key];
+  const session = await mongoose.startSession();
+
+  try {
+    await session.withTransaction(async () => {
+      // 1️⃣ Update notification
+      const notification = await Notification.findOneAndUpdate(
+        {
+          _id: notificationId,
+          recipient,
+          type,
+          isRead: false,
+        },
+        { $set: { isRead: true } },
+        { new: true, session },
+      );
+
+      if (!notification) {
+        throw new AppError(404, "Notification not found");
+      }
+
+      // 2️⃣ Resolve entity update
+      let updateConfig: {
+        update: Record<string, any>;
+        arrayFilters?: any[];
+      } | null;
+
+      if (config.resolveUpdate) {
+        updateConfig = config.resolveUpdate({ type, role, recipient });
+
+        if (!updateConfig) {
+          throw new AppError(400, "Invalid notification type for application");
+        }
+      } else {
+        updateConfig = { update: config.defaultUpdate! };
+      }
+
+      // 3️⃣ Update related entity
+      const updated = await config.model.findByIdAndUpdate(
+        target.id,
+        { $set: updateConfig.update },
+        {
+          new: true,
+          session,
+          ...(updateConfig.arrayFilters && {
+            arrayFilters: updateConfig.arrayFilters,
+          }),
+        },
+      );
+
+      if (!updated) {
+        throw new AppError(404, `${target.key} not updated`);
+      }
+    });
+  } catch (error: any) {
+    throw new AppError(500, error.message || "Transaction failed");
+  } finally {
+    session.endSession();
+  }
+};
+
 export const NotificationService = {
   createNotification,
   getNotification,
@@ -454,4 +540,5 @@ export const NotificationService = {
   unReadCountNotification,
   unReadNotification,
   allNo,
+  read,
 };

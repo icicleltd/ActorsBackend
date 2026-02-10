@@ -28,7 +28,10 @@ const getSchedules = (0, catchAsync_1.default)(async (req, res, next) => {
     const sortBy = req.query?.sortBy || "order";
     const sortWith = req.query?.sortWith === "asc" ? 1 : -1;
     const approver = req.query?.approver;
-    const result = await appointments_services_1.ScheduleService.getSchedules(sortBy, sortWith, approver);
+    const page = parseInt(req.query?.page) || 1;
+    const limit = parseInt(req.query?.limit) || 10;
+    const skip = (page - 1) * limit;
+    const result = await appointments_services_1.ScheduleService.getSchedules(sortBy, sortWith, approver, skip, limit);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -77,8 +80,39 @@ const reorderSchedules = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const approve = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    const userId = req.user.data._id;
+    const { date, email, idNo } = req.body;
+    const memberName = req.user.data.fullName;
+    const result = await appointments_services_1.ScheduleService.approve(id, userId, date, email, memberName);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Schedule approve successfully",
+        data: result,
+    });
+});
+const getMyMonthlyApprovedSchedules = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { month, year } = req?.query;
+    const actorId = req.user?.data?._id;
+    if (!month || !year) {
+        return res.status(400).json({
+            message: "month and year are required",
+        });
+    }
+    const result = await appointments_services_1.ScheduleService.getMyMonthlyApprovedSchedules(actorId, Number(month), Number(year));
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Schedule approve successfully",
+        data: result,
+    });
+});
 exports.ScheduleController = {
     createSchedule,
     getSchedules,
     reorderSchedules,
+    approve,
+    getMyMonthlyApprovedSchedules,
 };

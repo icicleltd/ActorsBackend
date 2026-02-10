@@ -29,7 +29,6 @@ const createAuth = async (payload) => {
     const existingUser = await actor_schema_1.default.findOne(filter)
         .select("+password _id email fullName")
         .lean(false);
-    console.log(trimmedIdentifier, existingUser);
     if (!existingUser) {
         throw new error_1.AppError(401, "Unauthorized");
     }

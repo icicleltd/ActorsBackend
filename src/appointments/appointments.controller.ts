@@ -30,10 +30,15 @@ const getSchedules = catchAsync(
     const sortBy = (req.query?.sortBy as string) || "order";
     const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
     const approver = req.query?.approver as string;
+    const page = parseInt(req.query?.page as string) || 1;
+    const limit = parseInt(req.query?.limit as string) || 10;
+    const skip = (page - 1) * limit;
     const result = await ScheduleService.getSchedules(
       sortBy,
       sortWith,
       approver,
+      skip,
+      limit,
     );
 
     sendResponse(res, {
@@ -94,9 +99,56 @@ const reorderSchedules = catchAsync(
     });
   },
 );
+const approve = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const userId = req.user.data._id;
+    const { date, email, idNo } = req.body;
+    const memberName = req.user.data.fullName;
+    const result = await ScheduleService.approve(
+      id,
+      userId,
+      date,
+      email,
+      memberName,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Schedule approve successfully",
+      data: result,
+    });
+  },
+);
+const getMyMonthlyApprovedSchedules = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const { month, year } = req?.query;
+    const actorId = req.user?.data?._id;
+
+    if (!month || !year) {
+      return res.status(400).json({
+        message: "month and year are required",
+      });
+    }
+    const result = await ScheduleService.getMyMonthlyApprovedSchedules(
+      actorId,
+      Number(month),
+      Number(year),
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Schedule approve successfully",
+      data: result,
+    });
+  },
+);
 
 export const ScheduleController = {
   createSchedule,
   getSchedules,
   reorderSchedules,
+  approve,
+  getMyMonthlyApprovedSchedules,
 };

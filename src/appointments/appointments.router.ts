@@ -1,6 +1,7 @@
 import express from "express";
 import { fileUploader } from "../helper/fileUpload";
 import { ScheduleController } from "./appointments.controller";
+import { VerifyLogin } from "../middleware/verifyLogin";
 
 const router = express.Router();
 
@@ -17,21 +18,10 @@ router.post(
 /**
  * Get all schedules (sorted)
  */
+router.get("/report", VerifyLogin,ScheduleController.getMyMonthlyApprovedSchedules);
 router.get("/", ScheduleController.getSchedules);
 
-/**
- * Delete single schedule
- */
-// router.delete("/:id", ScheduleController.deleteSchedule);
-
-/**
- * Delete all schedules
- */
-// router.delete("/", ScheduleController.deleteAllSchedules);
-
-/**
- * Reorder schedules (drag & drop)
- */
 router.put("/reorder", ScheduleController.reorderSchedules);
+router.put("/:id",VerifyLogin, ScheduleController.approve);
 
 export default router;

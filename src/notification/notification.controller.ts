@@ -126,7 +126,7 @@ const readNotification = catchAsync(
       role,
       id,
     );
-    
+
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -186,6 +186,47 @@ const allNo = catchAsync(
   },
 );
 
+const read = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const role = req.user.data.role;
+    const id = req.user.data._id;
+    const notificationId = req.params.id;
+    const {
+      type,
+      recipient,
+      application,
+      schedule,
+      payment,
+      contact,
+      isRead,
+    } = req.body;
+    if (
+      role === "member" &&
+      !new Types.ObjectId(recipient).equals(new Types.ObjectId(id))
+    ) {
+      throw new AppError(401, "Unauthorized");
+    }
+    const result = await NotificationService.read(
+      role,
+      recipient,
+      schedule,
+      contact,
+      payment,
+      application,
+      isRead,
+      notificationId,
+      type,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "updated successfully",
+      data: result,
+    });
+  },
+);
+
 export const NotificationController = {
   createNotification,
   getNotification,
@@ -193,5 +234,6 @@ export const NotificationController = {
   readNotification,
   unReadCountNotification,
   unReadNotification,
-  allNo
+  allNo,
+  read,
 };

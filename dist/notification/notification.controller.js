@@ -151,6 +151,23 @@ const allNo = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const read = (0, catchAsync_1.default)(async (req, res, next) => {
+    const role = req.user.data.role;
+    const id = req.user.data._id;
+    const notificationId = req.params.id;
+    const { type, recipient, application, schedule, payment, contact, isRead, } = req.body;
+    if (role === "member" &&
+        !new mongoose_1.Types.ObjectId(recipient).equals(new mongoose_1.Types.ObjectId(id))) {
+        throw new error_1.AppError(401, "Unauthorized");
+    }
+    const result = await notification_services_1.NotificationService.read(role, recipient, schedule, contact, payment, application, isRead, notificationId, type);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "updated successfully",
+        data: result,
+    });
+});
 exports.NotificationController = {
     createNotification,
     getNotification,
@@ -158,5 +175,6 @@ exports.NotificationController = {
     readNotification,
     unReadCountNotification,
     unReadNotification,
-    allNo
+    allNo,
+    read,
 };

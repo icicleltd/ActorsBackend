@@ -9,9 +9,8 @@ const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const event_services_1 = require("./event.services");
 const createEvent = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
-    const files = req.files;
     // const adminId = req.user?.id;
-    const result = await event_services_1.EventService.createEvent(payload, files);
+    const result = await event_services_1.EventService.createEvent(payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
@@ -72,8 +71,7 @@ const deleteEvent = (0, catchAsync_1.default)(async (req, res, next) => {
 const updateEvent = (0, catchAsync_1.default)(async (req, res, next) => {
     const { id } = req.params;
     const payload = req.body;
-    const files = req.files;
-    const result = await event_services_1.EventService.updateEvent(id, payload, files);
+    const result = await event_services_1.EventService.updateEvent(id, payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

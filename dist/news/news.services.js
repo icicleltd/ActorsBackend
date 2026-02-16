@@ -2,18 +2,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NewsService = void 0;
 const error_1 = require("../middleware/error");
-const fileUpload_1 = require("../helper/fileUpload");
 const news_schema_1 = require("./news.schema");
 const senitizePayload_1 = require("../helper/senitizePayload");
 const mongoose_1 = require("mongoose");
-const createNews = async (payload, file) => {
-    if (!file) {
-        throw new error_1.AppError(400, "Image is required");
+const createNews = async (payload) => {
+    // if (!file) {
+    //   throw new AppError(400, "Image is required");
+    // }
+    // const upload = (await fileUploader.CloudinaryUpload(file)) as {
+    //   secure_url: string;
+    // };
+    const { title, image, published, link, details, category } = payload;
+    if (!title || !image || !published || !link || !details || !category) {
+        throw new error_1.AppError(400, "title,image,published,link,details,category required");
     }
-    const upload = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
     const news = await news_schema_1.News.create({
         title: payload.title,
-        image: upload.secure_url,
+        image: payload.image,
         published: payload.published,
         link: payload.link,
         details: payload.details,
@@ -55,19 +60,17 @@ const deleteNews = async (id) => {
         throw new error_1.AppError(404, "News not found");
     return news;
 };
-const editNews = async (id, payload, file) => {
-    let uploadUrl;
-    if (!mongoose_1.Types.ObjectId.isValid(id)) {
-        throw new error_1.AppError(400, "This is not vaild");
-    }
-    if (file) {
-        uploadUrl = (await fileUpload_1.fileUploader.CloudinaryUpload(file));
-    }
-    const updatedPayload = {
-        ...payload,
-        ...(uploadUrl && { image: uploadUrl.secure_url }),
-    };
-    const cleanedPayload = (0, senitizePayload_1.sanitizePayload)(updatedPayload);
+const editNews = async (id, payload) => {
+    // let uploadUrl;
+    // if (!Types.ObjectId.isValid(id)) {
+    //   throw new AppError(400, "This is not vaild");
+    // }
+    // if (file) {
+    //   uploadUrl = (await fileUploader.CloudinaryUpload(file)) as {
+    //     secure_url: string;
+    //   };
+    // }
+    const cleanedPayload = (0, senitizePayload_1.sanitizePayload)(payload);
     const updateNews = await news_schema_1.News.findByIdAndUpdate(id, {
         $set: cleanedPayload,
     }, { new: true, runValidators: true });

@@ -6,12 +6,12 @@ const router = express.Router();
 
 router.post(
   "/",
-  fileUploader.upload.single("image"),
+  // fileUploader.upload.single("image"),
   NewsController.createNews
 );
 router.put(
   "/:id",
-  fileUploader.upload.single("image"),
+  // fileUploader.upload.single("image"),
   NewsController.editNews
 );
 

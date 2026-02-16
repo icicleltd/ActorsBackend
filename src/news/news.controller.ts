@@ -6,9 +6,9 @@ import { NewsService } from "./news.services";
 
 const createNews = catchAsync(async (req: Request, res: Response) => {
   const payload: CreateNewsDto = req.body;
-  const file = req.file;
+  // const file = req.file;
 
-  const result = await NewsService.createNews(payload, file);
+  const result = await NewsService.createNews(payload);
 
   sendResponse(res, {
     statusCode: 201,
@@ -64,10 +64,10 @@ const deleteNews = catchAsync(async (req, res) => {
 });
 
 const editNews = catchAsync(async (req, res) => {
-  const file = req.file;
+  // const file = req.file;
   const payload = req.body;
   const id = req.params.id;
-  const result = await NewsService.editNews(id, payload, file);
+  const result = await NewsService.editNews(id, payload);
 
   sendResponse(res, {
     statusCode: 200,

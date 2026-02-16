@@ -7,11 +7,11 @@ const router = express.Router();
 // router.post("/upcomming", EventController.createEvent);
 router.post(
   "/",
-  fileUploader.upload.fields([
-    { name: "banner", maxCount: 1 },
-    { name: "logo", maxCount: 1 },
-    { name: "images", maxCount: 20 },
-  ]),
+  // fileUploader.upload.fields([
+  //   { name: "banner", maxCount: 1 },
+  //   { name: "logo", maxCount: 1 },
+  //   { name: "images", maxCount: 20 },
+  // ]),
   EventController.createEvent
 );
 router.get("/", EventController.getEvents);

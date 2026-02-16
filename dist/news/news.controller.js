@@ -9,8 +9,8 @@ const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const news_services_1 = require("./news.services");
 const createNews = (0, catchAsync_1.default)(async (req, res) => {
     const payload = req.body;
-    const file = req.file;
-    const result = await news_services_1.NewsService.createNews(payload, file);
+    // const file = req.file;
+    const result = await news_services_1.NewsService.createNews(payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
@@ -52,10 +52,10 @@ const deleteNews = (0, catchAsync_1.default)(async (req, res) => {
     });
 });
 const editNews = (0, catchAsync_1.default)(async (req, res) => {
-    const file = req.file;
+    // const file = req.file;
     const payload = req.body;
     const id = req.params.id;
-    const result = await news_services_1.NewsService.editNews(id, payload, file);
+    const result = await news_services_1.NewsService.editNews(id, payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

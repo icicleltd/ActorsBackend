@@ -4,39 +4,23 @@ import { CreateEventDto, GetEventsDto } from "./event.interface";
 import { Event } from "./event.schema";
 
 const validatePayload = () => {};
-const createEvent = async (
-  payload: CreateEventDto,
-  files: { [fieldname: string]: Express.Multer.File[] }
-) => {
-  const { title, name, description, eventDate, isBookingOpen } =
+const createEvent = async (payload: CreateEventDto) => {
+  const { title, name, description, eventDate, isBookingOpen, images } =
     payload;
-  if (!files) {
-    throw new AppError(400, "File required");
+  if (images.length < 0) {
+    throw new AppError(400, "Images required");
   }
-  const uploadArray = async (fileArr: any[]) => {
-    if (!fileArr || fileArr.length === 0) return [];
-    const uploaded = await fileUploader.CloudinaryUploadMultiple(fileArr);
-    return uploaded.map((u: any) => u.secure_url);
-  };
-  const [logo, banner, images] = await Promise.all([
-    (await uploadArray(files.logo))[0] || null,
-    (await uploadArray(files.banner))[0] || null,
-    await uploadArray(files.images),
-  ]);
+
   if (!eventDate || !name) {
     throw new AppError(400, "Name and date are required");
   }
   const eventTime = new Date(eventDate);
   const isUpcomming = eventTime > new Date();
   if (isUpcomming) {
-    if (!logo || !banner) {
-      throw new AppError(400, "Logo and banner are required");
-    }
-
     const upcomming = await Event.create({
       eventDate: eventTime,
-      logo,
-      banner,
+      logo: "some",
+      banner: "some",
       description,
       isBookingOpen: isBookingOpen ?? true,
       registrationCount: 0,
@@ -49,7 +33,6 @@ const createEvent = async (
   const pastEvent = await Event.create({
     name,
     title,
-    // details,
     eventDate: eventTime,
     description,
     images,
@@ -60,7 +43,7 @@ const createEvent = async (
 const getEvents = async (
   { eventType }: GetEventsDto,
   sortBy: string,
-  sortWith: -1 | 1
+  sortWith: -1 | 1,
 ) => {
   const now = new Date();
   let filter: any = {};
@@ -131,7 +114,7 @@ const deleteEvent = async (eventId: string) => {
 const updateEventPatch = async (
   id: string,
   payload: any,
-  files?: { [fieldname: string]: Express.Multer.File[] }
+  files?: { [fieldname: string]: Express.Multer.File[] },
 ) => {
   const event = await Event.findById(id);
   if (!event) {
@@ -187,11 +170,7 @@ const updateEventPatch = async (
   return updatedEvent;
 };
 
-const updateEvent = async (
-  id: string,
-  payload: any,
-  files?: { [fieldname: string]: Express.Multer.File[] }
-) => {
+const updateEvent = async (id: string, payload: CreateEventDto) => {
   const event = await Event.findById(id);
   if (!event) {
     throw new AppError(404, "Event not found");
@@ -200,10 +179,13 @@ const updateEvent = async (
   /* -------------------------------
      REQUIRED FIELD VALIDATION
   -------------------------------- */
-  const { title, name, description, eventDate } = payload;
+  const { title, name, description, eventDate, images } = payload;
 
   if (!title || !name || !description || !eventDate) {
     throw new AppError(400, "Required fields missing for PUT update");
+  }
+  if (images.length === 0) {
+    throw new AppError(400, "At least one image is required");
   }
   const eventTime = new Date(eventDate);
   const isUpcomming = eventTime > new Date();
@@ -213,33 +195,33 @@ const updateEvent = async (
   if (isUpcomming) {
     throw new AppError(
       400,
-      "You select future date for event, please select past date."
+      "You select future date for event, please select past date.",
     );
   }
-  let existingImages: string[] = [];
+  // let existingImages: string[] = [];
 
-  if (payload.existingImages) {
-    existingImages = Array.isArray(payload.existingImages)
-      ? payload.existingImages
-      : [payload.existingImages];
-  }
+  // if (payload.existingImages) {
+  //   existingImages = Array.isArray(payload.existingImages)
+  //     ? payload.existingImages
+  //     : [payload.existingImages];
+  // }
 
   /* -------------------------------
      UPLOAD NEW IMAGES
   -------------------------------- */
-  const uploadArray = async (files?: Express.Multer.File[]) => {
-    if (!files || files.length === 0) return [];
-    const uploaded = await fileUploader.CloudinaryUploadMultiple(files);
-    return uploaded.map((u: any) => u.secure_url);
-  };
+  // const uploadArray = async (files?: Express.Multer.File[]) => {
+  //   if (!files || files.length === 0) return [];
+  //   const uploaded = await fileUploader.CloudinaryUploadMultiple(files);
+  //   return uploaded.map((u: any) => u.secure_url);
+  // };
 
-  const uploadedImages = await uploadArray(files?.images);
+  // const uploadedImages = await uploadArray(files?.images);
 
-  const finalImages = [...existingImages, ...uploadedImages];
+  // const finalImages = [...existingImages, ...uploadedImages];
 
-  if (finalImages.length === 0) {
-    throw new AppError(400, "At least one image is required");
-  }
+  // if (finalImages.length === 0) {
+  //   throw new AppError(400, "At least one image is required");
+  // }
 
   /* -------------------------------
      FULL REPLACEMENT (PUT)
@@ -250,11 +232,10 @@ const updateEvent = async (
       title,
       name,
       description,
-      details: payload.details || "",
       eventDate: new Date(eventDate),
-      images: finalImages,
+      images: images,
     },
-    { new: true }
+    { new: true },
   );
   return updatedEvent;
 };

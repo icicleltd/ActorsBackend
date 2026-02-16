@@ -5,35 +5,21 @@ const fileUpload_1 = require("../helper/fileUpload");
 const error_1 = require("../middleware/error");
 const event_schema_1 = require("./event.schema");
 const validatePayload = () => { };
-const createEvent = async (payload, files) => {
-    const { title, name, description, eventDate, isBookingOpen } = payload;
-    if (!files) {
-        throw new error_1.AppError(400, "File required");
+const createEvent = async (payload) => {
+    const { title, name, description, eventDate, isBookingOpen, images } = payload;
+    if (images.length < 0) {
+        throw new error_1.AppError(400, "Images required");
     }
-    const uploadArray = async (fileArr) => {
-        if (!fileArr || fileArr.length === 0)
-            return [];
-        const uploaded = await fileUpload_1.fileUploader.CloudinaryUploadMultiple(fileArr);
-        return uploaded.map((u) => u.secure_url);
-    };
-    const [logo, banner, images] = await Promise.all([
-        (await uploadArray(files.logo))[0] || null,
-        (await uploadArray(files.banner))[0] || null,
-        await uploadArray(files.images),
-    ]);
     if (!eventDate || !name) {
         throw new error_1.AppError(400, "Name and date are required");
     }
     const eventTime = new Date(eventDate);
     const isUpcomming = eventTime > new Date();
     if (isUpcomming) {
-        if (!logo || !banner) {
-            throw new error_1.AppError(400, "Logo and banner are required");
-        }
         const upcomming = await event_schema_1.Event.create({
             eventDate: eventTime,
-            logo,
-            banner,
+            logo: "some",
+            banner: "some",
             description,
             isBookingOpen: isBookingOpen ?? true,
             registrationCount: 0,
@@ -46,7 +32,6 @@ const createEvent = async (payload, files) => {
     const pastEvent = await event_schema_1.Event.create({
         name,
         title,
-        // details,
         eventDate: eventTime,
         description,
         images,
@@ -155,7 +140,7 @@ const updateEventPatch = async (id, payload, files) => {
     });
     return updatedEvent;
 };
-const updateEvent = async (id, payload, files) => {
+const updateEvent = async (id, payload) => {
     const event = await event_schema_1.Event.findById(id);
     if (!event) {
         throw new error_1.AppError(404, "Event not found");
@@ -163,9 +148,12 @@ const updateEvent = async (id, payload, files) => {
     /* -------------------------------
        REQUIRED FIELD VALIDATION
     -------------------------------- */
-    const { title, name, description, eventDate } = payload;
+    const { title, name, description, eventDate, images } = payload;
     if (!title || !name || !description || !eventDate) {
         throw new error_1.AppError(400, "Required fields missing for PUT update");
+    }
+    if (images.length === 0) {
+        throw new error_1.AppError(400, "At least one image is required");
     }
     const eventTime = new Date(eventDate);
     const isUpcomming = eventTime > new Date();
@@ -175,26 +163,25 @@ const updateEvent = async (id, payload, files) => {
     if (isUpcomming) {
         throw new error_1.AppError(400, "You select future date for event, please select past date.");
     }
-    let existingImages = [];
-    if (payload.existingImages) {
-        existingImages = Array.isArray(payload.existingImages)
-            ? payload.existingImages
-            : [payload.existingImages];
-    }
+    // let existingImages: string[] = [];
+    // if (payload.existingImages) {
+    //   existingImages = Array.isArray(payload.existingImages)
+    //     ? payload.existingImages
+    //     : [payload.existingImages];
+    // }
     /* -------------------------------
        UPLOAD NEW IMAGES
     -------------------------------- */
-    const uploadArray = async (files) => {
-        if (!files || files.length === 0)
-            return [];
-        const uploaded = await fileUpload_1.fileUploader.CloudinaryUploadMultiple(files);
-        return uploaded.map((u) => u.secure_url);
-    };
-    const uploadedImages = await uploadArray(files?.images);
-    const finalImages = [...existingImages, ...uploadedImages];
-    if (finalImages.length === 0) {
-        throw new error_1.AppError(400, "At least one image is required");
-    }
+    // const uploadArray = async (files?: Express.Multer.File[]) => {
+    //   if (!files || files.length === 0) return [];
+    //   const uploaded = await fileUploader.CloudinaryUploadMultiple(files);
+    //   return uploaded.map((u: any) => u.secure_url);
+    // };
+    // const uploadedImages = await uploadArray(files?.images);
+    // const finalImages = [...existingImages, ...uploadedImages];
+    // if (finalImages.length === 0) {
+    //   throw new AppError(400, "At least one image is required");
+    // }
     /* -------------------------------
        FULL REPLACEMENT (PUT)
     -------------------------------- */
@@ -202,9 +189,8 @@ const updateEvent = async (id, payload, files) => {
         title,
         name,
         description,
-        details: payload.details || "",
         eventDate: new Date(eventDate),
-        images: finalImages,
+        images: images,
     }, { new: true });
     return updatedEvent;
 };

@@ -10,6 +10,7 @@ import BeAMember from "../beAMember/beAMember.schema";
 import { notDeepEqual } from "assert";
 import Schedule from "../appointments/appointments.schema";
 import { getTarget, MODEL_MAP } from "./hepler/detectTarget";
+import { connectDB } from "../db";
 
 const createNotification = async () => {
   return {
@@ -385,6 +386,7 @@ const unReadNotification = async (queryPayload: INotificationQuery) => {
   if (!role) {
     throw new AppError(400, "Role is required");
   }
+  await connectDB(); 
   if (role === "member") {
     if (!recipient) {
       throw new AppError(400, "recipient id is required");

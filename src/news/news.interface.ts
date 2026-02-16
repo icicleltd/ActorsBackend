@@ -11,10 +11,11 @@ export interface INews {
 }
 
 export interface CreateNewsDto {
-  title: string;
-  published: Date;
+   title: string;
   link: string;
   details: string;
+  published: string;
   category: string;
+  image: string;
 }
 

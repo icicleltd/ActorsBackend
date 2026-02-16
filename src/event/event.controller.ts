@@ -7,13 +7,8 @@ import { CreateEventDto, GetEventsDto } from "./event.interface";
 const createEvent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: CreateEventDto = req.body;
-    
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
-  
     // const adminId = req.user?.id;
-    const result = await EventService.createEvent(payload, files);
+    const result = await EventService.createEvent(payload);
 
     sendResponse(res, {
       statusCode: 201,
@@ -98,11 +93,8 @@ const updateEvent = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     const payload = req.body;
-    const files = req.files as {
-      [fieldname: string]: Express.Multer.File[];
-    };
 
-    const result = await EventService.updateEvent(id, payload, files);
+    const result = await EventService.updateEvent(id, payload);
 
     sendResponse(res, {
       statusCode: 200,

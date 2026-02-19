@@ -4,6 +4,7 @@ import { ContactUs } from "../../contact/contact.schema";
 import { Payment } from "../../payment/payment.schema";
 import { Types } from "mongoose";
 import { NotificationType } from "../notification.interface";
+import { NotifyPayment } from "../../actor payment/actor.payment.schema";
 
 
 export const getTarget = ({
@@ -11,16 +12,19 @@ export const getTarget = ({
   contact,
   payment,
   application,
+  notifyPayment,
 }: {
   schedule?: string;
   contact?: string;
   payment?: string;
   application?: string;
+  notifyPayment?: string;
 }) => {
   if (schedule) return { key: "schedule", id: schedule };
   if (contact) return { key: "contact", id: contact };
   if (payment) return { key: "payment", id: payment };
   if (application) return { key: "application", id: application };
+  if (notifyPayment) return { key: "notifyPayment", id: notifyPayment };
   return null;
 };
 
@@ -49,6 +53,10 @@ export const MODEL_MAP: Record<
   },
   payment: {
     model: Payment,
+    defaultUpdate: { isView: true },
+  },
+  notifyPayment: {
+    model: NotifyPayment,
     defaultUpdate: { isView: true },
   },
   application: {

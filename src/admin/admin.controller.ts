@@ -152,6 +152,17 @@ const makeAdmin = catchAsync(
     });
   }
 );
+const fetchActorPayments = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AdminService.fetchActorPayments();
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Actor payment get successfully",
+      data: result,
+    });
+  }
+);
 const test = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const result = await AdminService.test();
@@ -176,4 +187,5 @@ export const AdminController = {
   uploadGallery,
   deleteImage,
   makeAdmin,
+  fetchActorPayments
 };

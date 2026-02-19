@@ -199,6 +199,7 @@ const read = catchAsync(
       payment,
       contact,
       isRead,
+      notifyPayment,
     } = req.body;
     if (
       role === "member" &&
@@ -211,6 +212,7 @@ const read = catchAsync(
       recipient,
       schedule,
       contact,
+      notifyPayment,
       payment,
       application,
       isRead,

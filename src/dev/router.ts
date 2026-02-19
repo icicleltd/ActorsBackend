@@ -3,6 +3,7 @@ import Actor from "../actor/actor.schema";
 import { sendMail } from "../helper/emailHelper";
 import { AppError } from "../middleware/error";
 import BeAMember from "../beAMember/beAMember.schema";
+import ActorPayment from "../actor payment/actor.payment.schema";
 
 const router = express.Router();
 
@@ -191,12 +192,65 @@ router.get("/agg", async (req, res) => {
   // console.log(result);
 
   // Top 5 newest actors
-  const result = await Actor.aggregate([{ $sort: { createdAt: -1 }},{$limit:5},{$project:{
-    fullName:1,
-    createdAt:1,
-    _id:0
-  }}]);
+  const result = await Actor.aggregate([
+    { $sort: { createdAt: -1 } },
+    { $limit: 5 },
+    {
+      $project: {
+        fullName: 1,
+        createdAt: 1,
+        _id: 0,
+      },
+    },
+  ]);
   console.log(result);
   res.send({ data: result });
 });
+// add dummy data for payment
+
+router.post("/seed-payment", async (req, res) => {
+  const dummyPayments = [
+    {
+      actor: "697f17b95e8fdf3310015ff7",
+      type: "membership",
+      year: 2024,
+      amount: 2000,
+      method: "bkash",
+      transactionId: "TXN-MEM-2024-001",
+      status: "verified",
+    },
+    {
+      actor: "697f17b95e8fdf3310015ff7",
+      type: "membership",
+      year: 2025,
+      amount: 2000,
+      method: "bkash",
+      transactionId: "TXN-MEM-2025-001",
+      status: "verified",
+    },
+    {
+      actor: "697f17b95e8fdf3310015ff7",
+      type: "membership",
+      year: 2026,
+      amount: 2000,
+      method: "bkash",
+      transactionId: "TXN-MEM-2026-001",
+      status: "pending",
+    },
+  ];
+  try {
+    const result = await ActorPayment.insertMany(dummyPayments);
+    res.status(201).json({
+      success: true,
+      inserted: result.length,
+      data: result,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 export default router;

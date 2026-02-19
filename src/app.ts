@@ -22,6 +22,7 @@ import { VerifyLogin } from "./middleware/verifyLogin";
 import { VerifyAdmin } from "./middleware/verifyAdmin";
 import dotenv from "dotenv";
 import { ContactRoutes } from "./contact/contact.router";
+import { ActorPayment } from "./actor payment/actor.payment.router";
 dotenv.config();
 
 const app = express();
@@ -106,6 +107,7 @@ app.use("/api/v1/counter", counterRouter);
 app.use("/api/v1/be-a-member", beAMemberRouter);
 app.use("/api/v1/site-management", siteManagementRouter);
 app.use("/api/v1/contact", ContactRoutes);
+app.use("/api/v1/actors-payments", ActorPayment);
 app.use(globalErrorHandler);
 
 // Test route

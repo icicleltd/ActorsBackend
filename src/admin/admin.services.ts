@@ -13,6 +13,7 @@ import { Admin } from "./admin.schema";
 import { TokenPayload } from "../auth/auth.interface";
 import { jwtHelper } from "../helper/jwtHelper";
 import { Secret } from "jsonwebtoken";
+import ActorPayment from "../actor payment/actor.payment.schema";
 
 const createAdmin = async (payload: PayloadAdmin) => {
   if (!payload) {
@@ -363,6 +364,14 @@ const makeAdmin = async (payload: PayloadMakeAdmin) => {
   
   return result;
 };
+const fetchActorPayments = async () => {
+  const actorPayments = await ActorPayment.find({
+  }).sort({ createdAt: -1 }).populate("actor","fullName").lean();
+  if (!actorPayments || actorPayments.length < 1) {
+    throw new AppError(202, "No actor Payments");
+  }
+  return actorPayments;
+};
 const test = async () => {
   return;
 };
@@ -379,4 +388,5 @@ export const AdminService = {
   uploadGallery,
   deleteImage,
   makeAdmin,
+  fetchActorPayments
 };

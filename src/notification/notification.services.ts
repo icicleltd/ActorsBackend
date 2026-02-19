@@ -32,6 +32,7 @@ const MEMBER_TYPES = [
   // "APPLICATION_REJECTED",
   "REFERENCE_REQUEST",
   "SCHEDULE",
+  "NOTIFY_PAYMENT",
 ];
 const getNotification = async (queryPayload: IFetchNotification) => {
   const {
@@ -456,6 +457,7 @@ const read = async (
   recipient: string,
   schedule: string,
   contact: string,
+  notifyPayment: string,
   payment: string,
   application: string,
   isRead: boolean,
@@ -468,7 +470,7 @@ const read = async (
   if (!role) {
     throw new AppError(400, "Role is not found");
   }
-  const target = getTarget({ schedule, application, contact, payment });
+  const target = getTarget({ schedule, application, contact, payment,notifyPayment });
   if (!target) {
     throw new AppError(400, "No valid notification reference found");
   }

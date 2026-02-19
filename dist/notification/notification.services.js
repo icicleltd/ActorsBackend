@@ -42,6 +42,7 @@ const error_1 = require("../middleware/error");
 const notification_schema_1 = require("./notification.schema");
 const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
 const detectTarget_1 = require("./hepler/detectTarget");
+const db_1 = require("../db");
 const createNotification = async () => {
     return {
         msg: "Notification created",
@@ -62,6 +63,7 @@ const MEMBER_TYPES = [
     // "APPLICATION_REJECTED",
     "REFERENCE_REQUEST",
     "SCHEDULE",
+    "NOTIFY_PAYMENT",
 ];
 const getNotification = async (queryPayload) => {
     const { role, recipient, notificationType, limit, search, skip, sortBy, sortWith, } = queryPayload;
@@ -350,6 +352,7 @@ const unReadNotification = async (queryPayload) => {
     if (!role) {
         throw new error_1.AppError(400, "Role is required");
     }
+    await (0, db_1.connectDB)();
     if (role === "member") {
         if (!recipient) {
             throw new error_1.AppError(400, "recipient id is required");
@@ -411,14 +414,14 @@ const unReadNotification = async (queryPayload) => {
         CONTACT: contact,
     };
 };
-const read = async (role, recipient, schedule, contact, payment, application, isRead, notificationId, type) => {
+const read = async (role, recipient, schedule, contact, notifyPayment, payment, application, isRead, notificationId, type) => {
     if (!notificationId) {
         throw new error_1.AppError(400, "Notification id not found");
     }
     if (!role) {
         throw new error_1.AppError(400, "Role is not found");
     }
-    const target = (0, detectTarget_1.getTarget)({ schedule, application, contact, payment });
+    const target = (0, detectTarget_1.getTarget)({ schedule, application, contact, payment, notifyPayment });
     if (!target) {
         throw new error_1.AppError(400, "No valid notification reference found");
     }

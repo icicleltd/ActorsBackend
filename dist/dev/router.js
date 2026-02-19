@@ -8,6 +8,7 @@ const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const emailHelper_1 = require("../helper/emailHelper");
 const error_1 = require("../middleware/error");
 const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
+const actor_payment_schema_1 = __importDefault(require("../actor payment/actor.payment.schema"));
 const router = express_1.default.Router();
 // router.post("/upcomming", EventController.createEvent);
 // router.get("/migrate", async (req, res) => {
@@ -161,12 +162,64 @@ router.get("/agg", async (req, res) => {
     // ]);
     // console.log(result);
     // Top 5 newest actors
-    const result = await actor_schema_1.default.aggregate([{ $sort: { createdAt: -1 } }, { $limit: 5 }, { $project: {
+    const result = await actor_schema_1.default.aggregate([
+        { $sort: { createdAt: -1 } },
+        { $limit: 5 },
+        {
+            $project: {
                 fullName: 1,
                 createdAt: 1,
-                _id: 0
-            } }]);
+                _id: 0,
+            },
+        },
+    ]);
     console.log(result);
     res.send({ data: result });
+});
+// add dummy data for payment
+router.post("/seed-payment", async (req, res) => {
+    const dummyPayments = [
+        {
+            actor: "697f17b95e8fdf3310015ff7",
+            type: "membership",
+            year: 2024,
+            amount: 2000,
+            method: "bkash",
+            transactionId: "TXN-MEM-2024-001",
+            status: "verified",
+        },
+        {
+            actor: "697f17b95e8fdf3310015ff7",
+            type: "membership",
+            year: 2025,
+            amount: 2000,
+            method: "bkash",
+            transactionId: "TXN-MEM-2025-001",
+            status: "verified",
+        },
+        {
+            actor: "697f17b95e8fdf3310015ff7",
+            type: "membership",
+            year: 2026,
+            amount: 2000,
+            method: "bkash",
+            transactionId: "TXN-MEM-2026-001",
+            status: "pending",
+        },
+    ];
+    try {
+        const result = await actor_payment_schema_1.default.insertMany(dummyPayments);
+        res.status(201).json({
+            success: true,
+            inserted: result.length,
+            data: result,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
 });
 exports.default = router;

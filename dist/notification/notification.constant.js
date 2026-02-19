@@ -10,5 +10,6 @@ exports.NOTIFICATION_TYPES = [
     "APPLICATION_REJECTED",
     "CONTACT",
     "ALL",
-    "SCHEDULE"
+    "SCHEDULE",
+    "NOTIFY_PAYMENT",
 ];

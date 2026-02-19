@@ -25,6 +25,7 @@ const siteManagement_router_1 = __importDefault(require("./siteManagement/siteMa
 const verifyLogin_1 = require("./middleware/verifyLogin");
 const dotenv_1 = __importDefault(require("dotenv"));
 const contact_router_1 = require("./contact/contact.router");
+const actor_payment_router_1 = require("./actor payment/actor.payment.router");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
@@ -93,6 +94,7 @@ app.use("/api/v1/counter", serialCounter_router_1.default);
 app.use("/api/v1/be-a-member", beAMember_router_1.default);
 app.use("/api/v1/site-management", siteManagement_router_1.default);
 app.use("/api/v1/contact", contact_router_1.ContactRoutes);
+app.use("/api/v1/actors-payments", actor_payment_router_1.ActorPayment);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

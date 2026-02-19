@@ -19,6 +19,11 @@ const notificationSchema = new mongoose_1.Schema({
         ref: "Schedule",
         required: false,
     },
+    notifyPayment: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "NotifyPayment",
+        required: false,
+    },
     recipient: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Actor",

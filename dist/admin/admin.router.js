@@ -17,6 +17,7 @@ adminRouter.put("/update-actor/:id", fileUpload_1.fileUploader.upload.single("ph
 adminRouter.post("/gallery/:id", fileUpload_1.fileUploader.upload.fields([{ name: "images", maxCount: 20 }]), admin_controller_1.AdminController.uploadGallery);
 adminRouter.delete("/gallery/:id", admin_controller_1.AdminController.deleteImage);
 adminRouter.delete("/deletemember/:id", admin_controller_1.AdminController.deleteMember);
+adminRouter.get("/actor-payment", admin_controller_1.AdminController.fetchActorPayments);
 adminRouter.get("/", admin_controller_1.AdminController.getAdmin);
 adminRouter.put("/update-idno", async (req, res) => {
     const { text } = req.body;

@@ -9,7 +9,8 @@ const beAMember_schema_1 = __importDefault(require("../../beAMember/beAMember.sc
 const contact_schema_1 = require("../../contact/contact.schema");
 const payment_schema_1 = require("../../payment/payment.schema");
 const mongoose_1 = require("mongoose");
-const getTarget = ({ schedule, contact, payment, application, }) => {
+const actor_payment_schema_1 = require("../../actor payment/actor.payment.schema");
+const getTarget = ({ schedule, contact, payment, application, notifyPayment, }) => {
     if (schedule)
         return { key: "schedule", id: schedule };
     if (contact)
@@ -18,6 +19,8 @@ const getTarget = ({ schedule, contact, payment, application, }) => {
         return { key: "payment", id: payment };
     if (application)
         return { key: "application", id: application };
+    if (notifyPayment)
+        return { key: "notifyPayment", id: notifyPayment };
     return null;
 };
 exports.getTarget = getTarget;
@@ -32,6 +35,10 @@ exports.MODEL_MAP = {
     },
     payment: {
         model: payment_schema_1.Payment,
+        defaultUpdate: { isView: true },
+    },
+    notifyPayment: {
+        model: actor_payment_schema_1.NotifyPayment,
         defaultUpdate: { isView: true },
     },
     application: {

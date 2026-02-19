@@ -11,6 +11,7 @@ const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("./admin.schema");
 const jwtHelper_1 = require("../helper/jwtHelper");
+const actor_payment_schema_1 = __importDefault(require("../actor payment/actor.payment.schema"));
 const createAdmin = async (payload) => {
     if (!payload) {
         throw new error_1.AppError(400, "No data provided");
@@ -283,6 +284,13 @@ const makeAdmin = async (payload) => {
     }, { new: true, runValidators: true });
     return result;
 };
+const fetchActorPayments = async () => {
+    const actorPayments = await actor_payment_schema_1.default.find({}).sort({ createdAt: -1 }).populate("actor", "fullName").lean();
+    if (!actorPayments || actorPayments.length < 1) {
+        throw new error_1.AppError(202, "No actor Payments");
+    }
+    return actorPayments;
+};
 const test = async () => {
     return;
 };
@@ -299,4 +307,5 @@ exports.AdminService = {
     uploadGallery,
     deleteImage,
     makeAdmin,
+    fetchActorPayments
 };

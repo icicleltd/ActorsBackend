@@ -30,6 +30,10 @@ const actorPaymentSchema = new Schema<IActorPayment>(
       type: String,
       required: true,
     },
+     desc: {
+      type: String,
+      trim: true,
+    },
 
     eventName: String,
 

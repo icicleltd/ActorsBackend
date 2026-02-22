@@ -8,6 +8,7 @@ export interface IActorPayment {
   eventName?: string;
   number: string;
   amount: number;
+  desc?: string;
   method: "bkash" | "Nagad" | "Cash";
   transactionId?: string;
 

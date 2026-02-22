@@ -78,7 +78,7 @@ const actorPaymentInfo = async (id, search, limit, sortBy, sortWith, alive, year
                             $expr: {
                                 $and: [
                                     { $eq: ["$actor", "$$actorId"] },
-                                    { $eq: ["$year", year] },
+                                    { $eq: ["$year", String(year)] },
                                 ],
                             },
                         },
@@ -166,6 +166,7 @@ const notifyActorForPayment = async (payload) => {
                 notifyPayment: notify._id,
                 isRead: false,
             }));
+            console.log(notificationData, notifyPayments);
             const notifications = await notification_schema_1.Notification.insertMany(notificationData, {
                 session,
             });
@@ -236,6 +237,7 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                     amount: Number(amount),
                     transactionId,
                     number: senderNumber,
+                    desc: updateNotifyPayment.desc
                 },
             ], { session });
             await notification_schema_1.Notification.create([
@@ -245,6 +247,7 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                     title: "Payment verify Notification",
                     message: "New payment submitted by an actor. Verification required.",
                     isRead: false,
+                    notifyPayment: updateNotifyPayment._id
                 },
             ], { session });
         });
@@ -259,6 +262,7 @@ const fetchActorPayments = async (idNo) => {
     const actorId = await actor_schema_1.default.findOne({ idNo }).select("_id").lean();
     const actorPayments = await actor_payment_schema_1.default.find({
         actor: actorId,
+        status: "verified"
     }).sort({ createdAt: -1 });
     if (!actorPayments || actorPayments.length < 1) {
         throw new error_1.AppError(202, "No actor Payments");
@@ -279,11 +283,7 @@ const verifyActorPayment = async (paymentId, notifyPayment) => {
     const session = await mongoose_1.default.startSession();
     try {
         await session.withTransaction(async () => {
-            const updateNotifyPayment = await actor_payment_schema_1.NotifyPayment.findByIdAndUpdate(notifyPayment, {
-                $set: {
-                    status: "paid",
-                },
-            }, {
+            const updateNotifyPayment = await actor_payment_schema_1.NotifyPayment.findByIdAndDelete(notifyPayment, {
                 new: true,
                 runValidators: true,
                 session,
@@ -291,19 +291,25 @@ const verifyActorPayment = async (paymentId, notifyPayment) => {
             if (!updateNotifyPayment) {
                 throw new error_1.AppError(400, "Updated failed");
             }
-            await notification_schema_1.Notification.findOneAndUpdate({ notifyPayment }, { $set: { isRead: true } }, { new: true, runValidators: true, session });
+            await notification_schema_1.Notification.findOneAndUpdate({ notifyPayment,
+                type: "PAYMENT_SUBMITTED"
+            }, { $set: { isRead: true } }, { new: true, runValidators: true, session });
             await actor_payment_schema_1.default.findByIdAndUpdate(paymentId, {
                 $set: { status: "verified" },
             }, { session });
-            await notification_schema_1.Notification.create([
-                {
-                    recipientRole: ["admin", "superadmin"],
-                    type: "PAYMENT_SUBMITTED",
-                    title: "Payment verify Notification",
-                    message: "New payment submitted by an actor. Verification required.",
-                    isRead: false,
-                },
-            ], { session });
+            // await Notification.create(
+            //   [
+            //     {
+            //       recipientRole: ["admin", "superadmin"],
+            //       type: "PAYMENT_SUBMITTED",
+            //       title: "Payment verify Notification",
+            //       message:
+            //         "New payment submitted by an actor. Verification required.",
+            //       isRead: false,
+            //     },
+            //   ],
+            //   { session },
+            // );
         });
     }
     catch (error) { }

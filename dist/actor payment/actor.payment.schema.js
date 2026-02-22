@@ -28,6 +28,10 @@ const actorPaymentSchema = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    desc: {
+        type: String,
+        trim: true,
+    },
     eventName: String,
     amount: {
         type: Number,

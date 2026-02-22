@@ -59,7 +59,7 @@ const actorPaymentInfo = async (
               $expr: {
                 $and: [
                   { $eq: ["$actor", "$$actorId"] },
-                  { $eq: ["$year", year] },
+                  { $eq: ["$year", String(year)] },
                 ],
               },
             },
@@ -102,7 +102,6 @@ const actorPaymentInfo = async (
   );
 
   const actors = await Actor.aggregate(pipeline);
-
   return { actors };
 };
 
@@ -164,6 +163,7 @@ const notifyActorForPayment = async (payload: INotifyActorPayload) => {
         notifyPayment: notify._id,
         isRead: false,
       }));
+      console.log(notificationData,notifyPayments)
       const notifications = await Notification.insertMany(notificationData, {
         session,
       });
@@ -249,6 +249,7 @@ const paymentSubmitted = async (
             amount: Number(amount),
             transactionId,
             number: senderNumber,
+            desc:updateNotifyPayment.desc
           },
         ],
         { session },
@@ -262,6 +263,7 @@ const paymentSubmitted = async (
             message:
               "New payment submitted by an actor. Verification required.",
             isRead: false,
+            notifyPayment:updateNotifyPayment._id
           },
         ],
         { session },
@@ -278,6 +280,7 @@ const fetchActorPayments = async (idNo: string) => {
   const actorId = await Actor.findOne({ idNo }).select("_id").lean();
   const actorPayments = await ActorPayment.find({
     actor: actorId,
+    status:"verified"
   }).sort({ createdAt: -1 });
   if (!actorPayments || actorPayments.length < 1) {
     throw new AppError(202, "No actor Payments");
@@ -300,13 +303,8 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
-      const updateNotifyPayment = await NotifyPayment.findByIdAndUpdate(
+      const updateNotifyPayment = await NotifyPayment.findByIdAndDelete(
         notifyPayment,
-        {
-          $set: {
-            status: "paid",
-          },
-        },
         {
           new: true,
           runValidators: true,
@@ -317,7 +315,10 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
         throw new AppError(400, "Updated failed");
       }
       await Notification.findOneAndUpdate(
-        { notifyPayment },
+        { notifyPayment,
+          type:"PAYMENT_SUBMITTED"
+         },
+      
         { $set: { isRead: true } },
         { new: true, runValidators: true, session },
       );
@@ -328,19 +329,19 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
         },
         { session },
       );
-      await Notification.create(
-        [
-          {
-            recipientRole: ["admin", "superadmin"],
-            type: "PAYMENT_SUBMITTED",
-            title: "Payment verify Notification",
-            message:
-              "New payment submitted by an actor. Verification required.",
-            isRead: false,
-          },
-        ],
-        { session },
-      );
+      // await Notification.create(
+      //   [
+      //     {
+      //       recipientRole: ["admin", "superadmin"],
+      //       type: "PAYMENT_SUBMITTED",
+      //       title: "Payment verify Notification",
+      //       message:
+      //         "New payment submitted by an actor. Verification required.",
+      //       isRead: false,
+      //     },
+      //   ],
+      //   { session },
+      // );
     });
   } catch (error) {}
   session.endSession();

@@ -173,11 +173,11 @@ const actorSchema = new Schema<IActor>(
     role: { type: String, default: "member" },
 
     category: { type: String, enum: ["A", "B", "C"] },
-    status: {
-      type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-    },
+    // status: {
+    //   type: String,
+    //   enum: ["pending", "approved", "rejected"],
+    //   default: "pending",
+    // },
   },
   { timestamps: true },
 );

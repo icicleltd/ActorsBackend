@@ -22,7 +22,7 @@ const verifyToken = (token, secret) => {
         return jsonwebtoken_1.default.verify(token, secret);
     }
     catch (error) {
-        throw new error_1.AppError(401, "Unauthorized access: Invalid or expired token");
+        throw new error_1.AppError(401, "Your token is expired. Please login");
     }
 };
 exports.jwtHelper = { generateToken, verifyToken };

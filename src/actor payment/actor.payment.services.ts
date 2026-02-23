@@ -5,6 +5,7 @@ import { INotifyActorPayload, INotifyPayment } from "./actor.payment.interface";
 import { Notification } from "../notification/notification.schema";
 import ActorPayment, { NotifyPayment } from "./actor.payment.schema";
 import { INotification } from "../notification/notification.interface";
+import { Payment } from "../payment/payment.schema";
 
 type PaymentStatus = "paid" | "pending";
 
@@ -163,7 +164,7 @@ const notifyActorForPayment = async (payload: INotifyActorPayload) => {
         notifyPayment: notify._id,
         isRead: false,
       }));
-      console.log(notificationData,notifyPayments)
+      console.log(notificationData, notifyPayments);
       const notifications = await Notification.insertMany(notificationData, {
         session,
       });
@@ -249,7 +250,7 @@ const paymentSubmitted = async (
             amount: Number(amount),
             transactionId,
             number: senderNumber,
-            desc:updateNotifyPayment.desc
+            desc: updateNotifyPayment.desc,
           },
         ],
         { session },
@@ -263,7 +264,7 @@ const paymentSubmitted = async (
             message:
               "New payment submitted by an actor. Verification required.",
             isRead: false,
-            notifyPayment:updateNotifyPayment._id
+            notifyPayment: updateNotifyPayment._id,
           },
         ],
         { session },
@@ -280,7 +281,7 @@ const fetchActorPayments = async (idNo: string) => {
   const actorId = await Actor.findOne({ idNo }).select("_id").lean();
   const actorPayments = await ActorPayment.find({
     actor: actorId,
-    status:"verified"
+    status: "verified",
   }).sort({ createdAt: -1 });
   if (!actorPayments || actorPayments.length < 1) {
     throw new AppError(202, "No actor Payments");
@@ -315,10 +316,8 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
         throw new AppError(400, "Updated failed");
       }
       await Notification.findOneAndUpdate(
-        { notifyPayment,
-          type:"PAYMENT_SUBMITTED"
-         },
-      
+        { notifyPayment, type: "PAYMENT_SUBMITTED" },
+
         { $set: { isRead: true } },
         { new: true, runValidators: true, session },
       );
@@ -346,6 +345,114 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
   } catch (error) {}
   session.endSession();
 };
+interface DashboardParams {
+  year: string;
+  yearlyFee: number;
+}
+
+const getPaymentDashboardStats = async ({
+  year,
+  yearlyFee,
+}: DashboardParams) => {
+  /* =====================================
+     🎯 TOTAL ACTIVE ACTORS
+  ====================================== */
+
+  const totalActors = await Actor.countDocuments({
+    isActive: true,
+  });
+
+  /* =====================================
+     🎯 PAID ACTORS (VERIFIED ONLY)
+  ====================================== */
+
+  const paidActorIds = await ActorPayment.distinct("actor", {
+    year,
+    status: "verified",
+  });
+
+  const totalActorPaid = paidActorIds.length;
+
+  /* =====================================
+     🎯 PAID AMOUNT
+  ====================================== */
+
+  const paidAmountResult = await ActorPayment.aggregate([
+    {
+      $match: {
+        year,
+        status: "verified",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalAmount: { $sum: "$amount" },
+      },
+    },
+  ]);
+
+  const totalActorPaidAmount =
+    paidAmountResult.length > 0 ? paidAmountResult[0].totalAmount : 0;
+
+  /* =====================================
+     🎯 UNPAID ACTORS
+  ====================================== */
+
+  const totalActorUnpaid = totalActors - totalActorPaid;
+
+  const totalActorUnpaidAmount = totalActorUnpaid * yearlyFee;
+
+  /* =====================================
+     🎯 NEW MEMBER PAYMENT
+  ====================================== */
+
+  const start = new Date(`${year}-01-01`);
+  const end = new Date(`${year}-12-31T23:59:59.999Z`);
+
+  const newMemberData = await Payment.aggregate([
+    {
+      $match: {
+        status: "verified",
+        createdAt: { $gte: start, $lte: end },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalMembers: { $sum: 1 },
+        totalAmount: { $sum: "$amount" },
+      },
+    },
+  ]);
+
+  const totalNewMemberPaid =
+    newMemberData.length > 0 ? newMemberData[0].totalMembers : 0;
+
+  const totalNewMemberAmount =
+    newMemberData.length > 0 ? newMemberData[0].totalAmount : 0;
+
+  /* =====================================
+     🎯 RETURN
+  ====================================== */
+
+  return {
+    actor: {
+      paid: {
+        totalActors: totalActorPaid,
+        totalAmount: totalActorPaidAmount,
+      },
+      unpaid: {
+        totalActors: totalActorUnpaid,
+        totalAmount: totalActorUnpaidAmount,
+      },
+    },
+    newMember: {
+      totalMembers: totalNewMemberPaid,
+      totalAmount: totalNewMemberAmount,
+    },
+  };
+};
 
 export const ActorPaymentService = {
   actorPaymentInfo,
@@ -354,4 +461,5 @@ export const ActorPaymentService = {
   paymentSubmitted,
   fetchActorPayments,
   verifyActorPayment,
+  getPaymentDashboardStats,
 };

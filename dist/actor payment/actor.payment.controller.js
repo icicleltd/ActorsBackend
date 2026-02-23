@@ -75,6 +75,20 @@ const verifyActorPayment = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const getPaymentDashboardStats = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { year } = req.query;
+    const yearlyFee = parseInt(req.query.yearlyFee);
+    const result = await actor_payment_services_1.ActorPaymentService.getPaymentDashboardStats({
+        year: year,
+        yearlyFee,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payment stats get successfully",
+        data: result,
+    });
+});
 exports.ActorPaymentController = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -82,4 +96,5 @@ exports.ActorPaymentController = {
     paymentSubmitted,
     fetchActorPayments,
     verifyActorPayment,
+    getPaymentDashboardStats,
 };

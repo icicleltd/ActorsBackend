@@ -14,6 +14,7 @@ router.post("/verify-payment",VerifyLogin, ActorPaymentController.verifyActorPay
 // Get all (Public/Admin)
 router.get("/notify-actor",VerifyLogin, ActorPaymentController.fetchNotifyPayments);
 router.get("/actor-payment",VerifyLogin, ActorPaymentController.fetchActorPayments);
+router.get("/payments-stats", ActorPaymentController.getPaymentDashboardStats);
 router.get("/", ActorPaymentController.actorPaymentInfo);
 
 // Delete (Admin)

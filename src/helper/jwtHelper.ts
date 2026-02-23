@@ -20,7 +20,7 @@ const verifyToken = (token: string, secret: Secret) => {
   try {
     return jwt.verify(token, secret) as DecodedToken;
   } catch (error) {
-    throw new AppError(401, "Unauthorized access: Invalid or expired token");
+    throw new AppError(401, "Your token is expired. Please login");
   }
 };
 

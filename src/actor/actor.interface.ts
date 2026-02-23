@@ -184,7 +184,7 @@ export interface IActor extends Document {
   // Category & Status
   // =========================
   category?: "A" | "B";
-  status: "pending" | "approved" | "rejected";
+  // status: "pending" | "approved" | "rejected";
   coverImages?: IImage[];
   activity?: {
     all?: string[];

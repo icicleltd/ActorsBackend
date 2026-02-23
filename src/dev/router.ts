@@ -252,5 +252,13 @@ router.post("/seed-payment", async (req, res) => {
     });
   }
 });
+router.post("/isActive", async (req, res) => {
+  const result = await Actor.updateMany(
+    { isActive: { $exists: false } },
+    { $set: { isActive: true } },
+  );
+
+  res.json(result);
+});
 
 export default router;

@@ -222,4 +222,8 @@ router.post("/seed-payment", async (req, res) => {
         });
     }
 });
+router.post("/isActive", async (req, res) => {
+    const result = await actor_schema_1.default.updateMany({ isActive: { $exists: false } }, { $set: { isActive: true } });
+    res.json(result);
+});
 exports.default = router;

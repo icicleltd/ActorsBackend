@@ -189,11 +189,11 @@ const actorSchema = new mongoose_1.Schema({
     isProfilePublic: { type: Boolean, default: true },
     role: { type: String, default: "member" },
     category: { type: String, enum: ["A", "B", "C"] },
-    status: {
-        type: String,
-        enum: ["pending", "approved", "rejected"],
-        default: "pending",
-    },
+    // status: {
+    //   type: String,
+    //   enum: ["pending", "approved", "rejected"],
+    //   default: "pending",
+    // },
 }, { timestamps: true });
 // Text / search helpers
 actorSchema.index({ fullName: 1 });

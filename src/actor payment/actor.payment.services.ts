@@ -350,58 +350,66 @@ interface DashboardParams {
   yearlyFee: number;
 }
 
-const getPaymentDashboardStats = async ({
-  year,
-  yearlyFee,
-}: DashboardParams) => {
-  /* =====================================
-     🎯 TOTAL ACTIVE ACTORS
-  ====================================== */
-
-  const totalActors = await Actor.countDocuments({
-    isActive: true,
-  });
-
-  /* =====================================
-     🎯 PAID ACTORS (VERIFIED ONLY)
-  ====================================== */
-
-  const paidActorIds = await ActorPayment.distinct("actor", {
-    year,
-    status: "verified",
-  });
-
-  const totalActorPaid = paidActorIds.length;
-
+const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
   /* =====================================
      🎯 PAID AMOUNT
   ====================================== */
 
-  const paidAmountResult = await ActorPayment.aggregate([
+  const amountResult = await ActorPayment.aggregate([
+    { $match: { year } },
+    {
+      $facet: {
+        verified: [
+          { $match: { status: "verified" } },
+          {
+            $group: {
+              _id: null,
+              totalAmount: { $sum: "$amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ],
+        pending: [
+          { $match: { status: "pending" } },
+          {
+            $group: {
+              _id: null,
+              totalAmount: { $sum: "$amount" },
+              count: { $sum: 1 },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+  const totalPaidAmount = amountResult[0].verified[0]?.totalAmount || 0;
+  const needVerifyAmount = amountResult[0].pending[0]?.totalAmount || 0;
+
+  const totalPaidActor = amountResult[0].verified[0]?.count || 0;
+  const needVerifyCount = amountResult[0].pending[0]?.count || 0;
+
+  /* =====================================
+     🎯 UNPAID ACTORS
+  ====================================== */
+
+  const unpaidAmountResult = await NotifyPayment.aggregate([
     {
       $match: {
-        year,
-        status: "verified",
+        year: Number(year),
+        status: "request",
       },
     },
     {
       $group: {
         _id: null,
         totalAmount: { $sum: "$amount" },
+        actor: { $sum: 1 },
       },
     },
   ]);
-
-  const totalActorPaidAmount =
-    paidAmountResult.length > 0 ? paidAmountResult[0].totalAmount : 0;
-
-  /* =====================================
-     🎯 UNPAID ACTORS
-  ====================================== */
-
-  const totalActorUnpaid = totalActors - totalActorPaid;
-
-  const totalActorUnpaidAmount = totalActorUnpaid * yearlyFee;
+console.log(unpaidAmountResult)
+  const totalActorUnpaidAmount = unpaidAmountResult[0]?.totalAmount || 0;
+  const totalActorUnpaid = unpaidAmountResult[0]?.actor || 0;
 
   /* =====================================
      🎯 NEW MEMBER PAYMENT
@@ -432,6 +440,8 @@ const getPaymentDashboardStats = async ({
   const totalNewMemberAmount =
     newMemberData.length > 0 ? newMemberData[0].totalAmount : 0;
 
+  const totalHandCash = totalPaidActor + totalNewMemberAmount;
+  console.log(totalHandCash)
   /* =====================================
      🎯 RETURN
   ====================================== */
@@ -439,8 +449,12 @@ const getPaymentDashboardStats = async ({
   return {
     actor: {
       paid: {
-        totalActors: totalActorPaid,
-        totalAmount: totalActorPaidAmount,
+        totalActors: totalPaidActor,
+        totalAmount: totalPaidAmount,
+      },
+      paymentVerifying: {
+        totalActors: needVerifyCount,
+        totalAmount: needVerifyAmount,
       },
       unpaid: {
         totalActors: totalActorUnpaid,

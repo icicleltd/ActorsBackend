@@ -122,11 +122,35 @@ const makeAdmin = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 const fetchActorPayments = (0, catchAsync_1.default)(async (req, res, next) => {
-    const result = await admin_services_1.AdminService.fetchActorPayments();
+    const year = req.query.year;
+    const search = req.query.search;
+    const status = req.query.status;
+    const result = await admin_services_1.AdminService.fetchActorPayments(year, status, search);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
         message: "Actor payment get successfully",
+        data: result,
+    });
+});
+const fetchPaymentHistory = (0, catchAsync_1.default)(async (req, res, next) => {
+    const year = req.query.year;
+    const search = req.query.search;
+    const status = req.query.status;
+    const result = await admin_services_1.AdminService.fetchPaymentHistory(year, status, search);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Actor payment get successfully",
+        data: result,
+    });
+});
+const getGroupedYears = (0, catchAsync_1.default)(async (req, res, next) => {
+    const result = await admin_services_1.AdminService.getGroupedYears();
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Actor Promoted successfully",
         data: result,
     });
 });
@@ -152,5 +176,7 @@ exports.AdminController = {
     uploadGallery,
     deleteImage,
     makeAdmin,
-    fetchActorPayments
+    fetchActorPayments,
+    getGroupedYears,
+    fetchPaymentHistory
 };

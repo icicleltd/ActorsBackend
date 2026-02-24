@@ -104,7 +104,7 @@ const updateActorProfile = async (actorData, actorId, file) => {
 //     fromActive: actorData.fromActive,
 //     bio: actorData.bio,
 //   };
-//  
+//
 //   const actor = await Actor.create(actorProfile);
 //   if (!actor) {
 //     throw new AppError(500, "Failed to create actor");
@@ -284,12 +284,89 @@ const makeAdmin = async (payload) => {
     }, { new: true, runValidators: true });
     return result;
 };
-const fetchActorPayments = async () => {
-    const actorPayments = await actor_payment_schema_1.default.find({}).sort({ createdAt: -1 }).populate("actor", "fullName").lean();
-    if (!actorPayments || actorPayments.length < 1) {
-        throw new error_1.AppError(202, "No actor Payments");
+// const fetchActorPayments = async (
+//   year: string,
+//   status: "pending" | "verified" | "rejected",
+//   search: string,
+// ) => {
+//   console.log(year, status, search);
+//   const matchStage: any = {};
+//   if (year) {
+//     matchStage.year = year;
+//   }
+//   if (status) {
+//     matchStage.status = status;
+//   }
+//   const pipeline: any[] = [
+//     { $match: matchStage },
+//     // Join Actor collection
+//     {
+//       $lookup: {
+//         from: "actors",
+//         localField: "actor",
+//         foreignField: "_id",
+//         as: "actor",
+//       },
+//     },
+//     { $unwind: "$actor" },
+//   ];
+//   // 🔎 Search condition
+//   if (search) {
+//     pipeline.push({
+//       $match: {
+//         $or: [
+//           { "actor.fullName": { $regex: search, $options: "i" } },
+//           { number: { $regex: search, $options: "i" } },
+//           { transactionId: { $regex: search, $options: "i" } },
+//           // { desc: { $regex: search, $options: "i" } },
+//           // { eventName: { $regex: search, $options: "i" } },
+//         ],
+//       },
+//     });
+//   }
+//   pipeline.push({ $sort: { createdAt: -1 } });
+//   const actorPayments = await ActorPayment.aggregate(pipeline);
+//   if (!actorPayments || actorPayments.length < 1) {
+//     throw new AppError(202, "No actor Payments");
+//   }
+//   return actorPayments;
+// };
+const fetchActorPayments = async (year, status, search) => {
+    const filter = {};
+    if (year) {
+        filter.year = year;
     }
+    if (status) {
+        filter.status = status;
+    }
+    const actorPayments = await actor_payment_schema_1.default.find(filter)
+        .sort({ createdAt: -1 })
+        .populate("actor", "fullName")
+        .lean();
     return actorPayments;
+};
+const fetchPaymentHistory = async (year, status, search) => {
+    const filter = {};
+    if (year) {
+        filter.year = year;
+    }
+    if (status && status !== "all") {
+        filter.status = status;
+    }
+    const actorPayments = await actor_payment_schema_1.default.find(filter)
+        .sort({ createdAt: -1 })
+        .populate("actor", "fullName")
+        .lean();
+    return actorPayments;
+};
+const getGroupedYears = async () => {
+    const years = await actor_payment_schema_1.default.distinct("year");
+    return years
+        .sort((a, b) => Number(b) - Number(a))
+        .map((year) => ({
+        label: year,
+        value: year,
+    }));
 };
 const test = async () => {
     return;
@@ -307,5 +384,7 @@ exports.AdminService = {
     uploadGallery,
     deleteImage,
     makeAdmin,
-    fetchActorPayments
+    fetchActorPayments,
+    getGroupedYears,
+    fetchPaymentHistory
 };

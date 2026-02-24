@@ -41,7 +41,7 @@ const readAdmin = async () => {
 const updateActorProfile = async (
   actorData: AllowedActorPayload,
   actorId: string,
-  file: any
+  file: any,
 ) => {
   if (!actorData) {
     throw new AppError(400, "No actor data provided");
@@ -79,9 +79,9 @@ const updateActorProfile = async (
     ...actorData,
     photo: uploadedUrl,
   };
-  
+
   const sanitize = sanitizePayload(updatedPayload);
-  
+
   const result = await Actor.findByIdAndUpdate(
     actorId,
     {
@@ -90,9 +90,9 @@ const updateActorProfile = async (
     {
       new: true,
       runValidators: true,
-    }
+    },
   ).select("-password");
- 
+
   if (!result) {
     throw new Error("Failed to fill up actor profile");
   }
@@ -123,7 +123,7 @@ const updateActorProfile = async (
 //     fromActive: actorData.fromActive,
 //     bio: actorData.bio,
 //   };
-//  
+//
 //   const actor = await Actor.create(actorProfile);
 //   if (!actor) {
 //     throw new AppError(500, "Failed to create actor");
@@ -163,8 +163,6 @@ const addActor = async (file: any, actorData: any) => {
     password: actorData.password,
   };
 
-  
-
   // Create the actor in the database
   const actor = await Actor.create(actorProfile);
 
@@ -184,7 +182,7 @@ const promoteMember = async (memberData: any) => {
   if (["executive", "advisor"].includes(rank) && !rankYearRange) {
     throw new AppError(
       400,
-      "Rank year range is required for advisor and executive"
+      "Rank year range is required for advisor and executive",
     );
   }
   const newMember = await Actor.findByIdAndUpdate(
@@ -202,7 +200,7 @@ const promoteMember = async (memberData: any) => {
         rankYear,
       },
     },
-    { new: true }
+    { new: true },
   );
   if (!newMember) {
     throw new AppError(500, "Member Not promote");
@@ -239,7 +237,7 @@ const login = async (payload: PayloadLoign) => {
 
   const fields = ["email", "phone"];
   const trimmedIdentifier = identifier.trim().toLowerCase();
- 
+
   const filter = {
     $or: fields.map((field) => ({
       [field]: trimmedIdentifier,
@@ -250,7 +248,7 @@ const login = async (payload: PayloadLoign) => {
   const existing = await Admin.findOne(filter)
     .select("+password _id email fullName role")
     .lean(false);
-  
+
   if (!existing) {
     throw new AppError(401, "Unauthorized");
   }
@@ -262,20 +260,20 @@ const login = async (payload: PayloadLoign) => {
   const data: TokenPayload = {
     _id: existing._id,
     email: existing.email,
-    role:existing.role,
+    role: existing.role,
     fullName: existing.fullName,
   };
   const accessToken = await jwtHelper.generateToken(
     data,
     process.env.ACCESS_TOKEN_SECRET_KEY as Secret,
-    process.env.ACCESS_TOKEN_EXPIRE_IN as string
+    process.env.ACCESS_TOKEN_EXPIRE_IN as string,
   );
   if (!accessToken) {
     throw new AppError(400, "Token not found");
   }
   const userResponse = existing.toObject();
   delete userResponse.password;
-  
+
   return {
     user: userResponse,
     accessToken,
@@ -285,7 +283,7 @@ const uploadGallery = async (
   files: {
     [fieldname: string]: Express.Multer.File[];
   },
-  id: string
+  id: string,
 ) => {
   if (!files || !files.images || files.images.length === 0) {
     throw new AppError(400, "Images are required");
@@ -300,20 +298,20 @@ const uploadGallery = async (
     publicId: u.public_id,
     image: u.secure_url,
   }));
- 
+
   const result = await Actor.findByIdAndUpdate(id, {
     $addToSet: {
       gallery: images,
     },
   });
-  
+
   return result;
 };
 const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
   if (!Types.ObjectId.isValid(id)) {
     throw new AppError(400, "Id is not valid");
   }
-  
+
   if (deleteMode === "all") {
     const result = await Actor.findByIdAndUpdate(
       id,
@@ -322,9 +320,9 @@ const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
           gallery: {},
         },
       },
-      { new: true }
+      { new: true },
     );
-    
+
     return result;
   }
 
@@ -338,7 +336,7 @@ const deleteImage = async (id: string, deleteMode: any, deleteImageId: any) => {
         gallery: { _id: deleteImageId },
       },
     },
-    { new: true }
+    { new: true },
   );
   return result;
 };
@@ -358,19 +356,114 @@ const makeAdmin = async (payload: PayloadMakeAdmin) => {
         role,
       },
     },
-    { new: true, runValidators: true }
+    { new: true, runValidators: true },
   );
 
-  
   return result;
 };
-const fetchActorPayments = async () => {
-  const actorPayments = await ActorPayment.find({
-  }).sort({ createdAt: -1 }).populate("actor","fullName").lean();
-  if (!actorPayments || actorPayments.length < 1) {
-    throw new AppError(202, "No actor Payments");
+// const fetchActorPayments = async (
+//   year: string,
+//   status: "pending" | "verified" | "rejected",
+//   search: string,
+// ) => {
+//   console.log(year, status, search);
+//   const matchStage: any = {};
+
+//   if (year) {
+//     matchStage.year = year;
+//   }
+
+//   if (status) {
+//     matchStage.status = status;
+//   }
+
+//   const pipeline: any[] = [
+//     { $match: matchStage },
+
+//     // Join Actor collection
+//     {
+//       $lookup: {
+//         from: "actors",
+//         localField: "actor",
+//         foreignField: "_id",
+//         as: "actor",
+//       },
+//     },
+//     { $unwind: "$actor" },
+//   ];
+
+//   // 🔎 Search condition
+//   if (search) {
+//     pipeline.push({
+//       $match: {
+//         $or: [
+//           { "actor.fullName": { $regex: search, $options: "i" } },
+//           { number: { $regex: search, $options: "i" } },
+//           { transactionId: { $regex: search, $options: "i" } },
+//           // { desc: { $regex: search, $options: "i" } },
+//           // { eventName: { $regex: search, $options: "i" } },
+//         ],
+//       },
+//     });
+//   }
+
+//   pipeline.push({ $sort: { createdAt: -1 } });
+
+//   const actorPayments = await ActorPayment.aggregate(pipeline);
+
+//   if (!actorPayments || actorPayments.length < 1) {
+//     throw new AppError(202, "No actor Payments");
+//   }
+
+//   return actorPayments;
+// };
+const fetchActorPayments = async (
+  year: string,
+  status: "pending" | "verified" | "rejected",
+  search: string,
+) => {
+  const filter: any = {};
+  if (year) {
+    filter.year = year;
   }
+  if (status) {
+    filter.status = status;
+  }
+  const actorPayments = await ActorPayment.find(filter)
+    .sort({ createdAt: -1 })
+    .populate("actor", "fullName")
+    .lean();
   return actorPayments;
+};
+const fetchPaymentHistory = async (
+  year: string,
+  status: "pending" | "verified" | "rejected"|"all",
+  search: string,
+) => {
+  const filter: any = {};
+  if (year) {
+    filter.year = year;
+  }
+if (status && status !== "all") {
+  filter.status = status;
+}
+  const actorPayments = await ActorPayment.find(filter)
+    .sort({ createdAt: -1 })
+    .populate("actor", "fullName")
+    .lean();
+  return actorPayments;
+};
+const getGroupedYears = async (): Promise<
+  { label: string; value: string }[]
+> => {
+  const years = await ActorPayment.distinct("year");
+
+  return years
+    .sort((a, b) => Number(b) - Number(a))
+    .map((year) => ({
+      label: year,
+      value: year,
+    }));
 };
 const test = async () => {
   return;
@@ -388,5 +481,7 @@ export const AdminService = {
   uploadGallery,
   deleteImage,
   makeAdmin,
-  fetchActorPayments
+  fetchActorPayments,
+  getGroupedYears,
+  fetchPaymentHistory
 };

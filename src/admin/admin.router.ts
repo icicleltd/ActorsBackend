@@ -26,6 +26,8 @@ adminRouter.post(
 adminRouter.delete("/gallery/:id", AdminController.deleteImage);
 adminRouter.delete("/deletemember/:id", AdminController.deleteMember);
 adminRouter.get("/actor-payment", AdminController.fetchActorPayments);
+adminRouter.get("/payment-history", AdminController.fetchPaymentHistory);
+adminRouter.get("/payments/years", AdminController.getGroupedYears);
 adminRouter.get("/", AdminController.getAdmin);
 adminRouter.put("/update-idno", async (req, res) => {
   const { text } = req.body;

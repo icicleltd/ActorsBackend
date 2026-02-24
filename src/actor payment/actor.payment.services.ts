@@ -387,7 +387,7 @@ const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
 
   const totalPaidActor = amountResult[0].verified[0]?.count || 0;
   const needVerifyCount = amountResult[0].pending[0]?.count || 0;
-
+console.log(needVerifyAmount,needVerifyCount)
   /* =====================================
      🎯 UNPAID ACTORS
   ====================================== */
@@ -407,7 +407,6 @@ const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
       },
     },
   ]);
-console.log(unpaidAmountResult)
   const totalActorUnpaidAmount = unpaidAmountResult[0]?.totalAmount || 0;
   const totalActorUnpaid = unpaidAmountResult[0]?.actor || 0;
 
@@ -440,8 +439,7 @@ console.log(unpaidAmountResult)
   const totalNewMemberAmount =
     newMemberData.length > 0 ? newMemberData[0].totalAmount : 0;
 
-  const totalHandCash = totalPaidActor + totalNewMemberAmount;
-  console.log(totalHandCash)
+  const totalHandCash = totalPaidAmount + totalNewMemberAmount;
   /* =====================================
      🎯 RETURN
   ====================================== */
@@ -465,6 +463,7 @@ console.log(unpaidAmountResult)
       totalMembers: totalNewMemberPaid,
       totalAmount: totalNewMemberAmount,
     },
+    totalHandCash
   };
 };
 

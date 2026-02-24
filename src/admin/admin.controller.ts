@@ -18,7 +18,7 @@ const createAdmin = catchAsync(
       message: "Admin created successfully",
       data: result,
     });
-  }
+  },
 );
 
 const readNotificaton = catchAsync(
@@ -30,7 +30,7 @@ const readNotificaton = catchAsync(
       message: "Not successfully",
       data: result,
     });
-  }
+  },
 );
 const updateActorProfile = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -44,7 +44,7 @@ const updateActorProfile = catchAsync(
       message: "Actor profile filled up successfully",
       data: result,
     });
-  }
+  },
 );
 const getAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -55,7 +55,7 @@ const getAdmin = catchAsync(
       message: "Admin fetched successfully",
       data: result,
     });
-  }
+  },
 );
 const addActor = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -68,7 +68,7 @@ const addActor = catchAsync(
       message: "Actor added successfully",
       data: result,
     });
-  }
+  },
 );
 const promoteMember = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -80,7 +80,7 @@ const promoteMember = catchAsync(
       message: "Actor Promoted successfully",
       data: result,
     });
-  }
+  },
 );
 const deleteMember = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -92,7 +92,7 @@ const deleteMember = catchAsync(
       message: "Actor deleted successfully",
       data: result,
     });
-  }
+  },
 );
 const login = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -104,7 +104,7 @@ const login = catchAsync(
       message: "Admin login successfully",
       data: result,
     });
-  }
+  },
 );
 const uploadGallery = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -119,18 +119,18 @@ const uploadGallery = catchAsync(
       message: "Actor Promoted successfully",
       data: result,
     });
-  }
+  },
 );
 const deleteImage = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id;
-   
+
     const deleteMode = req.query.delete;
     const deleteImageId = req.query.deleteImageId;
     const result = await AdminService.deleteImage(
       id,
       deleteMode,
-      deleteImageId
+      deleteImageId,
     );
     sendResponse(res, {
       statusCode: 201,
@@ -138,11 +138,11 @@ const deleteImage = catchAsync(
       message: "Actor Promoted successfully",
       data: result,
     });
-  }
+  },
 );
 const makeAdmin = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const payload = req.body
+    const payload = req.body;
     const result = await AdminService.makeAdmin(payload);
     sendResponse(res, {
       statusCode: 201,
@@ -150,18 +150,46 @@ const makeAdmin = catchAsync(
       message: "Actor Promoted successfully",
       data: result,
     });
-  }
+  },
 );
 const fetchActorPayments = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const result = await AdminService.fetchActorPayments();
+    const year = req.query.year as string;
+    const search = req.query.search as string;
+    const status = req.query.status as "pending" | "verified" | "rejected";
+    const result = await AdminService.fetchActorPayments(year, status,search);
     sendResponse(res, {
       statusCode: 200,
       success: true,
       message: "Actor payment get successfully",
       data: result,
     });
-  }
+  },
+);
+const fetchPaymentHistory = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const year = req.query.year as string;
+    const search = req.query.search as string;
+    const status = req.query.status as "pending" | "verified" | "rejected";
+    const result = await AdminService.fetchPaymentHistory(year, status,search);
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Actor payment get successfully",
+      data: result,
+    });
+  },
+);
+const getGroupedYears = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AdminService.getGroupedYears();
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  },
 );
 const test = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -172,7 +200,7 @@ const test = catchAsync(
       message: "Actor Promoted successfully",
       data: result,
     });
-  }
+  },
 );
 export const AdminController = {
   createAdmin,
@@ -187,5 +215,7 @@ export const AdminController = {
   uploadGallery,
   deleteImage,
   makeAdmin,
-  fetchActorPayments
+  fetchActorPayments,
+  getGroupedYears,
+  fetchPaymentHistory
 };

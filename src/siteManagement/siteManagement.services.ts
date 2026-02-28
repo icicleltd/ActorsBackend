@@ -1,4 +1,3 @@
-
 import {
   ActorPayloadForMediaArchives,
   ActorPayloadForNews,
@@ -13,6 +12,7 @@ import {
   PickActorPayloadForNews,
 } from "./siteManagement.interface";
 import Portfolio from "./protfolio.schems";
+import BreakingNews from "./breakingNew.schema";
 
 /* ------------------------------------
    CREATE BANNER
@@ -35,25 +35,55 @@ const uploadCoverImages = async (payload: { urls: string; idNo: string }) => {
   if (!result) {
     throw new AppError(404, "Banner not created");
   }
-  return urls;
+  return result;
+};
+const createBreakingNews = async (payload: { title: string }) => {
+  const { title } = payload;
+  if (!title) {
+    throw new AppError(400, "title is required");
+  }
+  const result = await BreakingNews.create({
+    title,
+  });
+  if (!result) {
+    throw new AppError(404, "Banner not created");
+  }
+  return result;
 };
 
 /* ------------------------------------
    GET ALL BANNERS
 ------------------------------------- */
+const getBreakingNews = async (
+  sortBy: string = "createdAt",
+  sortWith: 1 | -1 = 1,
+) => {
+  const result = await BreakingNews.find()
+    .select("title")
+    .lean()
+    .sort({ [sortBy]: sortWith });
+  return result;
+};
 const getBanners = async (sortBy: string = "order", sortWith: 1 | -1 = 1) => {
   const banners = await Actor.find().sort({ [sortBy]: sortWith });
   return banners;
 };
 
-const getPortfolio = async (idNo: string, page: number = 1, limit: number = 12, tabId: string = "ALL") => {
+const getPortfolio = async (
+  idNo: string,
+  page: number = 1,
+  limit: number = 12,
+  tabId: string = "ALL",
+) => {
   const actorId = await Actor.findOne({ idNo: idNo }).select("_id").lean();
   if (!actorId) {
     throw new AppError(400, "This actor not found");
   }
   const skip = (page - 1) * limit;
-    // Fetch the portfolio for the actor
-  const portfolio = await Portfolio.findOne({ actorId: actorId._id }).select("tabs").lean();
+  // Fetch the portfolio for the actor
+  const portfolio = await Portfolio.findOne({ actorId: actorId._id })
+    .select("tabs")
+    .lean();
 
   if (!portfolio) {
     throw new AppError(404, "Portfolio not found");
@@ -92,10 +122,7 @@ const getPortfolio = async (idNo: string, page: number = 1, limit: number = 12, 
   const countPipeline = [...pipeline, { $count: "total" }];
 
   // Add pagination stage
-  pipeline.push(
-    { $skip: skip },
-    { $limit: limit }
-  );
+  pipeline.push({ $skip: skip }, { $limit: limit });
 
   // Execute both pipelines
   const [works, totalCountResult] = await Promise.all([
@@ -103,7 +130,8 @@ const getPortfolio = async (idNo: string, page: number = 1, limit: number = 12, 
     Portfolio.aggregate(countPipeline),
   ]);
 
-  const totalWorks = totalCountResult.length > 0 ? totalCountResult[0].total : 0;
+  const totalWorks =
+    totalCountResult.length > 0 ? totalCountResult[0].total : 0;
 
   return {
     tabs: portfolio.tabs,
@@ -113,7 +141,6 @@ const getPortfolio = async (idNo: string, page: number = 1, limit: number = 12, 
     currentPage: page,
   };
 };
-
 
 const updateProfileAbout = async (
   profileData: ActorPayloadForProfileUpdate,
@@ -400,6 +427,21 @@ const deleteProfileNews = async (NewsId: string, id: string) => {
 
   return performance;
 };
+const deleteBreakingNews = async (id: string) => {
+  if (!id) {
+    throw new AppError(400, "Breaking news  id is required");
+  }
+
+  const result = await BreakingNews.findByIdAndDelete(id);
+
+  if (!result) {
+    throw new AppError(404, "BreakingNews not found");
+  }
+
+  // await deleteFromCloudinary(performance.publicId);
+
+  return result;
+};
 
 const createTabs = async (payload: any, idNo: string) => {
   const { id, label } = payload;
@@ -489,5 +531,8 @@ export const SiteManagementService = {
   uploadWorks,
   getPortfolio,
   deleteWork,
-  deleteTab
+  deleteTab,
+  getBreakingNews,
+  createBreakingNews,
+  deleteBreakingNews,
 };

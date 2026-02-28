@@ -19,7 +19,40 @@ const uploadCoverImages = catchAsync(
     });
   },
 );
+const createBreakingNews = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { title } = req.body;
+    const result = await SiteManagementService.createBreakingNews({
+      title,
+    });
 
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "BreakingNews created successfully",
+      data: result,
+    });
+  },
+);
+
+const getBreakingNews = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const sortBy = (req.query?.sortBy as string) || "createdAt";
+    const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
+
+    const result = await SiteManagementService.getBreakingNews(
+      sortBy,
+      sortWith,
+    );
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "BreakingNews fetched successfully",
+      data: result,
+    });
+  },
+);
 const getBanners = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const sortBy = (req.query?.sortBy as string) || "order";
@@ -44,7 +77,12 @@ const getPortfolio = catchAsync(
     // const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
     const tabId = req.query?.tabId as string;
 
-    const result = await SiteManagementService.getPortfolio(idNo,page,limit,tabId);
+    const result = await SiteManagementService.getPortfolio(
+      idNo,
+      page,
+      limit,
+      tabId,
+    );
 
     sendResponse(res, {
       statusCode: 200,
@@ -67,6 +105,19 @@ const deleteCoverPhoto = catchAsync(
       statusCode: 200,
       success: true,
       message: "Cover photo deleted successfully",
+      data: result,
+    });
+  },
+);
+const deleteBreakingNews = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const result = await SiteManagementService.deleteBreakingNews(id);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "BreakingNews deleted successfully",
       data: result,
     });
   },
@@ -262,7 +313,10 @@ export const SiteManagementController = {
   editProfileNews,
   createTabs,
   uploadWork,
+  getBreakingNews,
   getPortfolio,
   deleteWork,
   deleteTab,
+  createBreakingNews,
+  deleteBreakingNews,
 };

@@ -8,6 +8,7 @@ const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
 const protfolio_schems_1 = __importDefault(require("./protfolio.schems"));
+const breakingNew_schema_1 = __importDefault(require("./breakingNew.schema"));
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
@@ -26,11 +27,31 @@ const uploadCoverImages = async (payload) => {
     if (!result) {
         throw new error_1.AppError(404, "Banner not created");
     }
-    return urls;
+    return result;
+};
+const createBreakingNews = async (payload) => {
+    const { title } = payload;
+    if (!title) {
+        throw new error_1.AppError(400, "title is required");
+    }
+    const result = await breakingNew_schema_1.default.create({
+        title,
+    });
+    if (!result) {
+        throw new error_1.AppError(404, "Banner not created");
+    }
+    return result;
 };
 /* ------------------------------------
    GET ALL BANNERS
 ------------------------------------- */
+const getBreakingNews = async (sortBy = "createdAt", sortWith = 1) => {
+    const result = await breakingNew_schema_1.default.find()
+        .select("title")
+        .lean()
+        .sort({ [sortBy]: sortWith });
+    return result;
+};
 const getBanners = async (sortBy = "order", sortWith = 1) => {
     const banners = await actor_schema_1.default.find().sort({ [sortBy]: sortWith });
     return banners;
@@ -42,7 +63,9 @@ const getPortfolio = async (idNo, page = 1, limit = 12, tabId = "ALL") => {
     }
     const skip = (page - 1) * limit;
     // Fetch the portfolio for the actor
-    const portfolio = await protfolio_schems_1.default.findOne({ actorId: actorId._id }).select("tabs").lean();
+    const portfolio = await protfolio_schems_1.default.findOne({ actorId: actorId._id })
+        .select("tabs")
+        .lean();
     if (!portfolio) {
         throw new error_1.AppError(404, "Portfolio not found");
     }
@@ -285,6 +308,17 @@ const deleteProfileNews = async (NewsId, id) => {
     // await deleteFromCloudinary(performance.publicId);
     return performance;
 };
+const deleteBreakingNews = async (id) => {
+    if (!id) {
+        throw new error_1.AppError(400, "Breaking news  id is required");
+    }
+    const result = await breakingNew_schema_1.default.findByIdAndDelete(id);
+    if (!result) {
+        throw new error_1.AppError(404, "BreakingNews not found");
+    }
+    // await deleteFromCloudinary(performance.publicId);
+    return result;
+};
 const createTabs = async (payload, idNo) => {
     const { id, label } = payload;
     if (!idNo) {
@@ -363,5 +397,8 @@ exports.SiteManagementService = {
     uploadWorks,
     getPortfolio,
     deleteWork,
-    deleteTab
+    deleteTab,
+    getBreakingNews,
+    createBreakingNews,
+    deleteBreakingNews,
 };

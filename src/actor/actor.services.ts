@@ -62,7 +62,7 @@ const getSingleActor = async (actorId: string) => {
   if (!actorId) {
     throw new Error("No actor id provided");
   }
-  const actor = await Actor.findOne({ idNo: actorId ,isActive:true}).lean();
+  const actor = await Actor.findOne({ idNo: actorId, isActive: true }).lean();
   if (!actor) {
     throw new Error("Actor not found");
   }
@@ -302,8 +302,17 @@ const getAllActor = async (
                 case: { $in: ["$latestRank.rank", ROLE_ORDER] },
                 then: {
                   primary: "$latestRank.rank",
+                  // secondary: {
+                  //   $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                  // },
                   secondary: {
-                    $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                    $switch: {
+                      branches: [
+                        { case: "$hasPastWay", then: "pastWay" },
+                        { case: "$hasLifeTime", then: "lifeTime" },
+                      ],
+                      default: "$$REMOVE",
+                    },
                   },
                 },
               },
@@ -314,7 +323,13 @@ const getAllActor = async (
                 then: {
                   primary: "advisor",
                   secondary: {
-                    $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                    $switch: {
+                      branches: [
+                        { case: "$hasPastWay", then: "pastWay" },
+                        { case: "$hasLifeTime", then: "lifeTime" },
+                      ],
+                      default: "$$REMOVE",
+                    },
                   },
                 },
               },
@@ -329,20 +344,29 @@ const getAllActor = async (
                 },
                 then: {
                   primary: "Ex Advisor",
+                  // secondary: {
+                  //   $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                  // },
                   secondary: {
-                    $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                    $switch: {
+                      branches: [
+                        { case: "$hasPastWay", then: "pastWay" },
+                        { case: "$hasLifeTime", then: "lifeTime" },
+                      ],
+                      default: "$$REMOVE",
+                    },
                   },
                 },
               },
 
               /* ✅ Only lifeTime */
               {
-                case: "$hasLifeTime",
-                then: { primary: "lifeTime" },
-              },
-              {
                 case: "$hasPastWay",
                 then: { primary: "pastWay" },
+              },
+              {
+                case: "$hasLifeTime",
+                then: { primary: "lifeTime" },
               },
             ],
 

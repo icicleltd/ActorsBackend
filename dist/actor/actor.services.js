@@ -275,8 +275,17 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                 case: { $in: ["$latestRank.rank", exports.ROLE_ORDER] },
                                 then: {
                                     primary: "$latestRank.rank",
+                                    // secondary: {
+                                    //   $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                    // },
                                     secondary: {
-                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                        $switch: {
+                                            branches: [
+                                                { case: "$hasPastWay", then: "pastWay" },
+                                                { case: "$hasLifeTime", then: "lifeTime" },
+                                            ],
+                                            default: "$$REMOVE",
+                                        },
                                     },
                                 },
                             },
@@ -286,7 +295,13 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                 then: {
                                     primary: "advisor",
                                     secondary: {
-                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                        $switch: {
+                                            branches: [
+                                                { case: "$hasPastWay", then: "pastWay" },
+                                                { case: "$hasLifeTime", then: "lifeTime" },
+                                            ],
+                                            default: "$$REMOVE",
+                                        },
                                     },
                                 },
                             },
@@ -300,19 +315,28 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                 },
                                 then: {
                                     primary: "Ex Advisor",
+                                    // secondary: {
+                                    //   $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                    // },
                                     secondary: {
-                                        $cond: ["$hasLifeTime", "lifeTime", "$$REMOVE"],
+                                        $switch: {
+                                            branches: [
+                                                { case: "$hasPastWay", then: "pastWay" },
+                                                { case: "$hasLifeTime", then: "lifeTime" },
+                                            ],
+                                            default: "$$REMOVE",
+                                        },
                                     },
                                 },
                             },
                             /* ✅ Only lifeTime */
                             {
-                                case: "$hasLifeTime",
-                                then: { primary: "lifeTime" },
-                            },
-                            {
                                 case: "$hasPastWay",
                                 then: { primary: "pastWay" },
+                            },
+                            {
+                                case: "$hasLifeTime",
+                                then: { primary: "lifeTime" },
                             },
                         ],
                         /* ⬇️ fallback by category */

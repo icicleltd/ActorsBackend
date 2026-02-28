@@ -10,12 +10,14 @@ const router = express_1.default.Router();
  * Create site Management all module
  */
 router.post("/upload-cover-images", siteManagement_controller_1.SiteManagementController.uploadCoverImages);
+router.post("/breaking-news", siteManagement_controller_1.SiteManagementController.createBreakingNews);
 router.post("/create-tab/:id", siteManagement_controller_1.SiteManagementController.createTabs);
 router.post("/upload-work/:id", siteManagement_controller_1.SiteManagementController.uploadWork);
 /**
  * Get site Management all module
  */
 router.get("/portfolio/:id", siteManagement_controller_1.SiteManagementController.getPortfolio);
+router.get("/breaking-news", siteManagement_controller_1.SiteManagementController.getBreakingNews);
 router.get("/", siteManagement_controller_1.SiteManagementController.getBanners);
 /**
  * update site Management all module
@@ -28,6 +30,7 @@ router.put("/profile-edit-news/:id", siteManagement_controller_1.SiteManagementC
 /**
  * Delete site Management all module
  */
+router.delete("/breaking-news/:id", siteManagement_controller_1.SiteManagementController.deleteBreakingNews);
 router.delete("/portfolio-work/:tabId/:workId/:id", siteManagement_controller_1.SiteManagementController.deleteWork);
 router.delete("/portfolio-tab/:tabId/:id", siteManagement_controller_1.SiteManagementController.deleteTab);
 router.delete("/cover-image/:imageId/:id", siteManagement_controller_1.SiteManagementController.deleteCoverPhoto);

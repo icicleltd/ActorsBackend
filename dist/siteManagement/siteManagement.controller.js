@@ -20,6 +20,29 @@ const uploadCoverImages = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const createBreakingNews = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { title } = req.body;
+    const result = await siteManagement_services_1.SiteManagementService.createBreakingNews({
+        title,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "BreakingNews created successfully",
+        data: result,
+    });
+});
+const getBreakingNews = (0, catchAsync_1.default)(async (req, res, next) => {
+    const sortBy = req.query?.sortBy || "createdAt";
+    const sortWith = req.query?.sortWith === "asc" ? 1 : -1;
+    const result = await siteManagement_services_1.SiteManagementService.getBreakingNews(sortBy, sortWith);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "BreakingNews fetched successfully",
+        data: result,
+    });
+});
 const getBanners = (0, catchAsync_1.default)(async (req, res, next) => {
     const sortBy = req.query?.sortBy || "order";
     const sortWith = req.query?.sortWith === "asc" ? 1 : -1;
@@ -56,6 +79,16 @@ const deleteCoverPhoto = (0, catchAsync_1.default)(async (req, res, next) => {
         statusCode: 200,
         success: true,
         message: "Cover photo deleted successfully",
+        data: result,
+    });
+});
+const deleteBreakingNews = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { id } = req.params;
+    const result = await siteManagement_services_1.SiteManagementService.deleteBreakingNews(id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "BreakingNews deleted successfully",
         data: result,
     });
 });
@@ -198,7 +231,10 @@ exports.SiteManagementController = {
     editProfileNews,
     createTabs,
     uploadWork,
+    getBreakingNews,
     getPortfolio,
     deleteWork,
     deleteTab,
+    createBreakingNews,
+    deleteBreakingNews,
 };

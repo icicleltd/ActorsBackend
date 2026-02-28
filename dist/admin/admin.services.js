@@ -368,6 +368,11 @@ const getGroupedYears = async () => {
         value: year,
     }));
 };
+const toggleActorStatus = async ({ actorId }) => {
+    const updateActor = await actor_schema_1.default.findByIdAndUpdate(actorId, [{ $set: { isActive: { $not: "$isActive" } } }], { new: true, updatePipeline: true });
+    console.log(updateActor);
+    return updateActor;
+};
 const test = async () => {
     return;
 };
@@ -386,5 +391,6 @@ exports.AdminService = {
     makeAdmin,
     fetchActorPayments,
     getGroupedYears,
-    fetchPaymentHistory
+    fetchPaymentHistory,
+    toggleActorStatus,
 };

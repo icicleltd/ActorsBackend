@@ -11,6 +11,7 @@ import { notDeepEqual } from "assert";
 import Schedule from "../appointments/appointments.schema";
 import { getTarget, MODEL_MAP } from "./hepler/detectTarget";
 import { connectDB } from "../db";
+import Actor from "../actor/actor.schema";
 
 const createNotification = async () => {
   return {
@@ -387,8 +388,21 @@ const unReadNotification = async (queryPayload: INotificationQuery) => {
   if (!role) {
     throw new AppError(400, "Role is required");
   }
-  await connectDB(); 
+  await connectDB();
   if (role === "member") {
+    const isValidMember = await Actor.findById(recipient)
+      .select("isActive -_id")
+      .lean();
+    if (!isValidMember) {
+      throw new AppError(404, "Member not found.");
+    }
+
+    if (!isValidMember.isActive) {
+      throw new AppError(
+        403,
+        "Your account has been deactivated. Please contact support.",
+      );
+    }
     if (!recipient) {
       throw new AppError(400, "recipient id is required");
     }
@@ -470,7 +484,13 @@ const read = async (
   if (!role) {
     throw new AppError(400, "Role is not found");
   }
-  const target = getTarget({ schedule, application, contact, payment,notifyPayment });
+  const target = getTarget({
+    schedule,
+    application,
+    contact,
+    payment,
+    notifyPayment,
+  });
   if (!target) {
     throw new AppError(400, "No valid notification reference found");
   }

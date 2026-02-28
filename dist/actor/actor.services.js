@@ -64,7 +64,7 @@ const getSingleActor = async (actorId) => {
     if (!actorId) {
         throw new Error("No actor id provided");
     }
-    const actor = await actor_schema_1.default.findOne({ idNo: actorId }).lean();
+    const actor = await actor_schema_1.default.findOne({ idNo: actorId, isActive: true }).lean();
     if (!actor) {
         throw new Error("Actor not found");
     }
@@ -170,8 +170,14 @@ exports.ROLE_ORDER = [
     "it_secretary",
     "executive_member",
 ];
-const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange, advisorYearRange) => {
+const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange, advisorYearRange, isAdminDashboard) => {
     const pipeline = [];
+    // check actor is active or not
+    if (!isAdminDashboard) {
+        pipeline.push({
+            $match: { isActive: true },
+        });
+    }
     // ==================== SEARCH FILTER ====================
     if (search) {
         const fields = [

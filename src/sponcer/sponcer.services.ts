@@ -1,21 +1,48 @@
 import { deleteFromCloudinary, fileUploader } from "../helper/fileUpload";
+import { sanitizePayload } from "../helper/senitizePayload";
 import { AppError } from "../middleware/error";
+import { requiredString } from "../notification/hepler/requiredName";
+import { AllowEditSponsorField, ISponcer } from "./sponcer.interface";
 import { Sponcer } from "./sponcer.schema";
-
 
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
-const createSponcer = async (payload: { title: string; url: string }) => {
-  const { title, url } = payload;
-  if (!url) {
-    throw new AppError(400, "Url required");
+const createSponcer = async (payload: ISponcer) => {
+  const { name, url, description, discount, validity, terms } = payload;
+  requiredString(name, "Name");
+  requiredString(url, "URL");
+  requiredString(description, "Description");
+  requiredString(discount, "Discount");
+  requiredString(terms, "Terms & Conditions");
+  if (!validity || isNaN(Date.parse(validity))) {
+    throw new AppError(400, "Valid validity date is required");
   }
-  const result = await Sponcer.create({
-    url,
-  });
+
+  const result = await Sponcer.create(payload);
   if (!result) {
     throw new AppError(404, "Banner not created");
+  }
+  return result;
+};
+const editSponsor = async (id: string, payload: AllowEditSponsorField) => {
+  if (!id) {
+    throw new AppError(400, "Sponsor not found");
+  }
+  const sanitize = sanitizePayload(payload);
+  if (!Object.keys(sanitize).length) {
+    throw new AppError(400, "No valid fields to update");
+  }
+  const result = await Sponcer.findByIdAndUpdate(
+    id,
+    {
+      $set: sanitize,
+    },
+    { new: true, runValidators: true },
+  );
+  console.log(result);
+  if (!result) {
+    throw new AppError(404, "Sponsor not Updated");
   }
   return result;
 };
@@ -48,10 +75,9 @@ const deleteSponcer = async (id: string) => {
   return banner;
 };
 
-
-
-export const SponcerService = {
+export const SponsorService = {
   createSponcer,
   getSponcer,
   deleteSponcer,
+  editSponsor,
 };

@@ -62,7 +62,7 @@ const getSingleActor = async (actorId: string) => {
   if (!actorId) {
     throw new Error("No actor id provided");
   }
-  const actor = await Actor.findOne({ idNo: actorId }).lean();
+  const actor = await Actor.findOne({ idNo: actorId ,isActive:true}).lean();
   if (!actor) {
     throw new Error("Actor not found");
   }
@@ -189,8 +189,15 @@ const getAllActor = async (
   rankGroup: string,
   searchYearRange: string,
   advisorYearRange: string,
+  isAdminDashboard: boolean,
 ) => {
   const pipeline: PipelineStage[] = [];
+  // check actor is active or not
+  if (!isAdminDashboard) {
+    pipeline.push({
+      $match: { isActive: true },
+    });
+  }
 
   // ==================== SEARCH FILTER ====================
   if (search) {

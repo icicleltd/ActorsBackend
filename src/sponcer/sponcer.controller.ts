@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
-import { SponcerService } from "./sponcer.services";
+import { SponsorService } from "./sponcer.services";
 
 /* ------------------------------------
    CREATE BANNER (Admin)
@@ -9,19 +9,17 @@ import { SponcerService } from "./sponcer.services";
 ------------------------------------- */
 const createSponcer = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { title, url } = req.body;
-    const result = await SponcerService.createSponcer({
-      title,
-      url,
-    });
+    const payload = req.body;
+    console.log(payload)
+    const result = await SponsorService.createSponcer(payload);
 
     sendResponse(res, {
       statusCode: 201,
       success: true,
-      message: "Sponcer created successfully",
+      message: "Sponsor created successfully",
       data: result,
     });
-  }
+  },
 );
 
 /* ------------------------------------
@@ -32,15 +30,15 @@ const getSponcer = catchAsync(
     const sortBy = (req.query?.sortBy as string) || "order";
     const sortWith = (req.query?.sortWith as string) === "asc" ? 1 : -1;
 
-    const result = await SponcerService.getSponcer(sortBy, sortWith);
+    const result = await SponsorService.getSponcer(sortBy, sortWith);
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Sponcer fetched successfully",
+      message: "Sponsor fetched successfully",
       data: result,
     });
-  }
+  },
 );
 
 /* ------------------------------------
@@ -50,19 +48,35 @@ const deleteSponcer = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
 
-    const result = await SponcerService.deleteSponcer(id);
+    const result = await SponsorService.deleteSponcer(id);
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Sponcer deleted successfully",
+      message: "Sponsor deleted successfully",
       data: result,
     });
-  }
+  },
+);
+const editSponsor = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
+    const payload = req.body;
+
+    const result = await SponsorService.editSponsor(id, payload);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Sponsor updated successfully",
+      data: result,
+    });
+  },
 );
 
 export const SponcerController = {
   createSponcer,
   getSponcer,
   deleteSponcer,
+  editSponsor,
 };

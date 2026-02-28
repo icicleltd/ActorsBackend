@@ -43,6 +43,7 @@ const notification_schema_1 = require("./notification.schema");
 const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
 const detectTarget_1 = require("./hepler/detectTarget");
 const db_1 = require("../db");
+const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const createNotification = async () => {
     return {
         msg: "Notification created",
@@ -354,6 +355,15 @@ const unReadNotification = async (queryPayload) => {
     }
     await (0, db_1.connectDB)();
     if (role === "member") {
+        const isValidMember = await actor_schema_1.default.findById(recipient)
+            .select("isActive -_id")
+            .lean();
+        if (!isValidMember) {
+            throw new error_1.AppError(404, "Member not found.");
+        }
+        if (!isValidMember.isActive) {
+            throw new error_1.AppError(403, "Your account has been deactivated. Please contact support.");
+        }
         if (!recipient) {
             throw new error_1.AppError(400, "recipient id is required");
         }
@@ -421,7 +431,13 @@ const read = async (role, recipient, schedule, contact, notifyPayment, payment, 
     if (!role) {
         throw new error_1.AppError(400, "Role is not found");
     }
-    const target = (0, detectTarget_1.getTarget)({ schedule, application, contact, payment, notifyPayment });
+    const target = (0, detectTarget_1.getTarget)({
+        schedule,
+        application,
+        contact,
+        payment,
+        notifyPayment,
+    });
     if (!target) {
         throw new error_1.AppError(400, "No valid notification reference found");
     }

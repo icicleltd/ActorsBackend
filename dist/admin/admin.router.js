@@ -21,6 +21,7 @@ adminRouter.get("/actor-payment", admin_controller_1.AdminController.fetchActorP
 adminRouter.get("/payment-history", admin_controller_1.AdminController.fetchPaymentHistory);
 adminRouter.get("/payments/years", admin_controller_1.AdminController.getGroupedYears);
 adminRouter.get("/", admin_controller_1.AdminController.getAdmin);
+adminRouter.put("/toggle-actor-status/:id", admin_controller_1.AdminController.toggleActorStatus);
 adminRouter.put("/update-idno", async (req, res) => {
     const { text } = req.body;
     try {

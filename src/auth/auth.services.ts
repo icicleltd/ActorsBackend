@@ -23,6 +23,7 @@ const createAuth = async (payload: IPayload) => {
     // [field]: trimmedIdentifier,
     [field]: { $regex: trimmedIdentifier, $options: "i" },
   }));
+  filter.isActive = true;
   const existingUser = await Actor.findOne(filter)
     .select("+password _id email fullName")
     .lean(false);

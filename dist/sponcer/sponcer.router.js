@@ -10,5 +10,6 @@ const sponcer_controller_1 = require("./sponcer.controller");
 const router = express_1.default.Router();
 router.post("/", verifyLogin_1.VerifyLogin, verifyAdmin_1.VerifyAdmin, sponcer_controller_1.SponcerController.createSponcer);
 router.get("/", sponcer_controller_1.SponcerController.getSponcer);
+router.put("/:id", sponcer_controller_1.SponcerController.editSponsor);
 router.delete("/:id", verifyLogin_1.VerifyLogin, verifyAdmin_1.VerifyAdmin, sponcer_controller_1.SponcerController.deleteSponcer);
 exports.default = router;

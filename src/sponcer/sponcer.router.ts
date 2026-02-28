@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.post("/", VerifyLogin, VerifyAdmin, SponcerController.createSponcer);
 router.get("/", SponcerController.getSponcer);
+router.put("/:id", SponcerController.editSponsor);
 router.delete("/:id",VerifyLogin, VerifyAdmin, SponcerController.deleteSponcer);
 
 export default router;

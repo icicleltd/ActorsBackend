@@ -437,16 +437,16 @@ const fetchActorPayments = async (
 };
 const fetchPaymentHistory = async (
   year: string,
-  status: "pending" | "verified" | "rejected"|"all",
+  status: "pending" | "verified" | "rejected" | "all",
   search: string,
 ) => {
   const filter: any = {};
   if (year) {
     filter.year = year;
   }
-if (status && status !== "all") {
-  filter.status = status;
-}
+  if (status && status !== "all") {
+    filter.status = status;
+  }
   const actorPayments = await ActorPayment.find(filter)
     .sort({ createdAt: -1 })
     .populate("actor", "fullName")
@@ -464,6 +464,15 @@ const getGroupedYears = async (): Promise<
       label: year,
       value: year,
     }));
+};
+const toggleActorStatus = async ({ actorId }: { actorId: string }) => {
+  const updateActor = await Actor.findByIdAndUpdate(
+    actorId,
+    [{ $set: { isActive: { $not: "$isActive" } } }],
+    { new: true,updatePipeline:true },
+  );
+  console.log(updateActor);
+  return updateActor;
 };
 const test = async () => {
   return;
@@ -483,5 +492,6 @@ export const AdminService = {
   makeAdmin,
   fetchActorPayments,
   getGroupedYears,
-  fetchPaymentHistory
+  fetchPaymentHistory,
+  toggleActorStatus,
 };

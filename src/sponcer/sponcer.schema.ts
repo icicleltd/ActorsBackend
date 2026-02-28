@@ -8,6 +8,31 @@ const sponcerSchema = new Schema<ISponcer>(
       trim: true,
       required: true,
     },
+    name: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    terms: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    discount: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    validity: {
+      type: String,
+      trim: true,
+      required: true,
+    },
   },
   {
     timestamps: true,

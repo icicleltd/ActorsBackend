@@ -12,15 +12,13 @@ const sponcer_services_1 = require("./sponcer.services");
    image + title + subtitle
 ------------------------------------- */
 const createSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { title, url } = req.body;
-    const result = await sponcer_services_1.SponcerService.createSponcer({
-        title,
-        url,
-    });
+    const payload = req.body;
+    console.log(payload);
+    const result = await sponcer_services_1.SponsorService.createSponcer(payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
         success: true,
-        message: "Sponcer created successfully",
+        message: "Sponsor created successfully",
         data: result,
     });
 });
@@ -30,11 +28,11 @@ const createSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
 const getSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
     const sortBy = req.query?.sortBy || "order";
     const sortWith = req.query?.sortWith === "asc" ? 1 : -1;
-    const result = await sponcer_services_1.SponcerService.getSponcer(sortBy, sortWith);
+    const result = await sponcer_services_1.SponsorService.getSponcer(sortBy, sortWith);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "Sponcer fetched successfully",
+        message: "Sponsor fetched successfully",
         data: result,
     });
 });
@@ -43,11 +41,22 @@ const getSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
 ------------------------------------- */
 const deleteSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
     const { id } = req.params;
-    const result = await sponcer_services_1.SponcerService.deleteSponcer(id);
+    const result = await sponcer_services_1.SponsorService.deleteSponcer(id);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "Sponcer deleted successfully",
+        message: "Sponsor deleted successfully",
+        data: result,
+    });
+});
+const editSponsor = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { id } = req.params;
+    const payload = req.body;
+    const result = await sponcer_services_1.SponsorService.editSponsor(id, payload);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Sponsor updated successfully",
         data: result,
     });
 });
@@ -55,4 +64,5 @@ exports.SponcerController = {
     createSponcer,
     getSponcer,
     deleteSponcer,
+    editSponsor,
 };

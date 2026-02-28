@@ -55,6 +55,12 @@ const getAllActor = catchAsync(
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange = req.query.searchYearRange as string;
     const advisorYearRange = req.query.advisorYearRange as string;
+    const isAdminDashboard = req.query.isAdminDashboard as string;
+    // const parseBoolean = (isAdminDashboard: string): boolean | undefined => {
+    //   if (isAdminDashboard === "true") return true;
+    //   if (isAdminDashboard === "false") return false;
+    //   return undefined;
+    // };
     const result = await ActorService.getAllActor(
       search,
       page,
@@ -67,6 +73,7 @@ const getAllActor = catchAsync(
       rankGroup,
       searchYearRange,
       advisorYearRange,
+      Boolean(isAdminDashboard),
     );
     sendResponse(res, {
       statusCode: 200,

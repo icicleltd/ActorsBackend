@@ -47,7 +47,13 @@ const getAllActor = (0, catchAsync_1.default)(async (req, res, next) => {
     // Use the dynamic year range if searchYearRange is not provided
     const searchYearRange = req.query.searchYearRange;
     const advisorYearRange = req.query.advisorYearRange;
-    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange, advisorYearRange);
+    const isAdminDashboard = req.query.isAdminDashboard;
+    // const parseBoolean = (isAdminDashboard: string): boolean | undefined => {
+    //   if (isAdminDashboard === "true") return true;
+    //   if (isAdminDashboard === "false") return false;
+    //   return undefined;
+    // };
+    const result = await actor_services_1.ActorService.getAllActor(search, page, limit, skip, category, sortBy, sortWith, executiveRank, rankGroup, searchYearRange, advisorYearRange, Boolean(isAdminDashboard));
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

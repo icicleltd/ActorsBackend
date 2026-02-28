@@ -191,6 +191,18 @@ const getGroupedYears = catchAsync(
     });
   },
 );
+const toggleActorStatus = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const actorId = req.params.id
+    const result = await AdminService.toggleActorStatus({actorId});
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Actor Promoted successfully",
+      data: result,
+    });
+  },
+);
 const test = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const result = await AdminService.test();
@@ -217,5 +229,6 @@ export const AdminController = {
   makeAdmin,
   fetchActorPayments,
   getGroupedYears,
-  fetchPaymentHistory
+  fetchPaymentHistory,
+  toggleActorStatus,
 };

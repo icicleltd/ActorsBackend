@@ -41,7 +41,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const error_1 = require("../middleware/error");
 const notification_schema_1 = require("./notification.schema");
 const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
-const detectTarget_1 = require("./hepler/detectTarget");
+const detectTarget_1 = require("../hepler/detectTarget");
 const db_1 = require("../db");
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const createNotification = async () => {

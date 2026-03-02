@@ -4,6 +4,7 @@ import { sendMail } from "../helper/emailHelper";
 import { AppError } from "../middleware/error";
 import BeAMember from "../beAMember/beAMember.schema";
 import ActorPayment from "../actor payment/actor.payment.schema";
+import { Payment } from "../payment/payment.schema";
 
 const router = express.Router();
 
@@ -260,5 +261,52 @@ router.post("/isActive", async (req, res) => {
 
   res.json(result);
 });
+
+// Count all active actors
+// router.get("/count-active", async (req, res) => {
+//   const result = await Actor.aggregate([
+//     {
+//       $match: { isActive: true },
+//     },
+//     {
+//       $group: {
+//         _id: null,
+//         count: { $sum: 1 },
+//       },
+//     },
+//   ]);
+
+//   res.json(result);
+// });
+
+// Total films acted by each actor
+// router.get("/acted-films", async (req, res) => {
+//   const result = await Actor.aggregate([
+//     {
+//       $group: {
+//         _id: "$film",
+//         count: { $sum: 1 },
+//       },
+//     },
+//   ]);
+
+//   res.json(result);
+// });
+// List BeAMembers with verified payments
+// router.get("/verified-payments", async (req, res) => {
+//   const result = await ActorPayment.aggregate([
+//     {$match:{status:"verified"}},
+//     {
+//       $lookup:{
+//         from:"actor",
+//         localField:"_id",
+//         foreignField:"actor",
+//         as:"paymentHistory"
+//       }
+//     },
+//   ]);
+
+//   res.json(result);
+// });
 
 export default router;

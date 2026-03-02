@@ -1,10 +1,10 @@
-import Schedule from "../../appointments/appointments.schema";
-import BeAMember from "../../beAMember/beAMember.schema";
-import { ContactUs } from "../../contact/contact.schema";
-import { Payment } from "../../payment/payment.schema";
+import Schedule from "../appointments/appointments.schema";
+import BeAMember from "../beAMember/beAMember.schema";
+import { ContactUs } from "../contact/contact.schema";
+import { Payment } from "../payment/payment.schema";
 import { Types } from "mongoose";
-import { NotificationType } from "../notification.interface";
-import { NotifyPayment } from "../../actor payment/actor.payment.schema";
+import { NotificationType } from "../notification/notification.interface";
+import { NotifyPayment } from "../actor payment/actor.payment.schema";
 
 
 export const getTarget = ({

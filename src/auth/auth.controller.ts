@@ -8,8 +8,8 @@ import setCookie from "../helper/cookieHelper";
 const createAuth = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: IPayload = req.body;
-  
-    const result = await AuthService.createAuth(payload);
+    const otp =req.query.otp as string;
+    const result = await AuthService.createAuth(payload,otp);
     setCookie(
       res,
       "accessToken",
@@ -68,10 +68,38 @@ const readAuth = catchAsync(
     });
   }
 );
+const createOTP = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {idNo,email} = req.body;
+    const result = await AuthService.createOTP(idNo,email);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Otp Created successfully. Please check your email",
+      data: result,
+    });
+  }
+);
+const updatePassword = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const {idNo,newPassword} = req.body;
+    const result = await AuthService.updatePassword(idNo,newPassword);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Password updated successfully",
+      data: result,
+    });
+  }
+);
 
 export const AuthController = {
   createAuth,
   getAuths,
   getAdminAuths,
   readAuth,
+  createOTP,
+  updatePassword,
 };

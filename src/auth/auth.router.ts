@@ -9,8 +9,10 @@ const router = express.Router();
 router.post("/login", AuthController.createAuth);
 router.post("/create-admin", AdminController.createAdmin);
 router.post("/admin-login", AdminController.login);
+router.post("/get-otp", AuthController.createOTP);
 router.get("/me", VerifyLogin, AuthController.getAuths);
 router.get("/:id", AuthController.getAdminAuths);
+router.put("/update-password",VerifyLogin, AuthController.updatePassword);
 router.put("/:id/read", AuthController.readAuth);
 
 export default router;

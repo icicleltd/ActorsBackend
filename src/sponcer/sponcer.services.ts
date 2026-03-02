@@ -1,7 +1,7 @@
 import { deleteFromCloudinary, fileUploader } from "../helper/fileUpload";
 import { sanitizePayload } from "../helper/senitizePayload";
 import { AppError } from "../middleware/error";
-import { requiredString } from "../notification/hepler/requiredName";
+import { requiredString } from "../hepler/requiredName";
 import { AllowEditSponsorField, ISponcer } from "./sponcer.interface";
 import { Sponcer } from "./sponcer.schema";
 

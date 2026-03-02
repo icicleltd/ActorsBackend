@@ -1,4 +1,4 @@
-import { AppError } from "../../middleware/error";
+import { AppError } from "../middleware/error";
 
 export const requiredString = (value: unknown, fieldName: string) => {
   if (!value || typeof value !== "string" || !value.trim()) {

@@ -9,7 +9,7 @@ import { Notification } from "./notification.schema";
 import BeAMember from "../beAMember/beAMember.schema";
 import { notDeepEqual } from "assert";
 import Schedule from "../appointments/appointments.schema";
-import { getTarget, MODEL_MAP } from "./hepler/detectTarget";
+import { getTarget, MODEL_MAP } from "../hepler/detectTarget";
 import { connectDB } from "../db";
 import Actor from "../actor/actor.schema";
 

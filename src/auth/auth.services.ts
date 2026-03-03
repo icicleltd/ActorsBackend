@@ -43,7 +43,6 @@ const createAuth = async (payload: IPayload, otp: string) => {
   let isMatchingOTP = null;
   let isPasswordValid = null;
   if (otp) {
-    console.log(existingUser);
     isMatchingOTP = await ActorOTP.findOne({
       actor: existingUser._id,
       otp,
@@ -73,6 +72,7 @@ const createAuth = async (payload: IPayload, otp: string) => {
   if (!accessToken) {
     throw new AppError(400, "Token not found");
   }
+  await ActorOTP.deleteOne({ actor: existingUser._id });
   const userResponse = existingUser.toObject();
   delete userResponse.password;
 
@@ -138,7 +138,7 @@ const createOTP = async (idNo: string, email: string) => {
   if (existsOTP) {
     throw new AppError(
       409,
-      "OTP already exists for this actor.Check your email",
+      `OTP already exists for this actor.Check your email or wait until it expires at ${existsOTP.expiresAt.toLocaleString()}`,
     );
   }
   // if (existsOTP) {

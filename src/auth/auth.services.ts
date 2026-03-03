@@ -29,10 +29,16 @@ const createAuth = async (payload: IPayload, otp: string) => {
   }));
   filter.isActive = true;
   const existingUser = await Actor.findOne(filter)
-    .select("+password _id email fullName")
+    .select("+password _id email fullName isCreatePassword")
     .lean(false);
   if (!existingUser) {
     throw new AppError(401, "Unauthorized");
+  }
+  if (!existingUser.isCreatePassword && !otp) {
+    throw new AppError(
+      400,
+      "Your don't have a password yet. Please login with 'First time login' and  create a password first.",
+    );
   }
   let isMatchingOTP = null;
   let isPasswordValid = null;
@@ -161,16 +167,19 @@ const createOTP = async (idNo: string, email: string) => {
   // console.log(existsActor);
   return saveOTP;
 };
-const updatePassword = async (idNo: string, newPassword:string) => {
+const updatePassword = async (idNo: string, newPassword: string) => {
   requiredString(idNo, "Actor ID");
   requiredString(newPassword, "New Password");
   const existingUser = await Actor.findOne({
     idNo: { $regex: `^${idNo.trim()}$`, $options: "i" },
-  }).select("+password _id email fullName").lean(false);
+  })
+    .select("+password _id email fullName")
+    .lean(false);
   if (!existingUser) {
     throw new AppError(404, "Actor not found");
   }
   existingUser.password = newPassword;
+  existingUser.isCreatePassword = true;
   await existingUser.save();
   return;
 };

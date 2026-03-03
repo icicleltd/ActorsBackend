@@ -261,6 +261,14 @@ router.post("/isActive", async (req, res) => {
 
   res.json(result);
 });
+router.post("/isCreatedPassword", async (req, res) => {
+  const result = await Actor.updateMany(
+    { isCreatePassword: { $exists: false } },
+    { $set: { isCreatePassword: false } },
+  );
+
+  res.json(result);
+});
 
 // Count all active actors
 // router.get("/count-active", async (req, res) => {

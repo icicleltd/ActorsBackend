@@ -59,7 +59,7 @@ const actorSchema = new mongoose_1.Schema({
     email: { type: String, trim: true },
     password: {
         type: String,
-        minlength: 6,
+        // minlength: 6,
         select: false, // 🔐 do not return password by default
     },
     phoneNumber: { type: String, unique: true, trim: true },

@@ -5,6 +5,7 @@ import { AppError } from "../middleware/error";
 import BeAMember from "../beAMember/beAMember.schema";
 import ActorPayment from "../actor payment/actor.payment.schema";
 import { Payment } from "../payment/payment.schema";
+import { totalmem } from "os";
 
 const router = express.Router();
 
@@ -291,29 +292,112 @@ router.post("/isCreatedPassword", async (req, res) => {
 // router.get("/acted-films", async (req, res) => {
 //   const result = await Actor.aggregate([
 //     {
-//       $group: {
-//         _id: "$film",
-//         count: { $sum: 1 },
+//       $project: {
+//         fullName: 1,
+//         totalFilms: "$film",
 //       },
 //     },
 //   ]);
 
 //   res.json(result);
 // });
-// List BeAMembers with verified payments
-// router.get("/verified-payments", async (req, res) => {
-//   const result = await ActorPayment.aggregate([
-//     {$match:{status:"verified"}},
+// Conditional project: Add isHighProfile if rank is "A".
+// router.get("/isHighProfile", async (req, res) => {
+//   const result = await Actor.aggregate([
 //     {
-//       $lookup:{
-//         from:"actor",
-//         localField:"_id",
-//         foreignField:"actor",
-//         as:"paymentHistory"
-//       }
+//       $project: {
+//         fullName: 1,
+//         category: 1,
+//         isHighProfile: {
+//           // --------simple if/else-------
+//           // $cond: {
+//           //   if: { $eq: ["$category", "A"] },
+//           //   then: true,
+//           //   else: false,
+//           // },
+
+//           // --------switch-------
+//           $switch: {
+//             branches: [
+//               { case: { $eq: ["$category", "A"] }, then: "High" },
+//               { case: { $eq: ["$category", "B"] }, then: "Medium" },
+//             ],
+//             default: "Low",
+//           },
+//         },
+//       },
 //     },
 //   ]);
 
+//   res.json(result);
+// });
+// List Actor with verified payments
+// router.get("/verified-payments", async (req, res) => {
+//   const result = await ActorPayment.aggregate([
+//     { $match: { status: "verified" } },
+
+//     {
+//       $lookup: {
+//         from: "actors", // collection name
+//         localField: "actor", // field in ActorPayment
+//         foreignField: "_id", // field in Actor
+//         as: "actorInfo",
+//       },
+//     },
+
+//     { $unwind: "$actorInfo" }, // optional but cleaner
+//   ]);
+
+//   res.json(result);
+// });
+// Find all pending references across members
+// router.get("/pending-references", async (req, res) => {
+//   const result = await BeAMember.aggregate([
+//     { $unwind: "$actorReference" },
+//     { $match: { status: "pending" } },
+//   ]);
+
+//   res.json(result);
+// });
+
+// Facet: Get total members, total verified payments, total pending.
+// router.get("/actors-stats", async (req, res) => {
+//   const result = await Actor.aggregate([
+//     {
+//       $facet: {
+//         totalMembers: [
+//           {
+//             $group: {
+//               _id: null,
+//               totalMember: { $sum: 1 },
+//             },
+//           },
+//         ],
+//         totalVerifiedPayments: [
+//           {
+//             $match: { status: "verified" },
+//           },
+//           {
+//             $count: "count",
+//           },
+//         ],
+//         totalPendingPayments: [
+//           {
+//             $match: { status: "pending" },
+//           },
+//           {
+//             // $group: {
+//             //   _id: null,
+//             //   verified: { $sum: 1 },
+//             // },
+//             // this alternantion of group
+
+//             $count: "count",
+//           },
+//         ],
+//       },
+//     },
+//   ]);
 //   res.json(result);
 // });
 

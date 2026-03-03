@@ -4,11 +4,17 @@ import { v2 as cloudinary } from "cloudinary";
 // Multer memory storage (required for Vercel)
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Cloudinary config
+// Cloudinary config personal account
+// cloudinary.config({
+//   cloud_name: "dk4ltobvb",
+//   api_key: "548264937859395",
+//   api_secret: "6_MiNGp0BDmahMzIP0V-WDeygVE",
+// });
+// Cloudinary config office account
 cloudinary.config({
-  cloud_name: "dk4ltobvb",
-  api_key: "548264937859395",
-  api_secret: "6_MiNGp0BDmahMzIP0V-WDeygVE",
+  cloud_name: "dgywkhtxz",
+  api_key: "967534559333113",
+  api_secret: "W0Lr6YQocCLQAZ1SYuazvR4e128",
 });
 
 // Upload single file (buffer)

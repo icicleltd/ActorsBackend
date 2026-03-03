@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SponsorService = void 0;
 const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
-const requiredName_1 = require("../notification/hepler/requiredName");
+const requiredName_1 = require("../hepler/requiredName");
 const sponcer_schema_1 = require("./sponcer.schema");
 /* ------------------------------------
    CREATE BANNER

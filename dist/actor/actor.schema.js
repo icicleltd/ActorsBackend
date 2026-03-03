@@ -129,6 +129,7 @@ const actorSchema = new mongoose_1.Schema({
     serial: { type: Number },
     film: { type: Number },
     award: { type: Number },
+    isCreatePassword: { type: Boolean, default: false },
     workExperience: { type: Number },
     workSocialMediaInfo: { type: String },
     educationInfo: { type: String },

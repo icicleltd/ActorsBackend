@@ -125,6 +125,7 @@ export interface IActor extends Document {
   award?: number;
   isProfilePublic: boolean;
   isActive: boolean;
+  isCreatePassword: boolean;
 
   // =========================
   // Work / Personal Info

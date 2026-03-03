@@ -226,4 +226,50 @@ router.post("/isActive", async (req, res) => {
     const result = await actor_schema_1.default.updateMany({ isActive: { $exists: false } }, { $set: { isActive: true } });
     res.json(result);
 });
+router.post("/isCreatedPassword", async (req, res) => {
+    const result = await actor_schema_1.default.updateMany({ isCreatePassword: { $exists: false } }, { $set: { isCreatePassword: false } });
+    res.json(result);
+});
+// Count all active actors
+// router.get("/count-active", async (req, res) => {
+//   const result = await Actor.aggregate([
+//     {
+//       $match: { isActive: true },
+//     },
+//     {
+//       $group: {
+//         _id: null,
+//         count: { $sum: 1 },
+//       },
+//     },
+//   ]);
+//   res.json(result);
+// });
+// Total films acted by each actor
+// router.get("/acted-films", async (req, res) => {
+//   const result = await Actor.aggregate([
+//     {
+//       $group: {
+//         _id: "$film",
+//         count: { $sum: 1 },
+//       },
+//     },
+//   ]);
+//   res.json(result);
+// });
+// List BeAMembers with verified payments
+// router.get("/verified-payments", async (req, res) => {
+//   const result = await ActorPayment.aggregate([
+//     {$match:{status:"verified"}},
+//     {
+//       $lookup:{
+//         from:"actor",
+//         localField:"_id",
+//         foreignField:"actor",
+//         as:"paymentHistory"
+//       }
+//     },
+//   ]);
+//   res.json(result);
+// });
 exports.default = router;

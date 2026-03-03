@@ -10,7 +10,8 @@ const auth_services_1 = require("./auth.services");
 const cookieHelper_1 = __importDefault(require("../helper/cookieHelper"));
 const createAuth = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
-    const result = await auth_services_1.AuthService.createAuth(payload);
+    const otp = req.query.otp;
+    const result = await auth_services_1.AuthService.createAuth(payload, otp);
     (0, cookieHelper_1.default)(res, "accessToken", result.accessToken, Number(process.env.ACCESS_COOKIE_EXPIRE_IN));
     (0, sendResponse_1.default)(res, {
         statusCode: 201,
@@ -49,9 +50,31 @@ const readAuth = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const createOTP = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { idNo, email } = req.body;
+    const result = await auth_services_1.AuthService.createOTP(idNo, email);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Otp Created successfully. Please check your email",
+        data: result,
+    });
+});
+const updatePassword = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { idNo, newPassword } = req.body;
+    const result = await auth_services_1.AuthService.updatePassword(idNo, newPassword);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Password updated successfully",
+        data: result,
+    });
+});
 exports.AuthController = {
     createAuth,
     getAuths,
     getAdminAuths,
     readAuth,
+    createOTP,
+    updatePassword,
 };

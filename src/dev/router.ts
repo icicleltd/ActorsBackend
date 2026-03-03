@@ -400,5 +400,97 @@ router.post("/isCreatedPassword", async (req, res) => {
 //   ]);
 //   res.json(result);
 // });
+// Exercise: Count how many actors are high-profile (category: "A") vs others, and sum their total films.
+router.get("/high-profile", async (req, res) => {
+  const result = await Actor.aggregate([
+    {
+      $facet: {
+        highProfile: [
+          {
+            $match: { category: "A" },
+          },
+          {
+            $group: {
+              _id: null,
+              totalActor: { $sum: 1 },
+              totalFilm: { $sum: "$film" },
+            },
+          },
+        ],
+        lowProfile: [
+          { $match: { category: { $ne: "A" } } },
+          {
+            $group: {
+              _id: null,
+              totalActor: { $sum: 1 },
+              totalFilm: { $sum: "$film" },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+  res.json(result);
+});
+// alterntive and best way
+router.get("/high-profile-best-way", async (req, res) => {
+  const result = await Actor.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalHightActor: {
+          $sum: { $cond: [{ $eq: ["$category", "A"] }, 1, 0] },
+        },
+        totalHightActorFilms: {
+          $sum: { $cond: [{ $eq: ["$category", "A"] }, "$film", 0] },
+        },
+        totalOtherActor: {
+          $sum: { $cond: [{ $ne: ["$category", "A"] }, 1, 0] },
+        },
+        totalOtherActorFilms: {
+          $sum: { $cond: [{ $ne: ["$category", "A"] }, "$film", 0] },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        highProfile: {
+          actors: "$totalHightActor",
+          films: "$totalHightActorFilms",
+        },
+        lowProfile: {
+          actors: "$totalOtherActor",
+          films: "$totalOtherActorFilms",
+        },
+      },
+    },
+  ]);
+  res.json(result);
+});
+
+// Exercise: List all Actor with:
+
+// Their verified payments
+
+// The actor info of each payment
+
+// The total amount paid per member
+router.get("/look-up", async (req, res) => {
+  const result = await BeAMember.aggregate([
+    {
+      $lookup: {
+        from: "payments",
+        localField: "_id",
+        foreignField: "actor",
+        as: "paymentInfo",
+      },
+    },
+    // {
+    //   $unwind:{}
+    // }
+  ]);
+  res.json(result);
+});
 
 export default router;

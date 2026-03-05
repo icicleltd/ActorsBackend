@@ -1,4 +1,4 @@
-import { NotifyPayment } from './../actor payment/actor.payment.schema';
+import { NotifyPayment } from "./../actor payment/actor.payment.schema";
 import { model, Schema } from "mongoose";
 import { INotification } from "./notification.interface";
 import { NOTIFICATION_TYPES, RECIPIENT_ROLES } from "./notification.constant";
@@ -30,6 +30,11 @@ const notificationSchema = new Schema<INotification>(
     recipient: {
       type: Schema.Types.ObjectId,
       ref: "Actor",
+    },
+    ticket: {
+      type: Schema.Types.ObjectId,
+      ref: "HelpDeskTicket",
+      required: false,
     },
 
     type: {

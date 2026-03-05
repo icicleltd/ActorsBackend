@@ -26,6 +26,7 @@ export interface INotification {
 
   application?: Types.ObjectId;
   contact?: Types.ObjectId;
+  ticket?: Types.ObjectId;
   schedule?: Types.ObjectId;
   notifyPayment?: Types.ObjectId;
   payment?: Types.ObjectId;

@@ -26,6 +26,7 @@ const verifyLogin_1 = require("./middleware/verifyLogin");
 const dotenv_1 = __importDefault(require("dotenv"));
 const contact_router_1 = require("./contact/contact.router");
 const actor_payment_router_1 = require("./actor payment/actor.payment.router");
+const onlineHelpDesk_router_1 = require("./onlineHelpDesk/onlineHelpDesk.router");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
@@ -95,6 +96,7 @@ app.use("/api/v1/be-a-member", beAMember_router_1.default);
 app.use("/api/v1/site-management", siteManagement_router_1.default);
 app.use("/api/v1/contact", contact_router_1.ContactRoutes);
 app.use("/api/v1/actors-payments", actor_payment_router_1.ActorPayment);
+app.use("/api/v1/help-desk", verifyLogin_1.VerifyLogin, onlineHelpDesk_router_1.HelpDeskRouter);
 app.use(globalErrorHandler_1.default);
 // Test route
 app.get("/", (req, res) => {

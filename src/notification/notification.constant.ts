@@ -10,4 +10,5 @@ export const NOTIFICATION_TYPES = [
   "ALL",
   "SCHEDULE",
   "NOTIFY_PAYMENT",
+  "help_desk_ticket",
 ] as const;

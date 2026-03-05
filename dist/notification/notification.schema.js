@@ -28,6 +28,11 @@ const notificationSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Actor",
     },
+    ticket: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "HelpDeskTicket",
+        required: false,
+    },
     type: {
         type: String,
         enum: notification_constant_1.NOTIFICATION_TYPES,

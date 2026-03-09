@@ -27,14 +27,51 @@ const createTicket = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 /* ------------------------------------
+   GET assign ticket
+------------------------------------- */
+const getAssignTickets = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.user?.data._id;
+    const role = req.user?.data.role;
+    const idNo = req.query.idNo;
+    const limit = req.query.limit
+        ? parseInt(req.query.limit, 10)
+        : 10;
+    const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const skip = (page - 1) * limit;
+    const result = await onlineHelpDesk_services_1.HelpDeskService.getAssignTickets({
+        id,
+        idNo,
+        limit,
+        page,
+        skip,
+        role,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Assign Tickets fetched successfully",
+        data: result,
+    });
+});
+/* ------------------------------------
    GET ALL TICKETS
 ------------------------------------- */
 const getTickets = (0, catchAsync_1.default)(async (req, res, next) => {
     const user = req.user?.data;
-    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
+    const limit = req.query.limit
+        ? parseInt(req.query.limit, 10)
+        : 10;
     const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+    const idNo = req.query.idNo;
     const skip = (page - 1) * limit;
-    const result = await onlineHelpDesk_services_1.HelpDeskService.getTickets({ user, limit, page, skip });
+    const view = req.query.view;
+    const result = await onlineHelpDesk_services_1.HelpDeskService.getTickets({
+        user,
+        limit,
+        page,
+        skip,
+        idNo, view
+    });
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -43,47 +80,41 @@ const getTickets = (0, catchAsync_1.default)(async (req, res, next) => {
     });
 });
 /* ------------------------------------
-   GET SINGLE TICKET
+   Assign TICKET
 ------------------------------------- */
-const getSingleTicket = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { id } = req.params;
-    const result = await onlineHelpDesk_services_1.HelpDeskService.getSingleTicket(id);
+const assignTicket = (0, catchAsync_1.default)(async (req, res, next) => {
+    const payload = req.body;
+    const result = await onlineHelpDesk_services_1.HelpDeskService.assignTicket({ payload });
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
-        message: "Ticket fetched successfully",
+        message: "Ticket assign successfully",
         data: result,
     });
 });
-/* ------------------------------------
-   DELETE SINGLE TICKET
-------------------------------------- */
-const deleteTicket = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { id } = req.params;
-    const result = await onlineHelpDesk_services_1.HelpDeskService.deleteTicket(id);
-    (0, sendResponse_1.default)(res, {
-        statusCode: 200,
-        success: true,
-        message: "Ticket deleted successfully",
-        data: result,
+// update
+const reply = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { ticketId, message, file } = req.body;
+    const actorId = req.user?.data._id;
+    const role = req.user?.data.role;
+    const result = await onlineHelpDesk_services_1.HelpDeskService.reply({
+        actorId,
+        ticketId,
+        message,
+        file,
+        role
     });
-});
-/* ------------------------------------
-   DELETE ALL TICKETS
-------------------------------------- */
-const deleteAllTickets = (0, catchAsync_1.default)(async (req, res, next) => {
-    const result = await onlineHelpDesk_services_1.HelpDeskService.deleteAllTickets();
     (0, sendResponse_1.default)(res, {
-        statusCode: 200,
+        statusCode: 201,
         success: true,
-        message: "All tickets deleted successfully",
+        message: "reply created successfully",
         data: result,
     });
 });
 exports.HelpDeskController = {
     createTicket,
     getTickets,
-    getSingleTicket,
-    deleteTicket,
-    deleteAllTickets,
+    assignTicket,
+    getAssignTickets,
+    reply,
 };

@@ -6,6 +6,8 @@ import BeAMember from "../beAMember/beAMember.schema";
 import ActorPayment from "../actor payment/actor.payment.schema";
 import { Payment } from "../payment/payment.schema";
 import { totalmem } from "os";
+import { fileUploader } from "../helper/fileUpload";
+import { v2 as cloudinary } from "cloudinary";
 
 const router = express.Router();
 
@@ -270,6 +272,42 @@ router.post("/isCreatedPassword", async (req, res) => {
 
   res.json(result);
 });
+
+router.post(
+  "/file",
+  fileUploader.upload.single("file"),
+  async (req, res) => {
+    const file = req.file;
+
+    if (!file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: "raw",
+          folder: "cloudinary-node-upload-pdf-demo",
+          public_id: file.originalname.split(".")[0],
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
+      );
+
+      stream.end(file.buffer);
+    });
+
+    res.json({
+      success: true,
+      pdf: result,
+      file,
+    });
+  }
+);
 
 // Count all active actors
 // router.get("/count-active", async (req, res) => {

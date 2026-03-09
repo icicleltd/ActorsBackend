@@ -7,24 +7,12 @@ exports.HelpDeskRouter = void 0;
 const express_1 = __importDefault(require("express"));
 const onlineHelpDesk_controller_1 = require("./onlineHelpDesk.controller");
 const router = express_1.default.Router();
-/* ------------------------------------
-   Create a ticket (actor)
-------------------------------------- */
+router.post("/assign-ticket", onlineHelpDesk_controller_1.HelpDeskController.assignTicket);
+router.post("/reply", onlineHelpDesk_controller_1.HelpDeskController.reply);
 router.post("/", onlineHelpDesk_controller_1.HelpDeskController.createTicket);
 /* ------------------------------------
    Get all tickets (admin / frontend)
 ------------------------------------- */
+router.get("/assign-ticket", onlineHelpDesk_controller_1.HelpDeskController.getAssignTickets);
 router.get("/", onlineHelpDesk_controller_1.HelpDeskController.getTickets);
-/* ------------------------------------
-   Get single ticket by id
-------------------------------------- */
-router.get("/:id", onlineHelpDesk_controller_1.HelpDeskController.getSingleTicket);
-/* ------------------------------------
-   Delete single ticket
-------------------------------------- */
-router.delete("/:id", onlineHelpDesk_controller_1.HelpDeskController.deleteTicket);
-/* ------------------------------------
-   Delete all tickets (admin)
-------------------------------------- */
-router.delete("/", onlineHelpDesk_controller_1.HelpDeskController.deleteAllTickets);
 exports.HelpDeskRouter = router;

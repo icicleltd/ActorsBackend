@@ -24,16 +24,17 @@ const BE_A_MEMBER_TYPES = [
   // "APPLICATION_APPROVED",
   // "APPLICATION_REJECTED",
   "CONTACT",
-  // "SCHEDULE",
+  "help_desk_ticket",
 ];
 const MEMBER_TYPES = [
   // "BE_A_MEMBER",
   // "PAYMENT_SUBMITTED",
   // "APPLICATION_APPROVED",
-  // "APPLICATION_REJECTED",
+  "assign_help_desk_ticket",
   "REFERENCE_REQUEST",
   "SCHEDULE",
   "NOTIFY_PAYMENT",
+  "reply_help_desk_ticket"
 ];
 const getNotification = async (queryPayload: IFetchNotification) => {
   const {
@@ -473,6 +474,7 @@ const read = async (
   contact: string,
   notifyPayment: string,
   payment: string,
+  ticket: string,
   application: string,
   isRead: boolean,
   notificationId: string,
@@ -488,6 +490,7 @@ const read = async (
     schedule,
     application,
     contact,
+    ticket,
     payment,
     notifyPayment,
   });

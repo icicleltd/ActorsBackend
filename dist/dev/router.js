@@ -9,6 +9,8 @@ const emailHelper_1 = require("../helper/emailHelper");
 const error_1 = require("../middleware/error");
 const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
 const actor_payment_schema_1 = __importDefault(require("../actor payment/actor.payment.schema"));
+const fileUpload_1 = require("../helper/fileUpload");
+const cloudinary_1 = require("cloudinary");
 const router = express_1.default.Router();
 // router.post("/upcomming", EventController.createEvent);
 // router.get("/migrate", async (req, res) => {
@@ -229,6 +231,31 @@ router.post("/isActive", async (req, res) => {
 router.post("/isCreatedPassword", async (req, res) => {
     const result = await actor_schema_1.default.updateMany({ isCreatePassword: { $exists: false } }, { $set: { isCreatePassword: false } });
     res.json(result);
+});
+router.post("/file", fileUpload_1.fileUploader.upload.single("file"), async (req, res) => {
+    const file = req.file;
+    if (!file) {
+        return res
+            .status(400)
+            .json({ success: false, message: "No file uploaded" });
+    }
+    const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary_1.v2.uploader.upload_stream({
+            resource_type: "raw",
+            folder: "cloudinary-node-upload-pdf-demo",
+            public_id: file.originalname.split(".")[0],
+        }, (error, result) => {
+            if (error)
+                return reject(error);
+            resolve(result);
+        });
+        stream.end(file.buffer);
+    });
+    res.json({
+        success: true,
+        pdf: result,
+        file,
+    });
 });
 // Count all active actors
 // router.get("/count-active", async (req, res) => {

@@ -3,29 +3,15 @@ import { HelpDeskController } from "./onlineHelpDesk.controller";
 
 const router = express.Router();
 
-/* ------------------------------------
-   Create a ticket (actor)
-------------------------------------- */
+router.post("/assign-ticket", HelpDeskController.assignTicket);
+router.post("/reply", HelpDeskController.reply);
 router.post("/", HelpDeskController.createTicket);
 
 /* ------------------------------------
    Get all tickets (admin / frontend)
 ------------------------------------- */
+router.get("/assign-ticket", HelpDeskController.getAssignTickets);
 router.get("/", HelpDeskController.getTickets);
 
-/* ------------------------------------
-   Get single ticket by id
-------------------------------------- */
-router.get("/:id", HelpDeskController.getSingleTicket);
-
-/* ------------------------------------
-   Delete single ticket
-------------------------------------- */
-router.delete("/:id", HelpDeskController.deleteTicket);
-
-/* ------------------------------------
-   Delete all tickets (admin)
-------------------------------------- */
-router.delete("/", HelpDeskController.deleteAllTickets);
 
 export const HelpDeskRouter = router;

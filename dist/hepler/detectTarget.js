@@ -10,7 +10,8 @@ const contact_schema_1 = require("../contact/contact.schema");
 const payment_schema_1 = require("../payment/payment.schema");
 const mongoose_1 = require("mongoose");
 const actor_payment_schema_1 = require("../actor payment/actor.payment.schema");
-const getTarget = ({ schedule, contact, payment, application, notifyPayment, }) => {
+const onlineHelpDesk_schema_1 = require("../onlineHelpDesk/onlineHelpDesk.schema");
+const getTarget = ({ schedule, contact, ticket, payment, application, notifyPayment, }) => {
     if (schedule)
         return { key: "schedule", id: schedule };
     if (contact)
@@ -19,6 +20,8 @@ const getTarget = ({ schedule, contact, payment, application, notifyPayment, }) 
         return { key: "payment", id: payment };
     if (application)
         return { key: "application", id: application };
+    if (ticket)
+        return { key: "ticket", id: ticket };
     if (notifyPayment)
         return { key: "notifyPayment", id: notifyPayment };
     return null;
@@ -67,6 +70,45 @@ exports.MODEL_MAP = {
                     update: { isMemberRead: true },
                 };
             }
+            return null;
+        },
+    },
+    ticket: {
+        model: onlineHelpDesk_schema_1.HelpDesk,
+        resolveUpdate: ({ type, role, recipient }) => {
+            // Admin reading BE_A_MEMBER
+            if (type === "help_desk_ticket" && role !== "member") {
+                return {
+                    update: { isAdminRead: true },
+                };
+            }
+            // Member reading REFERENCE_REQUEST
+            if (type === "assign_help_desk_ticket" && role === "member") {
+                return {
+                    update: {
+                        "targetActorIds.$[elem].isMemberRead": true,
+                    },
+                    arrayFilters: [
+                        { "elem.actorId": new mongoose_1.Types.ObjectId(recipient) },
+                    ],
+                };
+            }
+            if (type === "reply_help_desk_ticket" && role === "member") {
+                return {
+                    update: {
+                        "targetActorIds.$[elem].isMemberRead": true,
+                    },
+                    arrayFilters: [
+                        { "elem.actorId": new mongoose_1.Types.ObjectId(recipient) },
+                    ],
+                };
+            }
+            // Member reading BE_A_MEMBER
+            // if (type === "reply_help_desk_ticket" && role === "member") {
+            //   return {
+            //     update: { isMemberRead: true },
+            //   };
+            // }
             return null;
         },
     },

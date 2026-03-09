@@ -55,16 +55,17 @@ const BE_A_MEMBER_TYPES = [
     // "APPLICATION_APPROVED",
     // "APPLICATION_REJECTED",
     "CONTACT",
-    // "SCHEDULE",
+    "help_desk_ticket",
 ];
 const MEMBER_TYPES = [
     // "BE_A_MEMBER",
     // "PAYMENT_SUBMITTED",
     // "APPLICATION_APPROVED",
-    // "APPLICATION_REJECTED",
+    "assign_help_desk_ticket",
     "REFERENCE_REQUEST",
     "SCHEDULE",
     "NOTIFY_PAYMENT",
+    "reply_help_desk_ticket"
 ];
 const getNotification = async (queryPayload) => {
     const { role, recipient, notificationType, limit, search, skip, sortBy, sortWith, } = queryPayload;
@@ -424,7 +425,7 @@ const unReadNotification = async (queryPayload) => {
         CONTACT: contact,
     };
 };
-const read = async (role, recipient, schedule, contact, notifyPayment, payment, application, isRead, notificationId, type) => {
+const read = async (role, recipient, schedule, contact, notifyPayment, payment, ticket, application, isRead, notificationId, type) => {
     if (!notificationId) {
         throw new error_1.AppError(400, "Notification id not found");
     }
@@ -435,6 +436,7 @@ const read = async (role, recipient, schedule, contact, notifyPayment, payment, 
         schedule,
         application,
         contact,
+        ticket,
         payment,
         notifyPayment,
     });

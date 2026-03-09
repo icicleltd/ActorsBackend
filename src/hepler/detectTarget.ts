@@ -5,17 +5,20 @@ import { Payment } from "../payment/payment.schema";
 import { Types } from "mongoose";
 import { NotificationType } from "../notification/notification.interface";
 import { NotifyPayment } from "../actor payment/actor.payment.schema";
+import { HelpDesk } from "../onlineHelpDesk/onlineHelpDesk.schema";
 
 
 export const getTarget = ({
   schedule,
   contact,
+  ticket,
   payment,
   application,
   notifyPayment,
 }: {
   schedule?: string;
   contact?: string;
+  ticket?: string;
   payment?: string;
   application?: string;
   notifyPayment?: string;
@@ -24,6 +27,7 @@ export const getTarget = ({
   if (contact) return { key: "contact", id: contact };
   if (payment) return { key: "payment", id: payment };
   if (application) return { key: "application", id: application };
+  if (ticket) return { key: "ticket", id: ticket };
   if (notifyPayment) return { key: "notifyPayment", id: notifyPayment };
   return null;
 };
@@ -87,6 +91,48 @@ export const MODEL_MAP: Record<
           update: { isMemberRead: true },
         };
       }
+
+      return null;
+    },
+  },
+  ticket: {
+    model: HelpDesk,
+    resolveUpdate: ({ type, role, recipient }) => {
+      // Admin reading BE_A_MEMBER
+      if (type === "help_desk_ticket" && role !== "member") {
+        return {
+          update: { isAdminRead: true },
+        };
+      }
+
+      // Member reading REFERENCE_REQUEST
+      if (type === "assign_help_desk_ticket" && role === "member") {
+        return {
+          update: {
+            "targetActorIds.$[elem].isMemberRead": true,
+          },
+          arrayFilters: [
+            { "elem.actorId": new Types.ObjectId(recipient) },
+          ],
+        };
+      }
+      if (type === "reply_help_desk_ticket" && role === "member") {
+        return {
+          update: {
+            "targetActorIds.$[elem].isMemberRead": true,
+          },
+          arrayFilters: [
+            { "elem.actorId": new Types.ObjectId(recipient) },
+          ],
+        };
+      }
+
+      // Member reading BE_A_MEMBER
+      // if (type === "reply_help_desk_ticket" && role === "member") {
+      //   return {
+      //     update: { isMemberRead: true },
+      //   };
+      // }
 
       return null;
     },

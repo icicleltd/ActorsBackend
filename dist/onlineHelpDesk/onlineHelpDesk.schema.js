@@ -13,10 +13,29 @@ const helpDeskSchema = new mongoose_1.Schema({
         required: true,
         trim: true,
     },
-    message: {
-        type: String,
-        required: true,
-    },
+    messages: [
+        {
+            sender: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                required: true,
+                refPath: "messages.senderModel",
+            },
+            senderModel: {
+                type: String,
+                enum: ["Actor", "Admin"],
+                required: true,
+            },
+            message: {
+                type: String,
+                required: true,
+            },
+            file: String,
+            createdAt: {
+                type: Date,
+                default: Date.now,
+            },
+        },
+    ],
     file: {
         type: String,
     },
@@ -39,13 +58,38 @@ const helpDeskSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Admin",
     },
+    targetRoleReply: [
+        {
+            actorId: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: "Actor",
+            },
+            actorReply: String,
+        },
+    ],
+    targetActorIds: [
+        {
+            actorId: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: "Actor",
+            },
+            isMemberRead: {
+                type: Boolean,
+                default: false,
+            },
+        },
+    ],
     targetRole: {
         type: String,
-        enum: ["single_actor", "executive_member", "advisor_member", "all"],
-        default: "single_actor",
+        enum: ["actor", "executive_member", "advisor_member", "all"],
+        default: "actor",
     },
     adminReply: {
         type: String,
+    },
+    isAdminRead: {
+        type: Boolean,
+        default: false,
     },
 }, { timestamps: true });
 exports.HelpDesk = (0, mongoose_1.model)("HelpDesk", helpDeskSchema);

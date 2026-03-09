@@ -53,7 +53,7 @@ const actorSchema = new mongoose_1.Schema({
     dob: { type: Date },
     bloodGroup: {
         type: String,
-        enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"],
+        enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", ""],
     },
     // Contact
     email: { type: String, trim: true },

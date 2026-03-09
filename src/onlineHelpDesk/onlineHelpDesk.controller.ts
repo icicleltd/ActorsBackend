@@ -7,11 +7,7 @@ import { HelpDeskService } from "./onlineHelpDesk.services";
    CREATE TICKET
 ------------------------------------- */
 const createTicket = catchAsync(
-  async (
-    req: Request & { user?: any },
-    res: Response,
-    next: NextFunction,
-  ) => {
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const { ticketId, subject, message, file } = req.body;
     const actorId = req.user?.data._id;
 
@@ -32,15 +28,54 @@ const createTicket = catchAsync(
 );
 
 /* ------------------------------------
+   GET assign ticket
+------------------------------------- */
+const getAssignTickets = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const id = req.user?.data._id;
+    const role = req.user?.data.role;
+    const idNo = req.query.idNo as string;
+    const limit = req.query.limit
+      ? parseInt(req.query.limit as string, 10)
+      : 10;
+    const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+    const skip = (page - 1) * limit;
+    const result = await HelpDeskService.getAssignTickets({
+      id,
+      idNo,
+      limit,
+      page,
+      skip,
+      role,
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Assign Tickets fetched successfully",
+      data: result,
+    });
+  },
+);
+/* ------------------------------------
    GET ALL TICKETS
 ------------------------------------- */
 const getTickets = catchAsync(
-  async (req: Request & {user?:any}, res: Response, next: NextFunction) => {
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const user = req.user?.data;
-    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+    const limit = req.query.limit
+      ? parseInt(req.query.limit as string, 10)
+      : 10;
     const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+    const idNo = req.query.idNo as string;
     const skip = (page - 1) * limit;
-    const result = await HelpDeskService.getTickets({ user, limit, page, skip });
+    const view = req.query.view as string
+    const result = await HelpDeskService.getTickets({
+      user,
+      limit,
+      page,
+      skip,
+      idNo,view
+    });
 
     sendResponse(res, {
       statusCode: 200,
@@ -52,52 +87,41 @@ const getTickets = catchAsync(
 );
 
 /* ------------------------------------
-   GET SINGLE TICKET
+   Assign TICKET
 ------------------------------------- */
-const getSingleTicket = catchAsync(
+const assignTicket = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
-
-    const result = await HelpDeskService.getSingleTicket(id);
+    const payload = req.body;
+    const result = await HelpDeskService.assignTicket({ payload });
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Ticket fetched successfully",
+      message: "Ticket assign successfully",
       data: result,
     });
   },
 );
 
-/* ------------------------------------
-   DELETE SINGLE TICKET
-------------------------------------- */
-const deleteTicket = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
+// update
+const reply = catchAsync(
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const { ticketId, message, file } = req.body;
+    const actorId = req.user?.data._id;
+    const role = req.user?.data.role;
 
-    const result = await HelpDeskService.deleteTicket(id);
-
-    sendResponse(res, {
-      statusCode: 200,
-      success: true,
-      message: "Ticket deleted successfully",
-      data: result,
+    const result = await HelpDeskService.reply({
+      actorId,
+      ticketId,
+      message,
+      file,
+      role
     });
-  },
-);
-
-/* ------------------------------------
-   DELETE ALL TICKETS
-------------------------------------- */
-const deleteAllTickets = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const result = await HelpDeskService.deleteAllTickets();
 
     sendResponse(res, {
-      statusCode: 200,
+      statusCode: 201,
       success: true,
-      message: "All tickets deleted successfully",
+      message: "reply created successfully",
       data: result,
     });
   },
@@ -106,7 +130,7 @@ const deleteAllTickets = catchAsync(
 export const HelpDeskController = {
   createTicket,
   getTickets,
-  getSingleTicket,
-  deleteTicket,
-  deleteAllTickets,
+  assignTicket,
+  getAssignTickets,
+  reply,
 };

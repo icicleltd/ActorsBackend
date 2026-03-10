@@ -47,7 +47,8 @@ const fetchNotifyPayments = (0, catchAsync_1.default)(async (req, res, next) => 
 const paymentSubmitted = (0, catchAsync_1.default)(async (req, res, next) => {
     const { notifyPaymentId, senderNumber, transactionId, type, year, amount } = req.body;
     const actorId = req.user.data._id;
-    const result = await actor_payment_services_1.ActorPaymentService.paymentSubmitted(senderNumber, transactionId, notifyPaymentId, actorId, type, year, amount);
+    const idNo = req.body.uid;
+    const result = await actor_payment_services_1.ActorPaymentService.paymentSubmitted(senderNumber, transactionId, notifyPaymentId, actorId, type, year, amount, idNo);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -89,6 +90,39 @@ const getPaymentDashboardStats = (0, catchAsync_1.default)(async (req, res, next
         data: result,
     });
 });
+const getMergedPayments = (0, catchAsync_1.default)(async (req, res) => {
+    const id = req.query.id;
+    const search = req.query.search;
+    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortWith === "asc" ? 1 : -1;
+    const year = req.query.year ? Number(req.query.year) : undefined;
+    const filter = req.query.filter;
+    const skip = (page - 1) * limit;
+    const result = await actor_payment_services_1.ActorPaymentService.getMergedPaymentsFromDB({
+        search,
+        limit,
+        page,
+        skip,
+        sortBy,
+        sortOrder,
+        filter,
+        year,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payments retrieved successfully",
+        data: result,
+    });
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Payments retrieved successfully",
+    //   meta: result.meta,
+    //   data: result.data,
+    // });
+});
 exports.ActorPaymentController = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -97,4 +131,5 @@ exports.ActorPaymentController = {
     fetchActorPayments,
     verifyActorPayment,
     getPaymentDashboardStats,
+    getMergedPayments,
 };

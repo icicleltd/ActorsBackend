@@ -63,6 +63,7 @@ const paymentSubmitted = catchAsync(
     const { notifyPaymentId, senderNumber, transactionId, type, year, amount } =
       req.body;
     const actorId = req.user.data._id;
+    const idNo = req.body.uid as string;
     const result = await ActorPaymentService.paymentSubmitted(
       senderNumber,
       transactionId,
@@ -71,6 +72,7 @@ const paymentSubmitted = catchAsync(
       type,
       year,
       amount,
+      idNo,
     );
     sendResponse(res, {
       statusCode: 200,
@@ -124,6 +126,42 @@ const getPaymentDashboardStats = catchAsync(
   },
 );
 
+const getMergedPayments = catchAsync(async (req: Request, res: Response) => {
+  const id = req.query.id as string;
+  const search = req.query.search as string;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const page = parseInt(req.query.page as string) || 1;
+  const sortBy = (req.query.sortBy as string) || "createdAt";
+  const sortOrder: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
+  const year = req.query.year ? Number(req.query.year) : undefined;
+  const filter = req.query.filter as "unpaid" | "needVerified" | "paid";
+  const skip = (page - 1) * limit;
+
+  const result = await ActorPaymentService.getMergedPaymentsFromDB({
+    search,
+    limit,
+    page,
+    skip,
+    sortBy,
+    sortOrder,
+    filter,
+    year,
+  });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Payments retrieved successfully",
+    data: result,
+  });
+
+  // res.status(200).json({
+  //   success: true,
+  //   message: "Payments retrieved successfully",
+  //   meta: result.meta,
+  //   data: result.data,
+  // });
+});
+
 export const ActorPaymentController = {
   actorPaymentInfo,
   notifyActorForPayment,
@@ -132,4 +170,5 @@ export const ActorPaymentController = {
   fetchActorPayments,
   verifyActorPayment,
   getPaymentDashboardStats,
+  getMergedPayments,
 };

@@ -6,6 +6,7 @@ import { Notification } from "../notification/notification.schema";
 import ActorPayment, { NotifyPayment } from "./actor.payment.schema";
 import { INotification } from "../notification/notification.interface";
 import { Payment } from "../payment/payment.schema";
+import { PipelineStage } from "mongoose";
 
 type PaymentStatus = "paid" | "pending";
 
@@ -96,6 +97,7 @@ const actorPaymentInfo = async (
         dob: 1,
         paid: 1,
         amount: 1,
+        status: 1,
       },
     },
     { $sort: { [sortBy]: sortWith } },
@@ -203,6 +205,7 @@ const paymentSubmitted = async (
   type: string,
   year: string,
   amount: string,
+  idNo: string,
 ) => {
   if (!senderNumber) {
     throw new AppError(400, "senderNumber is required");
@@ -215,6 +218,17 @@ const paymentSubmitted = async (
   }
   if (!notifyPaymentId) {
     throw new AppError(400, "Member notifyPaymentId is required");
+  }
+  const actor = await Actor.findOne({ idNo }).select("_id").lean();
+  if (!actor) {
+    throw new AppError(400, "Actor not found");
+  }
+  const isSame = actor._id.toString() === actorId;
+  if (!isSame) {
+    throw new AppError(
+      403,
+      "You are not authorized to submit payment for this actor.",
+    );
   }
 
   const existing = await NotifyPayment.findById(notifyPaymentId).lean();
@@ -281,7 +295,7 @@ const fetchActorPayments = async (idNo: string) => {
   const actorId = await Actor.findOne({ idNo }).select("_id").lean();
   const actorPayments = await ActorPayment.find({
     actor: actorId,
-    status: "verified",
+    // status: "verified",
   }).sort({ createdAt: -1 });
   if (!actorPayments || actorPayments.length < 1) {
     throw new AppError(202, "No actor Payments");
@@ -304,8 +318,13 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
-      const updateNotifyPayment = await NotifyPayment.findByIdAndDelete(
+      const updateNotifyPayment = await NotifyPayment.findByIdAndUpdate(
         notifyPayment,
+        {
+          $set: {
+            status: "paid",
+          },
+        },
         {
           new: true,
           runValidators: true,
@@ -387,7 +406,7 @@ const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
 
   const totalPaidActor = amountResult[0].verified[0]?.count || 0;
   const needVerifyCount = amountResult[0].pending[0]?.count || 0;
-console.log(needVerifyAmount,needVerifyCount)
+
   /* =====================================
      🎯 UNPAID ACTORS
   ====================================== */
@@ -409,7 +428,6 @@ console.log(needVerifyAmount,needVerifyCount)
   ]);
   const totalActorUnpaidAmount = unpaidAmountResult[0]?.totalAmount || 0;
   const totalActorUnpaid = unpaidAmountResult[0]?.actor || 0;
-
   /* =====================================
      🎯 NEW MEMBER PAYMENT
   ====================================== */
@@ -463,7 +481,218 @@ console.log(needVerifyAmount,needVerifyCount)
       totalMembers: totalNewMemberPaid,
       totalAmount: totalNewMemberAmount,
     },
-    totalHandCash
+    totalHandCash,
+  };
+};
+interface QueryParams {
+  search?: string;
+  filter?: "unpaid" | "needVerified" | "paid";
+  page?: number;
+  limit?: number;
+  sortBy: string;
+  sortOrder: 1 | -1;
+  skip: number;
+  year?: number;
+}
+
+const getMergedPaymentsFromDB = async (query: QueryParams) => {
+  const {
+    search,
+    filter,
+    page = 1,
+    limit = 10,
+    sortBy = "createdAt",
+    sortOrder = -1,
+    skip = 0,
+    year,
+  } = query;
+
+  const pipeline: PipelineStage[] = [];
+
+  /**
+   * Lookup actorPayments
+   */
+  pipeline.push({
+    $lookup: {
+      from: "actorpayments",
+      localField: "_id",
+      foreignField: "notifyPayment",
+      as: "actorPayment",
+    },
+  });
+
+  pipeline.push({
+    $unwind: {
+      path: "$actorPayment",
+      preserveNullAndEmptyArrays: true,
+    },
+  });
+
+  /**
+   * Populate actor
+   */
+  pipeline.push({
+    $lookup: {
+      from: "actors",
+      localField: "actorId",
+      foreignField: "_id",
+      as: "actor",
+    },
+  });
+
+  pipeline.push({
+    $unwind: "$actor",
+  });
+
+  /**
+   * Normalize year (string vs number problem)
+   */
+  pipeline.push({
+    $addFields: {
+      notifyYear: { $toInt: "$year" },
+      actorPaymentYear: {
+        $cond: [
+          { $ifNull: ["$actorPayment.year", false] },
+          { $toInt: "$actorPayment.year" },
+          null,
+        ],
+      },
+    },
+  });
+
+  /**
+   * Search
+   */
+  if (search) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { "actor.fullName": { $regex: search, $options: "i" } },
+          { "actor.idNo": { $regex: search, $options: "i" } },
+        ],
+      },
+    });
+  }
+
+  /**
+   * Year filter
+   */
+  if (typeof year === "number" && !Number.isNaN(year)) {
+    pipeline.push({
+      $match: {
+        $or: [{ notifyYear: year }, { actorPaymentYear: year }],
+      },
+    });
+  }
+
+  /**
+   * Status filter
+   */
+
+  // unpaid → admin requested but member didn't pay
+  if (filter === "unpaid") {
+    pipeline.push({
+      $match: {
+        status: "request",
+        actorPayment: null,
+      },
+    });
+  }
+
+  // pending → member paid but admin not verified
+  if (filter === "needVerified") {
+    pipeline.push({
+      $match: {
+        "actorPayment.status": "pending",
+      },
+    });
+  }
+
+  // verified → admin verified payment
+  if (filter === "paid") {
+    pipeline.push({
+      $match: {
+        "actorPayment.status": "verified",
+      },
+    });
+  }
+
+  /**
+   * Final merged status
+   */
+  pipeline.push({
+    $addFields: {
+      finalStatus: {
+        $cond: [
+          { $eq: ["$actorPayment.status", "verified"] },
+          "verified",
+          {
+            $cond: [
+              { $eq: ["$actorPayment.status", "pending"] },
+              "pending",
+              "requested",
+            ],
+          },
+        ],
+      },
+    },
+  });
+
+  /**
+   * Projection
+   */
+  pipeline.push({
+    $project: {
+      amount: 1,
+      number: 1,
+      year: "$notifyYear",
+      desc: 1,
+      finalStatus: 1,
+      createdAt: 1,
+      // transactionId:1,
+
+      actor: {
+        _id: "$actor._id",
+        fullName: "$actor.fullName",
+        idNo: "$actor.idNo",
+        photo: "$actor.photo",
+      },
+
+      payment: "$actorPayment",
+    },
+  });
+
+  /**
+   * Sorting
+   */
+  pipeline.push({
+    $sort: {
+      [sortBy]: sortOrder,
+    },
+  });
+
+  /**
+   * Pagination
+   */
+  pipeline.push({
+    $facet: {
+      data: [{ $skip: skip }, { $limit: limit }],
+      meta: [{ $count: "total" }],
+    },
+  });
+
+  const result = await NotifyPayment.aggregate(pipeline);
+
+  const data = result[0]?.data || [];
+  const total = result[0]?.meta[0]?.total || 0;
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data,
   };
 };
 
@@ -475,4 +704,5 @@ export const ActorPaymentService = {
   fetchActorPayments,
   verifyActorPayment,
   getPaymentDashboardStats,
+  getMergedPaymentsFromDB,
 };

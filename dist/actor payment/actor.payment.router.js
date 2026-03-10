@@ -17,6 +17,7 @@ router.post("/verify-payment", verifyLogin_1.VerifyLogin, actor_payment_controll
 router.get("/notify-actor", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.fetchNotifyPayments);
 router.get("/actor-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.fetchActorPayments);
 router.get("/payments-stats", actor_payment_controller_1.ActorPaymentController.getPaymentDashboardStats);
+router.get("/marge-payment-stats", actor_payment_controller_1.ActorPaymentController.getMergedPayments);
 router.get("/", actor_payment_controller_1.ActorPaymentController.actorPaymentInfo);
 // Delete (Admin)
 // router.delete(

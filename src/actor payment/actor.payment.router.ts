@@ -5,16 +5,37 @@ import { ActorPaymentController } from "./actor.payment.controller";
 
 const router = express.Router();
 
-
 // Create (Admin)
-router.post("/notify-actor",VerifyLogin,VerifyAdmin, ActorPaymentController.notifyActorForPayment);
-router.post("/save-payment/:id",VerifyLogin, ActorPaymentController.paymentSubmitted);
-router.post("/verify-payment",VerifyLogin, ActorPaymentController.verifyActorPayment);
+router.post(
+  "/notify-actor",
+  VerifyLogin,
+  VerifyAdmin,
+  ActorPaymentController.notifyActorForPayment,
+);
+router.post(
+  "/save-payment/:id",
+  VerifyLogin,
+  ActorPaymentController.paymentSubmitted,
+);
+router.post(
+  "/verify-payment",
+  VerifyLogin,
+  ActorPaymentController.verifyActorPayment,
+);
 
 // Get all (Public/Admin)
-router.get("/notify-actor",VerifyLogin, ActorPaymentController.fetchNotifyPayments);
-router.get("/actor-payment",VerifyLogin, ActorPaymentController.fetchActorPayments);
+router.get(
+  "/notify-actor",
+  VerifyLogin,
+  ActorPaymentController.fetchNotifyPayments,
+);
+router.get(
+  "/actor-payment",
+  VerifyLogin,
+  ActorPaymentController.fetchActorPayments,
+);
 router.get("/payments-stats", ActorPaymentController.getPaymentDashboardStats);
+router.get("/marge-payment-stats", ActorPaymentController.getMergedPayments);
 router.get("/", ActorPaymentController.actorPaymentInfo);
 
 // Delete (Admin)

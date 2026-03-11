@@ -90,10 +90,11 @@ const createSchedule = async (payload: any, files: any) => {
 
     let uploaded;
     if (files) {
-      uploaded = await fileUploader.CloudinaryUploadMultiplePDF(files);
+      uploaded = await fileUploader.UploadThingUploadMultiplePDF(files);
     }
 
-    const pdfLinks = uploaded?.map((pdf: any) => pdf.secure_url as string);
+    const pdfLinks = uploaded?.map((pdf: any) => pdf.url);
+    console.log("pdlinks",pdfLinks)
     const { dates, phone, email, message, name } = appointmentInfo;
     // ✅ Validate actor availability before creating
     await validateActorAvailability(member.memberId, dates, session);

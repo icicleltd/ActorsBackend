@@ -1,5 +1,6 @@
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { UTApi, UTFile } from "uploadthing/server";
 import path from "path";
 
 // Multer memory storage (required for Vercel)
@@ -16,6 +17,11 @@ cloudinary.config({
   cloud_name: "dgywkhtxz",
   api_key: "967534559333113",
   api_secret: "W0Lr6YQocCLQAZ1SYuazvR4e128",
+});
+
+// UploadThing client
+const utapi = new UTApi({
+  token: process.env.UPLOADTHING_TOKEN!,
 });
 
 const getPublicId = (filename: string, folder = "uploads") => {
@@ -84,6 +90,71 @@ const CloudinaryUploadMultiplePDF = async (files: Express.Multer.File[]) => {
   return uploaded;
 };
 
+export interface UploadThingResult {
+  url: string;
+  name: string;
+  key: string;
+  size: number;
+}
+const toArrayBuffer = (buffer: Buffer): ArrayBuffer =>
+  buffer.buffer.slice(
+    buffer.byteOffset,
+    buffer.byteOffset + buffer.byteLength
+  ) as ArrayBuffer;
+
+// ✅ Single PDF upload — replaces CloudinaryUploadPDF
+const UploadThingUploadPDF = async (
+  file: Express.Multer.File,
+): Promise<UploadThingResult> => {
+  if (file.mimetype !== "application/pdf") {
+    throw new Error("Only PDF files are allowed");
+  }
+
+  const utFile = new UTFile([toArrayBuffer(file.buffer)], file.originalname, {
+    type: "application/pdf",
+  });
+
+  const [result] = await utapi.uploadFiles([utFile]);
+
+  if (result.error) throw new Error(result.error.message);
+
+  return {
+    url: result.data.ufsUrl,
+    name: result.data.name,
+    key: result.data.key,
+    size: result.data.size,
+  };
+};
+
+// ✅ Multiple PDF upload — replaces CloudinaryUploadMultiplePDF
+const UploadThingUploadMultiplePDF = async (
+  files: Express.Multer.File[],
+): Promise<UploadThingResult[]> => {
+  const invalidFile = files.find((f) => f.mimetype !== "application/pdf");
+  if (invalidFile) throw new Error("Only PDF files are allowed");
+
+  const utFiles = files.map(
+    (file) =>
+      new UTFile([toArrayBuffer(file.buffer)], file.originalname, { type: "application/pdf" }),
+  );
+
+  const results = await utapi.uploadFiles(utFiles);
+
+  return results.map((result) => {
+    if (result.error) throw new Error(result.error.message);
+    return {
+      url: result.data.ufsUrl,
+      name: result.data.name,
+      key: result.data.key,
+      size: result.data.size,
+    };
+  });
+};
+
+// ✅ Delete PDF by key (replaces deleteFromCloudinary for PDFs)
+export const deleteFromUploadThing = async (key: string) => {
+  return utapi.deleteFiles([key]);
+};
 export const deleteFromCloudinary = async (publicId: string) => {
   return cloudinary.uploader.destroy(publicId);
 };
@@ -94,4 +165,7 @@ export const fileUploader = {
   CloudinaryUploadMultiple,
   CloudinaryUploadPDF,
   CloudinaryUploadMultiplePDF,
+  // PDFs → UploadThing
+  UploadThingUploadPDF,
+  UploadThingUploadMultiplePDF,
 };

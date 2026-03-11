@@ -3,9 +3,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fileUploader = exports.deleteFromCloudinary = void 0;
+exports.fileUploader = exports.deleteFromCloudinary = exports.deleteFromUploadThing = void 0;
 const multer_1 = __importDefault(require("multer"));
 const cloudinary_1 = require("cloudinary");
+const server_1 = require("uploadthing/server");
 const path_1 = __importDefault(require("path"));
 // Multer memory storage (required for Vercel)
 const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
@@ -20,6 +21,10 @@ cloudinary_1.v2.config({
     cloud_name: "dgywkhtxz",
     api_key: "967534559333113",
     api_secret: "W0Lr6YQocCLQAZ1SYuazvR4e128",
+});
+// UploadThing client
+const utapi = new server_1.UTApi({
+    token: process.env.UPLOADTHING_TOKEN,
 });
 const getPublicId = (filename, folder = "uploads") => {
     const name = path_1.default.parse(filename).name;
@@ -76,6 +81,48 @@ const CloudinaryUploadMultiplePDF = async (files) => {
     }
     return uploaded;
 };
+const toArrayBuffer = (buffer) => buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+// ✅ Single PDF upload — replaces CloudinaryUploadPDF
+const UploadThingUploadPDF = async (file) => {
+    if (file.mimetype !== "application/pdf") {
+        throw new Error("Only PDF files are allowed");
+    }
+    const utFile = new server_1.UTFile([toArrayBuffer(file.buffer)], file.originalname, {
+        type: "application/pdf",
+    });
+    const [result] = await utapi.uploadFiles([utFile]);
+    if (result.error)
+        throw new Error(result.error.message);
+    return {
+        url: result.data.ufsUrl,
+        name: result.data.name,
+        key: result.data.key,
+        size: result.data.size,
+    };
+};
+// ✅ Multiple PDF upload — replaces CloudinaryUploadMultiplePDF
+const UploadThingUploadMultiplePDF = async (files) => {
+    const invalidFile = files.find((f) => f.mimetype !== "application/pdf");
+    if (invalidFile)
+        throw new Error("Only PDF files are allowed");
+    const utFiles = files.map((file) => new server_1.UTFile([toArrayBuffer(file.buffer)], file.originalname, { type: "application/pdf" }));
+    const results = await utapi.uploadFiles(utFiles);
+    return results.map((result) => {
+        if (result.error)
+            throw new Error(result.error.message);
+        return {
+            url: result.data.ufsUrl,
+            name: result.data.name,
+            key: result.data.key,
+            size: result.data.size,
+        };
+    });
+};
+// ✅ Delete PDF by key (replaces deleteFromCloudinary for PDFs)
+const deleteFromUploadThing = async (key) => {
+    return utapi.deleteFiles([key]);
+};
+exports.deleteFromUploadThing = deleteFromUploadThing;
 const deleteFromCloudinary = async (publicId) => {
     return cloudinary_1.v2.uploader.destroy(publicId);
 };
@@ -86,4 +133,7 @@ exports.fileUploader = {
     CloudinaryUploadMultiple,
     CloudinaryUploadPDF,
     CloudinaryUploadMultiplePDF,
+    // PDFs → UploadThing
+    UploadThingUploadPDF,
+    UploadThingUploadMultiplePDF,
 };

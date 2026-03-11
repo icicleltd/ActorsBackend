@@ -45,53 +45,55 @@ const notification_schema_1 = require("../notification/notification.schema");
 const actor_schema_1 = __importDefault(require("../actor/actor.schema"));
 const scheduleApproved_1 = require("../helper/mailTempate/scheduleApproved");
 const emailHelper_1 = require("../helper/emailHelper");
+// validateActorAvailability
+const validateActorAvailability = async (memberId, requestedDates, session) => {
+    // Convert requested dates to Date objects (start of day / end of day in UTC)
+    const dateRanges = requestedDates.map((date) => {
+        const start = new Date(date);
+        start.setUTCHours(0, 0, 0, 0);
+        const end = new Date(date);
+        end.setUTCHours(23, 59, 59, 999);
+        return { start, end };
+    });
+    // Build $or query to check if any of the requested dates overlap with existing schedules
+    const orConditions = dateRanges.map(({ start, end }) => ({
+        dates: {
+            $elemMatch: {
+                $gte: start,
+                $lte: end,
+            },
+        },
+    }));
+    const conflictingSchedule = await appointments_schema_1.default.findOne({
+        approver: new mongoose_1.default.Types.ObjectId(memberId),
+        status: { $in: ["pending", "approved"] }, // ignore rejected
+        $or: orConditions,
+    }, null, { session });
+    if (conflictingSchedule) {
+        // Find exactly which dates are conflicting for a helpful error message
+        const conflictingDates = requestedDates.filter((reqDate) => {
+            const reqStart = new Date(reqDate);
+            reqStart.setUTCHours(0, 0, 0, 0);
+            const reqEnd = new Date(reqDate);
+            reqEnd.setUTCHours(23, 59, 59, 999);
+            return conflictingSchedule.dates.some((existingDate) => {
+                const d = new Date(existingDate);
+                return d >= reqStart && d <= reqEnd;
+            });
+        });
+        const formatted = conflictingDates
+            .map((date) => new Date(date).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        }))
+            .join(", ");
+        throw new error_1.AppError(409, `Actor is already booked on the following date(s): ${formatted}`);
+    }
+};
 /* ------------------------------------
    CREATE / UPDATE SCHEDULE BANNER
 ------------------------------------- */
-// const createSchedule = async (payload: any, files: any) => {
-//   const appointmentInfo = JSON.parse(payload.appointment);
-//   const member = JSON.parse(payload.member);
-//   if (!appointmentInfo || !member) {
-//     throw new AppError(400, "Appointment info required");
-//   }
-//   let uploaded;
-//   if (files) {
-//     uploaded = await fileUploader.CloudinaryUploadMultiplePDF(files);
-//   }
-//   const pdfLinks = uploaded?.map((pdf: any) => pdf.secure_url as string);
-//   const { date, phone, email, message, name } = appointmentInfo;
-//   const appointmentData = {
-//     date: new Date(date),
-//     name,
-//     phone,
-//     email,
-//     message,
-//     approver: member.memberId,
-//     pdfLinks,
-//   };
-//   const result = await Schedule.create(appointmentData);
-//   if (!result) {
-//     throw new AppError(500, "Not created appointmentData");
-//   }
-//   return result;
-// };
-// Upload image (if provided)
-//   const uploadResult = await fileUploader.CloudinaryUpload(file);
-//   schedule = await Schedule.findOneAndUpdate(
-//     {},
-//     {
-//       title,
-//       description,
-//       imageUrl: uploadResult.secure_url,
-//       publicId: uploadResult.public_id,
-//     },
-//     {
-//       new: true,
-//       upsert: true,
-//     }
-//   );
-//   return schedule;
-// };
 const createSchedule = async (payload, files) => {
     const session = await mongoose_1.default.startSession(); // Start a new session for the transaction
     session.startTransaction();
@@ -103,12 +105,23 @@ const createSchedule = async (payload, files) => {
         }
         let uploaded;
         if (files) {
-            uploaded = await fileUpload_1.fileUploader.CloudinaryUploadMultiplePDF(files);
+            uploaded = await fileUpload_1.fileUploader.UploadThingUploadMultiplePDF(files);
         }
-        const pdfLinks = uploaded?.map((pdf) => pdf.secure_url);
-        const { date, phone, email, message, name } = appointmentInfo;
+        const pdfLinks = uploaded?.map((pdf) => pdf.url);
+        console.log("pdlinks", pdfLinks);
+        const { dates, phone, email, message, name } = appointmentInfo;
+        // ✅ Validate actor availability before creating
+        await validateActorAvailability(member.memberId, dates, session);
+        // Create a formatted dates string first
+        const formattedDates = dates
+            .map((date) => new Date(date).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        }))
+            .join(", ");
         const appointmentData = {
-            date: new Date(date),
+            dates: dates, //dates.map((date :string)=>new Date(date)) ,
             name,
             phone,
             email,
@@ -126,7 +139,7 @@ const createSchedule = async (payload, files) => {
                 recipientRole: ["member", "admin", "superadmin"],
                 type: "SCHEDULE",
                 title: "New Schedule Created",
-                message: `A new schedule has been created for ${name} on ${new Date(date).toLocaleDateString()}.`,
+                message: `A new schedule has been created for ${name} on ${formattedDates}.`,
                 recipient: member.memberId,
                 schedule: result[0]._id,
             },
@@ -169,39 +182,38 @@ const getSchedules = async (sortBy = "order", sortWith = 1, approver, skip, limi
     return { schedules, total, totalPages };
 };
 // approve request
-const approve = async (id, userId, date, email, memberName) => {
+const approve = async (id, userId, email, memberName) => {
     if (!id) {
         throw new error_1.AppError(400, "Id is required");
     }
-    // const { subject, text, html } = scheduleApprovedTemplate(name, new Date(date));
-    // console.log("schedule", email);
-    //   await sendMail({ to: email, subject, text, html });
-    const schedule = await appointments_schema_1.default.findById(id).select("name date").lean();
+    // ✅ Added "message" to select since you use it in the template
+    const schedule = await appointments_schema_1.default.findById(id)
+        .select("name dates message")
+        .lean();
     if (!schedule) {
         throw new error_1.AppError(400, "Schedule not found");
     }
     const session = await mongoose_1.default.startSession();
     try {
         await session.withTransaction(async () => {
-            const viewSchedule = await appointments_schema_1.default.findByIdAndUpdate(id, {
-                $set: {
-                    status: "approved",
-                    isView: true,
-                },
-            }, { new: true, session });
+            // ✅ Run both updates in parallel — no dependency on each other
+            const [viewSchedule, viewNotification] = await Promise.all([
+                appointments_schema_1.default.findByIdAndUpdate(id, { $set: { status: "approved", isView: true } }, { new: true, session }),
+                notification_schema_1.Notification.findOneAndUpdate({ schedule: id, recipient: userId }, { $set: { isRead: true } }, { new: true, session }),
+            ]);
             if (!viewSchedule) {
-                throw new error_1.AppError(400, "Schedule not update");
+                throw new error_1.AppError(400, "Schedule not updated");
             }
-            const viewNotification = await notification_schema_1.Notification.findOneAndUpdate({ schedule: id, recipient: userId }, { $set: { isRead: true } }, { new: true, session });
             if (!viewNotification) {
-                throw new error_1.AppError(400, "Notification not update");
+                throw new error_1.AppError(400, "Notification not updated");
             }
         });
-        const { subject, text, html } = (0, scheduleApproved_1.scheduleApprovedTemplate)(schedule?.name, schedule?.date, schedule?.message, memberName);
+        // ✅ Email sent after transaction commits successfully
+        const { subject, text, html } = (0, scheduleApproved_1.scheduleApprovedTemplate)(schedule.name, schedule.dates, schedule.message, memberName);
         await (0, emailHelper_1.sendMail)({ to: email, subject, text, html });
     }
     catch (error) {
-        console.log("be a member tarasation error", error);
+        console.log("approve transaction error", error);
         throw new error_1.AppError(400, `${error}`);
     }
     finally {
@@ -216,7 +228,7 @@ const getMyMonthlyApprovedSchedules = async (actorId, month, year) => {
             $match: {
                 approver: new mongoose_1.Types.ObjectId(actorId), // 🔥 only MY approvals
                 status: "approved",
-                date: {
+                dates: {
                     $gte: startDate,
                     $lt: endDate,
                 },
@@ -229,14 +241,14 @@ const getMyMonthlyApprovedSchedules = async (actorId, month, year) => {
                 name: 1, // user name
                 phone: 1, // user phone
                 email: 1, // user email
-                date: 1,
+                dates: 1,
                 startTime: 1,
                 endTime: 1,
                 location: 1,
                 scheduleType: 1,
                 message: 1,
                 createdAt: 1,
-                approver: 1
+                approver: 1,
             },
         },
         {
@@ -303,5 +315,5 @@ exports.ScheduleService = {
     getSchedules,
     reorderSchedules,
     approve,
-    getMyMonthlyApprovedSchedules: exports.getMyMonthlyApprovedSchedules
+    getMyMonthlyApprovedSchedules: exports.getMyMonthlyApprovedSchedules,
 };

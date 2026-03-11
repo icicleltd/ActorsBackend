@@ -37,15 +37,14 @@ const mongoose_1 = __importStar(require("mongoose"));
 const scheduleSchema = new mongoose_1.Schema({
     title: {
         type: String,
-        // required: true,
         trim: true,
     },
     message: {
         type: String,
         trim: true,
     },
-    date: {
-        type: Date,
+    dates: {
+        type: [Date],
         required: true,
     },
     name: {
@@ -62,11 +61,9 @@ const scheduleSchema = new mongoose_1.Schema({
     },
     startTime: {
         type: String,
-        // required: true,
     },
     endTime: {
         type: String,
-        // required: true,
     },
     location: {
         type: String,
@@ -96,7 +93,6 @@ const scheduleSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
-    // optional (admin / user)
     createdBy: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Actor",
@@ -104,10 +100,7 @@ const scheduleSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
-/* ===============================
-   🔎 Indexes (Important)
-================================ */
-scheduleSchema.index({ date: 1 });
+scheduleSchema.index({ dates: 1 });
 scheduleSchema.index({ actors: 1 });
 const Schedule = mongoose_1.default.model("Schedule", scheduleSchema);
 exports.default = Schedule;

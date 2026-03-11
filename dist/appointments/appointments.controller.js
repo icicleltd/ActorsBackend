@@ -83,9 +83,10 @@ const reorderSchedules = (0, catchAsync_1.default)(async (req, res, next) => {
 const approve = (0, catchAsync_1.default)(async (req, res, next) => {
     const id = req.params.id;
     const userId = req.user.data._id;
-    const { date, email, idNo } = req.body;
+    const { dates, email, idNo } = req.body;
     const memberName = req.user.data.fullName;
-    const result = await appointments_services_1.ScheduleService.approve(id, userId, date, email, memberName);
+    const result = await appointments_services_1.ScheduleService.approve(id, userId, email, memberName);
+    console.log(result);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

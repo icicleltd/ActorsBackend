@@ -229,6 +229,7 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
             const updateNotifyPayment = await actor_payment_schema_1.NotifyPayment.findByIdAndUpdate(notifyPaymentId, {
                 $set: {
                     status: "paid",
+                    isView: true
                 },
             }, {
                 new: true,
@@ -250,6 +251,10 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                     desc: updateNotifyPayment.desc,
                 },
             ], { session });
+            await notification_schema_1.Notification.findOneAndDelete({
+                notifyPayment: notifyPaymentId,
+                recipient: actor._id
+            });
             await notification_schema_1.Notification.create([
                 {
                     recipientRole: ["admin", "superadmin"],

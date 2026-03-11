@@ -1,27 +1,20 @@
 import { Types } from "mongoose";
 
+// appointments.interface.ts
 export interface ISchedule {
   title?: string;
-
+  message?: string;
+  dates: Date[];        // ← was: date: Date
   name: string;
   phone: string;
   email: string;
-  message?: string;
-
-  date: Date;
-  startTime?: string; // "10:00"
-  endTime?: string; // "18:00"
-
+  startTime?: string;
+  endTime?: string;
   location?: string;
-
-  pdfLinks?: string[];
-
   approver: Types.ObjectId;
-
   scheduleType?: "shooting" | "rehearsal" | "meeting" | "event";
-
-  status: "pending" | "approved" | "rejected";
-  isView: boolean
-
+  pdfLinks?: string[];
+  status?: "pending" | "approved" | "rejected";
+  isView?: boolean;
   createdBy?: Types.ObjectId;
 }

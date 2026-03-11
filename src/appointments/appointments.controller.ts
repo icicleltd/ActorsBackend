@@ -12,7 +12,6 @@ const createSchedule = catchAsync(
     const files = req.files;
 
     const result = await ScheduleService.createSchedule(payload, files);
-
     sendResponse(res, {
       statusCode: 201,
       success: true,
@@ -103,16 +102,15 @@ const approve = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const id = req.params.id;
     const userId = req.user.data._id;
-    const { date, email, idNo } = req.body;
+    const { dates, email, idNo } = req.body;
     const memberName = req.user.data.fullName;
     const result = await ScheduleService.approve(
       id,
       userId,
-      date,
       email,
       memberName,
     );
-
+    console.log(result);
     sendResponse(res, {
       statusCode: 200,
       success: true,

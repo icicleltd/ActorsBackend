@@ -5,7 +5,6 @@ const scheduleSchema = new Schema<ISchedule>(
   {
     title: {
       type: String,
-      // required: true,
       trim: true,
     },
 
@@ -14,10 +13,11 @@ const scheduleSchema = new Schema<ISchedule>(
       trim: true,
     },
 
-    date: {
-      type: Date,
+    dates: {
+      type: [Date],
       required: true,
     },
+
     name: {
       type: String,
       required: true,
@@ -33,12 +33,10 @@ const scheduleSchema = new Schema<ISchedule>(
 
     startTime: {
       type: String,
-      // required: true,
     },
 
     endTime: {
       type: String,
-      // required: true,
     },
 
     location: {
@@ -57,6 +55,7 @@ const scheduleSchema = new Schema<ISchedule>(
       enum: ["shooting", "rehearsal", "meeting", "event"],
       default: "shooting",
     },
+
     pdfLinks: [
       {
         type: String,
@@ -68,12 +67,12 @@ const scheduleSchema = new Schema<ISchedule>(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+
     isView: {
       type: Boolean,
       default: false,
     },
 
-    // optional (admin / user)
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "Actor",
@@ -84,10 +83,7 @@ const scheduleSchema = new Schema<ISchedule>(
   },
 );
 
-/* ===============================
-   🔎 Indexes (Important)
-================================ */
-scheduleSchema.index({ date: 1 });
+scheduleSchema.index({ dates: 1 });
 scheduleSchema.index({ actors: 1 });
 
 const Schedule = mongoose.model<ISchedule>("Schedule", scheduleSchema);

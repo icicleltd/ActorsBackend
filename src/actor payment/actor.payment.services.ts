@@ -243,6 +243,7 @@ const paymentSubmitted = async (
         {
           $set: {
             status: "paid",
+            isView: true
           },
         },
         {
@@ -269,6 +270,10 @@ const paymentSubmitted = async (
         ],
         { session },
       );
+      await Notification.findOneAndDelete({
+        notifyPayment:notifyPaymentId,
+        recipient:actor._id
+      })
       await Notification.create(
         [
           {

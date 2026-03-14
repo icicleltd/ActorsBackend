@@ -50,6 +50,10 @@ const paymentSchema = new Schema<IPayment>(
       type: Date,
       default: null,
     },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
 
     rejectionReason: String,
   },

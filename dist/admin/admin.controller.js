@@ -125,7 +125,9 @@ const fetchActorPayments = (0, catchAsync_1.default)(async (req, res, next) => {
     const year = req.query.year;
     const search = req.query.search;
     const status = req.query.status;
-    const result = await admin_services_1.AdminService.fetchActorPayments(year, status, search);
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const result = await admin_services_1.AdminService.fetchActorPayments(year, status, search, limit, page);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

@@ -1,66 +1,65 @@
-import { PayloadLoign } from '../admin/admin.interface';
+import { PayloadLoign } from "../admin/admin.interface";
 import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
-import { BeAMemberService } from "./payment.services";
+import { BeAMemberPaymentService } from "./payment.services";
+import { skip } from "node:test";
 
 /* ------------------------------------
    CREATE BE A MEMBER (Admin)
 ------------------------------------- */
-const createBeAMember = catchAsync(
+const getBeAMemberPayments = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const PayloadBeAMember = req.body;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const page = parseInt(req.query.page as string) || 1;
+    const skip = (page - 1) * limit;
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortOrder = (req.query.sortOrder as string) === "asc" ? 1 : -1;
 
-    const result = await BeAMemberService.createBeAMember(PayloadBeAMember);
-
-    sendResponse(res, {
-      statusCode: 201,
-      success: true,
-      message: "Be a Member created successfully",
-      data: result,
+    const result = await BeAMemberPaymentService.getBeAMemberPayments({
+      limit,
+      skip,
+      sortBy,
+      sortOrder,
     });
-  }
-);
-
-/* ------------------------------------
-   GET ALL BE A MEMBERS (Frontend/Admin)
-------------------------------------- */
-const getBeAMembers = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const result = await BeAMemberService.getBeAMembers();
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Be a Members fetched successfully",
+      message: "Be a Member payment get successfully",
       data: result,
     });
-  }
+  },
 );
 
-/* ------------------------------------
-   DELETE SINGLE BE A MEMBER (Admin)
-------------------------------------- */
-const deleteBeAMember = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+const verifyPayment = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
     const { id } = req.params;
+    const { status, rejectionReason, message } = req.body;
 
-    const result = await BeAMemberService.deleteBeAMember(id);
+    const adminId = req.user._id;
+
+    const result = await BeAMemberPaymentService.verifyPayment({
+      paymentId: id,
+      status,
+      rejectionReason,
+      adminId,
+      message,
+    });
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Be a Member deleted successfully",
+      message: "Admin Approved successfully",
       data: result,
     });
-  }
+  },
 );
 
 /* ------------------------------------
    EXPORT CONTROLLER
 ------------------------------------- */
-export const BeAMemberController = {
-  createBeAMember,
-  getBeAMembers,
-  deleteBeAMember,
+export const BeAMemberPaymentController = {
+  getBeAMemberPayments,
+  verifyPayment,
 };

@@ -157,7 +157,10 @@ const fetchActorPayments = catchAsync(
     const year = req.query.year as string;
     const search = req.query.search as string;
     const status = req.query.status as "pending" | "verified" | "rejected";
-    const result = await AdminService.fetchActorPayments(year, status,search);
+    const limit = parseInt(req.query.limit as string) || 10
+    const page = parseInt(req.query.page as string) || 1
+
+    const result = await AdminService.fetchActorPayments(year, status,search,limit,page);
     sendResponse(res, {
       statusCode: 200,
       success: true,

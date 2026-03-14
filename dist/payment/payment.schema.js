@@ -43,6 +43,10 @@ const paymentSchema = new mongoose_1.Schema({
         type: Date,
         default: null,
     },
+    isRead: {
+        type: Boolean,
+        default: false,
+    },
     rejectionReason: String,
 }, { timestamps: true });
 exports.Payment = (0, mongoose_1.model)("Payment", paymentSchema);

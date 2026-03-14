@@ -24,6 +24,7 @@ import dotenv from "dotenv";
 import { ContactRoutes } from "./contact/contact.router";
 import { ActorPayment } from "./actor payment/actor.payment.router";
 import { HelpDeskRouter } from "./onlineHelpDesk/onlineHelpDesk.router";
+import { BeAMemberPaymentRouter } from "./payment/payment.router";
 dotenv.config();
 
 const app = express();
@@ -110,6 +111,7 @@ app.use("/api/v1/site-management", siteManagementRouter);
 app.use("/api/v1/contact", ContactRoutes);
 app.use("/api/v1/actors-payments", ActorPayment);
 app.use("/api/v1/help-desk",VerifyLogin, HelpDeskRouter);
+app.use("/api/v1/be-a-member-payment",VerifyLogin, BeAMemberPaymentRouter);
 app.use(globalErrorHandler);
 
 // Test route

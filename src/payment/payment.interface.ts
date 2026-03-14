@@ -16,6 +16,7 @@ export interface IPayment {
   amount: number;
 
   status: PaymentStatus;
+  isRead: boolean;
 
   // 👮 Admin verification
   verifiedBy?: Types.ObjectId | null;

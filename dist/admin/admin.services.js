@@ -331,7 +331,7 @@ const makeAdmin = async (payload) => {
 //   }
 //   return actorPayments;
 // };
-const fetchActorPayments = async (year, status, search) => {
+const fetchActorPayments = async (year, status, search, limit, skip) => {
     const filter = {};
     if (year) {
         filter.year = year;
@@ -339,11 +339,17 @@ const fetchActorPayments = async (year, status, search) => {
     if (status) {
         filter.status = status;
     }
-    const actorPayments = await actor_payment_schema_1.default.find(filter)
-        .sort({ createdAt: -1 })
-        .populate("actor", "fullName")
-        .lean();
-    return actorPayments;
+    const [actorPayments, total] = await Promise.all([
+        await actor_payment_schema_1.default.find(filter)
+            .sort({ createdAt: -1 })
+            .populate("actor", "fullName")
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        actor_payment_schema_1.default.countDocuments(),
+    ]);
+    const totalPages = Math.floor(total / limit);
+    return { actorPayments, totalPages };
 };
 const fetchPaymentHistory = async (year, status, search) => {
     const filter = {};

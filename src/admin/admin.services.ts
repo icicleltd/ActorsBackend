@@ -421,6 +421,8 @@ const fetchActorPayments = async (
   year: string,
   status: "pending" | "verified" | "rejected",
   search: string,
+  limit: number,
+  skip: number,
 ) => {
   const filter: any = {};
   if (year) {
@@ -429,11 +431,17 @@ const fetchActorPayments = async (
   if (status) {
     filter.status = status;
   }
-  const actorPayments = await ActorPayment.find(filter)
-    .sort({ createdAt: -1 })
-    .populate("actor", "fullName")
-    .lean();
-  return actorPayments;
+  const [actorPayments, total] = await Promise.all([
+   await ActorPayment.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("actor", "fullName")
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    ActorPayment.countDocuments(),
+  ]);
+  const totalPages = Math.floor(total / limit);
+  return { actorPayments, totalPages };
 };
 const fetchPaymentHistory = async (
   year: string,
@@ -469,7 +477,7 @@ const toggleActorStatus = async ({ actorId }: { actorId: string }) => {
   const updateActor = await Actor.findByIdAndUpdate(
     actorId,
     [{ $set: { isActive: { $not: "$isActive" } } }],
-    { new: true,updatePipeline:true },
+    { new: true, updatePipeline: true },
   );
   console.log(updateActor);
   return updateActor;

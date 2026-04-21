@@ -401,31 +401,31 @@ const getAllActor = async (
       },
     });
 
-   pipeline.push({
-  $addFields: {
-    _idNoPrefix: {
-      $cond: {
-        if: { $and: [{ $ne: ["$idNo", null] }, { $ne: ["$idNo", ""] }] },
-        then: { $arrayElemAt: [{ $split: ["$idNo", "-"] }, 0] },
-        else: "ZZZ", // push empty idNo actors to the end
-      },
-    },
-    _idNoNum: {
-      $convert: {
-        input: {
-          $cond: {
-            if: { $and: [{ $ne: ["$idNo", null] }, { $ne: ["$idNo", ""] }] },
-            then: { $arrayElemAt: [{ $split: ["$idNo", "-"] }, 1] },
-            else: "0",
-          },
-        },
-        to: "int",
-        onError: 0,  // if conversion fails for any reason, default to 0
-        onNull: 0,   // if null, default to 0
-      },
-    },
-  },
-});
+//    pipeline.push({
+//   $addFields: {
+//     _idNoPrefix: {
+//       $cond: {
+//         if: { $and: [{ $ne: ["$idNo", null] }, { $ne: ["$idNo", ""] }] },
+//         then: { $arrayElemAt: [{ $split: ["$idNo", "-"] }, 0] },
+//         else: "ZZZ", // push empty idNo actors to the end
+//       },
+//     },
+//     _idNoNum: {
+//       $convert: {
+//         input: {
+//           $cond: {
+//             if: { $and: [{ $ne: ["$idNo", null] }, { $ne: ["$idNo", ""] }] },
+//             then: { $arrayElemAt: [{ $split: ["$idNo", "-"] }, 1] },
+//             else: "0",
+//           },
+//         },
+//         to: "int",
+//         onError: 0,  // if conversion fails for any reason, default to 0
+//         onNull: 0,   // if null, default to 0
+//       },
+//     },
+//   },
+// });
   }
 
   // ==================== CATEGORY FILTERS ====================
@@ -496,11 +496,14 @@ const getAllActor = async (
     pipeline.push({
       $sort: { "rankHistory.end": -1, idNo: 1 },
     });
-  } else if (rankGroup === "all") {
-    pipeline.push({
-      $sort:{_idNoPrefix:sortWith,_idNoNum: sortWith}
-    })
-  } else {
+  } 
+  // else if (rankGroup === "all")
+  //    {
+  //   pipeline.push({
+  //     $sort:{_idNoPrefix:sortWith,_idNoNum: sortWith}
+  //   })
+  // } 
+  else {
     pipeline.push({ $sort: { [sortBy]: sortWith } });
   }
 
@@ -515,8 +518,8 @@ const getAllActor = async (
           $project: {
             password: 0, // Exclude password only
             // All other fields including current will be included by default
-            _idNoNum: 0,
-            _idNoPrefix: 0,
+            // _idNoNum: 0,
+            // _idNoPrefix: 0,
           },
         },
       ],

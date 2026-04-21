@@ -87,6 +87,11 @@ router.post("/fix-actor", async (req, res) => {
     const result = await actor_schema_1.default.updateMany({ isModified: { $exists: false } }, { $set: { isModified: false } });
     res.json(result);
 });
+router.post("/add-actor-email", async (req, res) => {
+    // const result = await Actor.updateMany({ email: { $exists: false } },{$set:{email:"info@actorsequitybd.com"}});
+    const result = await actor_schema_1.default.findById("6948f36bacbe1f5f9154aaac");
+    res.json(result);
+});
 router.post("/be-a-mem", async (req, res) => {
     const result = await beAMember_schema_1.default.updateMany({ "actorReference.status": { $exists: false } }, {
         $set: {

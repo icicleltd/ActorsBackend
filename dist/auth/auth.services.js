@@ -110,18 +110,19 @@ const readAuth = async (authId) => {
 };
 const createOTP = async (idNo, email) => {
     (0, requiredName_1.requiredString)(idNo, "Actor ID");
-    (0, requiredName_1.requiredString)(email, "Email");
+    // requiredString(email, "Email");
     const existsActor = await actor_schema_1.default.findOne({
         idNo: { $regex: `^${idNo.trim()}$`, $options: "i" },
     })
-        .select("_id fullName")
+        .select("_id fullName email")
         .lean();
+    console.log(existsActor);
     if (!existsActor) {
         throw new error_1.AppError(404, "Actor not found");
     }
     const existsOTP = await otp_schema_1.ActorOTP.findOne({ actor: existsActor._id }).lean();
     if (existsOTP) {
-        throw new error_1.AppError(409, `OTP already exists for this actor.Check your email or wait until it expires at ${existsOTP.expiresAt.toLocaleString()}`);
+        throw new error_1.AppError(409, `OTP already exists for this actor.Check this ${existsActor.email} or wait until it expires at ${existsOTP.expiresAt.toLocaleString()}`);
     }
     // if (existsOTP) {
     //   await ActorOTP.findByIdAndDelete(existsActor._id);
@@ -136,11 +137,11 @@ const createOTP = async (idNo, email) => {
         throw new error_1.AppError(500, "Failed to create OTP. Please try again.");
     }
     const { subject, text, html } = (0, sentOTP_1.otpEmailTemplate)(existsActor.fullName, generateOpt, saveOTP.expiresAt);
-    await (0, emailHelper_1.sendMail)({ to: email, subject, text, html });
+    await (0, emailHelper_1.sendMail)({ to: existsActor.email, subject, text, html });
     // console.log(saveOTP)
     // console.log(existsOTP);
     // console.log(existsActor);
-    return saveOTP;
+    return existsActor;
 };
 const updatePassword = async (idNo, newPassword) => {
     (0, requiredName_1.requiredString)(idNo, "Actor ID");

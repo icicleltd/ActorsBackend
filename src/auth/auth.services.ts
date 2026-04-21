@@ -125,12 +125,13 @@ const readAuth = async (authId: string) => {
 
 const createOTP = async (idNo: string, email: string) => {
   requiredString(idNo, "Actor ID");
-  requiredString(email, "Email");
+  // requiredString(email, "Email");
   const existsActor = await Actor.findOne({
     idNo: { $regex: `^${idNo.trim()}$`, $options: "i" },
   })
-    .select("_id fullName")
+    .select("_id fullName email")
     .lean();
+    console.log(existsActor)
   if (!existsActor) {
     throw new AppError(404, "Actor not found");
   }
@@ -138,7 +139,7 @@ const createOTP = async (idNo: string, email: string) => {
   if (existsOTP) {
     throw new AppError(
       409,
-      `OTP already exists for this actor.Check your email or wait until it expires at ${existsOTP.expiresAt.toLocaleString()}`,
+      `OTP already exists for this actor.Check this ${existsActor.email} or wait until it expires at ${existsOTP.expiresAt.toLocaleString()}`,
     );
   }
   // if (existsOTP) {
@@ -160,12 +161,12 @@ const createOTP = async (idNo: string, email: string) => {
     saveOTP.expiresAt,
   );
 
-  await sendMail({ to: email, subject, text, html });
+  await sendMail({ to: existsActor.email!, subject, text, html });
   // console.log(saveOTP)
   // console.log(existsOTP);
 
   // console.log(existsActor);
-  return saveOTP;
+  return existsActor;
 };
 const updatePassword = async (idNo: string, newPassword: string) => {
   requiredString(idNo, "Actor ID");

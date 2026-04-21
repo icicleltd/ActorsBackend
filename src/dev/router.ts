@@ -104,6 +104,11 @@ router.post("/fix-actor", async (req, res) => {
 
   res.json(result);
 });
+router.post("/add-actor-email", async (req, res) => {
+  // const result = await Actor.updateMany({ email: { $exists: false } },{$set:{email:"info@actorsequitybd.com"}});
+  const result = await Actor.findById("6948f36bacbe1f5f9154aaac");
+  res.json(result);
+});
 
 router.post("/be-a-mem", async (req, res) => {
   const result = await BeAMember.updateMany(
@@ -273,41 +278,37 @@ router.post("/isCreatedPassword", async (req, res) => {
   res.json(result);
 });
 
-router.post(
-  "/file",
-  fileUploader.upload.single("file"),
-  async (req, res) => {
-    const file = req.file;
+router.post("/file", fileUploader.upload.single("file"), async (req, res) => {
+  const file = req.file;
 
-    if (!file) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No file uploaded" });
-    }
-
-    const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: "raw",
-          folder: "cloudinary-node-upload-pdf-demo",
-          public_id: file.originalname.split(".")[0],
-        },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        }
-      );
-
-      stream.end(file.buffer);
-    });
-
-    res.json({
-      success: true,
-      pdf: result,
-      file,
-    });
+  if (!file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded" });
   }
-);
+
+  const result = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "raw",
+        folder: "cloudinary-node-upload-pdf-demo",
+        public_id: file.originalname.split(".")[0],
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      },
+    );
+
+    stream.end(file.buffer);
+  });
+
+  res.json({
+    success: true,
+    pdf: result,
+    file,
+  });
+});
 
 // Count all active actors
 // router.get("/count-active", async (req, res) => {

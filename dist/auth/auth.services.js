@@ -116,7 +116,6 @@ const createOTP = async (idNo, email) => {
     })
         .select("_id fullName email")
         .lean();
-    console.log(existsActor);
     if (!existsActor) {
         throw new error_1.AppError(404, "Actor not found");
     }

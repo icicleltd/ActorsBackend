@@ -28,6 +28,7 @@ const createAuth = async (payload: IPayload, otp: string) => {
     [field]: { $regex: trimmedIdentifier, $options: "i" },
   }));
   filter.isActive = true;
+
   const existingUser = await Actor.findOne(filter)
     .select("+password _id email fullName isCreatePassword")
     .lean(false);
@@ -131,7 +132,6 @@ const createOTP = async (idNo: string, email: string) => {
   })
     .select("_id fullName email")
     .lean();
-    console.log(existsActor)
   if (!existsActor) {
     throw new AppError(404, "Actor not found");
   }

@@ -56,6 +56,7 @@ app.use(express_1.default.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     const allowedOrigins = [
         "*",
+        "https://actorsequitybd.com", // Local development
         "http://localhost:3000", // Local development
         "https://actors-equity-seven.vercel.app", // Deployed frontend 
         "https://actors-equity.vercel.app", // Deployed frontend 

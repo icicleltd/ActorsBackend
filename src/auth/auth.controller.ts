@@ -8,13 +8,13 @@ import setCookie from "../helper/cookieHelper";
 const createAuth = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const payload: IPayload = req.body;
-    const otp =req.query.otp as string;
-    const result = await AuthService.createAuth(payload,otp);
+    const otp = req.query.otp as string;
+    const result = await AuthService.createAuth(payload, otp);
     setCookie(
       res,
       "accessToken",
       result.accessToken,
-      Number(process.env.ACCESS_COOKIE_EXPIRE_IN)
+      Number(process.env.ACCESS_COOKIE_EXPIRE_IN),
     );
 
     sendResponse(res, {
@@ -23,13 +23,13 @@ const createAuth = catchAsync(
       message: "Auth created successfully",
       data: result,
     });
-  }
+  },
 );
 
 const getAuths = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
     const user = req.user;
- 
+
     const result = await AuthService.getAuths(user);
 
     sendResponse(res, {
@@ -38,7 +38,7 @@ const getAuths = catchAsync(
       message: "Auths fetched successfully",
       data: result,
     });
-  }
+  },
 );
 
 const getAdminAuths = catchAsync(
@@ -52,7 +52,7 @@ const getAdminAuths = catchAsync(
       message: "Admin auths fetched successfully",
       data: result,
     });
-  }
+  },
 );
 
 const readAuth = catchAsync(
@@ -66,25 +66,25 @@ const readAuth = catchAsync(
       message: "Auth updated successfully",
       data: result,
     });
-  }
+  },
 );
 const createOTP = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {idNo,email} = req.body;
-    const result = await AuthService.createOTP(idNo,email);
+    const { idNo, email } = req.body;
+    const result = await AuthService.createOTP(idNo, email);
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
-      message: "Otp Created successfully. Please check your email",
+      message: `OTP sent successfully. Please check your email (${result.email})`,
       data: result,
     });
-  }
+  },
 );
 const updatePassword = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const {idNo,newPassword} = req.body;
-    const result = await AuthService.updatePassword(idNo,newPassword);
+    const { idNo, newPassword } = req.body;
+    const result = await AuthService.updatePassword(idNo, newPassword);
 
     sendResponse(res, {
       statusCode: 200,
@@ -92,7 +92,7 @@ const updatePassword = catchAsync(
       message: "Password updated successfully",
       data: result,
     });
-  }
+  },
 );
 
 export const AuthController = {

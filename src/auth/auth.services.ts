@@ -160,7 +160,7 @@ const createOTP = async (idNo: string, email: string) => {
     generateOpt,
     saveOTP.expiresAt,
   );
-
+  console.log(existsActor.email);
   await sendMail({ to: existsActor.email!, subject, text, html });
   // console.log(saveOTP)
   // console.log(existsOTP);

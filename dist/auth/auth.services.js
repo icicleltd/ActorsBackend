@@ -136,6 +136,7 @@ const createOTP = async (idNo, email) => {
         throw new error_1.AppError(500, "Failed to create OTP. Please try again.");
     }
     const { subject, text, html } = (0, sentOTP_1.otpEmailTemplate)(existsActor.fullName, generateOpt, saveOTP.expiresAt);
+    console.log(existsActor.email);
     await (0, emailHelper_1.sendMail)({ to: existsActor.email, subject, text, html });
     // console.log(saveOTP)
     // console.log(existsOTP);

@@ -13,13 +13,15 @@ const createAuth = async (payload: IPayload, otp: string) => {
   const { password, identifier, role } = payload;
   const filter: any = {};
   const fields = ["email", "idNo", "phoneNumber"];
-  if (!password.trim()) {
-    throw new AppError(400, "Password is required");
+  if (!otp) {
+    if (!password || !password.trim()) {
+      throw new AppError(400, "Password is required");
+    }
   }
-  if (!identifier.trim()) {
+  if (!identifier || !identifier.trim()) {
     throw new AppError(400, "Identifier is required");
   }
-  if (!role.trim()) {
+  if (!role || !role.trim()) {
     throw new AppError(400, "Role is required");
   }
   const trimmedIdentifier = identifier.trim().toLowerCase();

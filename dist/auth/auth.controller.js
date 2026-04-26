@@ -53,7 +53,6 @@ const readAuth = (0, catchAsync_1.default)(async (req, res, next) => {
 const createOTP = (0, catchAsync_1.default)(async (req, res, next) => {
     const { idNo, email } = req.body;
     const result = await auth_services_1.AuthService.createOTP(idNo, email);
-    console.log(result);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,

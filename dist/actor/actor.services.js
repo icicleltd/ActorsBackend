@@ -281,8 +281,8 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                     secondary: {
                                         $switch: {
                                             branches: [
-                                                { case: "$hasPastWay", then: "pastWay" },
-                                                { case: "$hasLifeTime", then: "lifeTime" },
+                                                { case: "$hasPastWay", then: "Passed away" },
+                                                { case: "$hasLifeTime", then: "Life Time" },
                                             ],
                                             default: "$$REMOVE",
                                         },
@@ -297,8 +297,8 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                     secondary: {
                                         $switch: {
                                             branches: [
-                                                { case: "$hasPastWay", then: "pastWay" },
-                                                { case: "$hasLifeTime", then: "lifeTime" },
+                                                { case: "$hasPastWay", then: "Passed away" },
+                                                { case: "$hasLifeTime", then: "Life Time" },
                                             ],
                                             default: "$$REMOVE",
                                         },
@@ -321,8 +321,8 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                                     secondary: {
                                         $switch: {
                                             branches: [
-                                                { case: "$hasPastWay", then: "pastWay" },
-                                                { case: "$hasLifeTime", then: "lifeTime" },
+                                                { case: "$hasPastWay", then: "Passed away" },
+                                                { case: "$hasLifeTime", then: "Life Time" },
                                             ],
                                             default: "$$REMOVE",
                                         },
@@ -332,11 +332,11 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                             /* ✅ Only lifeTime */
                             {
                                 case: "$hasPastWay",
-                                then: { primary: "pastWay" },
+                                then: { primary: "Passed away" },
                             },
                             {
                                 case: "$hasLifeTime",
-                                then: { primary: "lifeTime" },
+                                then: { primary: "Life Time" },
                             },
                         ],
                         /* ⬇️ fallback by category */

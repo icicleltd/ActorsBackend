@@ -308,8 +308,8 @@ const getAllActor = async (
                   secondary: {
                     $switch: {
                       branches: [
-                        { case: "$hasPastWay", then: "pastWay" },
-                        { case: "$hasLifeTime", then: "lifeTime" },
+                        { case: "$hasPastWay", then: "Passed away" },
+                        { case: "$hasLifeTime", then: "Life Time" },
                       ],
                       default: "$$REMOVE",
                     },
@@ -325,8 +325,8 @@ const getAllActor = async (
                   secondary: {
                     $switch: {
                       branches: [
-                        { case: "$hasPastWay", then: "pastWay" },
-                        { case: "$hasLifeTime", then: "lifeTime" },
+                        { case: "$hasPastWay", then: "Passed away" },
+                        { case: "$hasLifeTime", then: "Life Time" },
                       ],
                       default: "$$REMOVE",
                     },
@@ -350,8 +350,8 @@ const getAllActor = async (
                   secondary: {
                     $switch: {
                       branches: [
-                        { case: "$hasPastWay", then: "pastWay" },
-                        { case: "$hasLifeTime", then: "lifeTime" },
+                        { case: "$hasPastWay", then: "Passed away" },
+                        { case: "$hasLifeTime", then: "Life Time" },
                       ],
                       default: "$$REMOVE",
                     },
@@ -362,11 +362,11 @@ const getAllActor = async (
               /* ✅ Only lifeTime */
               {
                 case: "$hasPastWay",
-                then: { primary: "pastWay" },
+                then: { primary: "Passed away" },
               },
               {
                 case: "$hasLifeTime",
-                then: { primary: "lifeTime" },
+                then: { primary: "Life Time" },
               },
             ],
 

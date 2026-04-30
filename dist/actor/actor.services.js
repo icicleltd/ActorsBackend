@@ -186,6 +186,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
             "presentAddress",
             "phoneNumber",
             "rank",
+            "email",
         ];
         pipeline.push({
             $match: {
@@ -381,7 +382,9 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
                     $convert: {
                         input: {
                             $cond: {
-                                if: { $and: [{ $ne: ["$idNo", null] }, { $ne: ["$idNo", ""] }] },
+                                if: {
+                                    $and: [{ $ne: ["$idNo", null] }, { $ne: ["$idNo", ""] }],
+                                },
                                 then: { $arrayElemAt: [{ $split: ["$idNo", "-"] }, 1] },
                                 else: "0",
                             },
@@ -453,7 +456,7 @@ const getAllActor = async (search, page, limit, skip, category, sortBy, sortWith
     }
     else if (rankGroup === "all") {
         pipeline.push({
-            $sort: { _idNoPrefix: sortWith, _idNoNum: sortWith }
+            $sort: { _idNoPrefix: sortWith, _idNoNum: sortWith },
         });
     }
     else {

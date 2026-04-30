@@ -105,8 +105,11 @@ router.post("/fix-actor", async (req, res) => {
   res.json(result);
 });
 router.post("/add-actor-email", async (req, res) => {
-  // const result = await Actor.updateMany({ email: { $exists: false } },{$set:{email:"info@actorsequitybd.com"}});
-  const result = await Actor.findById("6948f36bacbe1f5f9154aaac");
+  const result = await Actor.updateMany(
+    { email: "info@actorsequitybd.com" },
+    { $set: { email: "bangladeshactorseqiuty@gmail.com" } },
+  );
+  // const result = await Actor.findById("6948f36bacbe1f5f9154aaac");
   res.json(result);
 });
 

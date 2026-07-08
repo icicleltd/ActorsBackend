@@ -11,6 +11,10 @@ const mediaDirectorySchema = new mongoose_1.Schema({
         type: String,
         trim: true,
     },
+    address: {
+        type: String,
+        trim: true,
+    },
     phone: {
         type: String,
         required: true,
@@ -31,7 +35,7 @@ const mediaDirectorySchema = new mongoose_1.Schema({
             "makeup_artist",
             "shooting_house",
             "tv_channel",
-            "finance_and_contract",
+            "finance_and_contract", "journalist"
         ],
         required: true,
     },

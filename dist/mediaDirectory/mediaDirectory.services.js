@@ -9,6 +9,8 @@ const createMediaDirectory = async (payload) => {
     if (!payload) {
         throw new error_1.AppError(400, "MediaDirectory info required");
     }
+    // console.log(payload)
+    // return
     const newMediaDirectory = await mediaDirectory_schema_1.MediaDirectory.create(payload);
     if (!newMediaDirectory) {
         throw new error_1.AppError(500, "MediaDirectory not created");

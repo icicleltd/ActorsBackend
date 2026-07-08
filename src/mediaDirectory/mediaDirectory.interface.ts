@@ -7,7 +7,8 @@ export type MediaDirectoryType =
   | "makeup_artist"
   | "shooting_house"
   | "tv_channel"
-  | "finance_and_contract";
+  | "finance_and_contract"
+  | "journalist";
 
 export interface IMediaDirectory {
   houseName?: string;
@@ -15,6 +16,7 @@ export interface IMediaDirectory {
 
   phone: string;
   email?: string;
+  address?:string;
   mediaRole: MediaDirectoryType;
 
   createdAt?: Date;

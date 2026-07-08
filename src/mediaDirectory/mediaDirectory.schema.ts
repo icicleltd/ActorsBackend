@@ -12,6 +12,10 @@ const mediaDirectorySchema = new Schema<IMediaDirectory>(
       type: String,
       trim: true,
     },
+    address: {
+      type: String,
+      trim: true,
+    },
 
     phone: {
       type: String,
@@ -35,7 +39,7 @@ const mediaDirectorySchema = new Schema<IMediaDirectory>(
         "makeup_artist",
         "shooting_house",
         "tv_channel",
-        "finance_and_contract",
+        "finance_and_contract","journalist"
       ],
       required: true,
     },

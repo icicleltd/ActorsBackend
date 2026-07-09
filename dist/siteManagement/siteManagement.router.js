@@ -29,6 +29,10 @@ router.put("/profile-news/:id", siteManagement_controller_1.SiteManagementContro
 router.put("/profile-edit-news/:id", siteManagement_controller_1.SiteManagementController.editProfileNews);
 router.put("/portfolio/tab/:id", siteManagement_controller_1.SiteManagementController.renameTabs);
 router.put("/portfolio/tabs/reorder", siteManagement_controller_1.SiteManagementController.reorderPortfolioTabs);
+router.get("/social-links", siteManagement_controller_1.SiteManagementController.getSocialLinks);
+router.post("/social-links", siteManagement_controller_1.SiteManagementController.createSocialLink);
+router.put("/social-links/:id", siteManagement_controller_1.SiteManagementController.updateSocialLink);
+router.delete("/social-links/:id", siteManagement_controller_1.SiteManagementController.deleteSocialLink);
 /**
  * Delete site Management all module
  */

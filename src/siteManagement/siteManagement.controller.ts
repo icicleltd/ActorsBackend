@@ -338,6 +338,64 @@ const reorderPortfolioTabs = catchAsync(
   },
 );
 
+ 
+const getSocialLinks = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await SiteManagementService.getSocialLinks();
+ 
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Social links fetched successfully",
+      data: result,
+    });
+  },
+);
+ 
+const createSocialLink = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    const result = await SiteManagementService.createSocialLink(payload);
+ 
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Social link created successfully",
+      data: result,
+    });
+  },
+);
+ 
+const updateSocialLink = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const payload = { ...req.body, _id: id };
+    const result = await SiteManagementService.updateSocialLink(payload);
+ 
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Social link updated successfully",
+      data: result,
+    });
+  },
+);
+ 
+const deleteSocialLink = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const id = req.params.id;
+    const result = await SiteManagementService.deleteSocialLink(id);
+ 
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Social link deleted successfully",
+      data: result,
+    });
+  },
+);
+ 
+
 export const SiteManagementController = {
   uploadCoverImages,
   getBanners,
@@ -359,5 +417,9 @@ export const SiteManagementController = {
   createBreakingNews,
   deleteBreakingNews,
   renameTabs,
-  reorderPortfolioTabs
+  reorderPortfolioTabs,
+  getSocialLinks,
+  createSocialLink,
+  updateSocialLink,
+  deleteSocialLink,
 };

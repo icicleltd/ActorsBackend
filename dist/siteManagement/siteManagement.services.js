@@ -10,6 +10,7 @@ const error_1 = require("../middleware/error");
 const protfolio_schems_1 = __importDefault(require("./protfolio.schems"));
 const breakingNew_schema_1 = __importDefault(require("./breakingNew.schema"));
 const mongoose_1 = require("mongoose");
+const socialMedia_schema_1 = __importDefault(require("./socialMedia.schema"));
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
@@ -437,6 +438,76 @@ const reorderPortfolioTabs = async (order, idNo) => {
     await portfolio.save();
     return portfolio;
 };
+// -----------------------------------------------------------------------
+const getSocialLinks = async () => {
+    const socialMedia = await socialMedia_schema_1.default.findOne({});
+    // No document yet means no links have been added — return an empty list
+    // rather than erroring, since "not configured yet" isn't a failure state.
+    return socialMedia?.links ?? [];
+};
+// -----------------------------------------------------------------------
+// CREATE
+// -----------------------------------------------------------------------
+const createSocialLink = async (payload) => {
+    const { platform, url } = payload;
+    if (!platform || !url) {
+        throw new error_1.AppError(400, "Platform and URL are required");
+    }
+    const existing = await socialMedia_schema_1.default.findOne({
+        links: { $elemMatch: { platform } },
+    });
+    if (existing) {
+        throw new error_1.AppError(400, `Link for platform "${platform}" already exists`);
+    }
+    const result = await socialMedia_schema_1.default.findOneAndUpdate({}, { $push: { links: { platform, url } } }, { new: true, upsert: true });
+    if (!result) {
+        throw new error_1.AppError(500, "Failed to create social link");
+    }
+    return result;
+};
+// -----------------------------------------------------------------------
+// UPDATE
+// -----------------------------------------------------------------------
+const updateSocialLink = async (payload) => {
+    const { _id, platform, url } = payload;
+    if (!_id) {
+        throw new error_1.AppError(400, "Link id is required");
+    }
+    if (!platform || !url) {
+        throw new error_1.AppError(400, "Platform and URL are required");
+    }
+    // Guard against renaming this link's platform onto one already used by
+    // a different link in the same document.
+    const conflict = await socialMedia_schema_1.default.findOne({
+        links: { $elemMatch: { platform, _id: { $ne: _id } } },
+    });
+    if (conflict) {
+        throw new error_1.AppError(400, `Link for platform "${platform}" already exists`);
+    }
+    const result = await socialMedia_schema_1.default.findOneAndUpdate({ "links._id": _id }, {
+        $set: {
+            "links.$.platform": platform,
+            "links.$.url": url,
+        },
+    }, { new: true });
+    if (!result) {
+        throw new error_1.AppError(404, "Social link not found");
+    }
+    return result;
+};
+// -----------------------------------------------------------------------
+// DELETE
+// -----------------------------------------------------------------------
+const deleteSocialLink = async (id) => {
+    if (!id) {
+        throw new error_1.AppError(400, "Link id is required");
+    }
+    const result = await socialMedia_schema_1.default.findOneAndUpdate({ "links._id": id }, { $pull: { links: { _id: id } } }, { new: true });
+    if (!result) {
+        throw new error_1.AppError(404, "Social link not found");
+    }
+    return result;
+};
 exports.SiteManagementService = {
     uploadCoverImages,
     getBanners,
@@ -458,5 +529,9 @@ exports.SiteManagementService = {
     createBreakingNews,
     deleteBreakingNews,
     renameTabs,
-    reorderPortfolioTabs
+    reorderPortfolioTabs,
+    getSocialLinks,
+    createSocialLink,
+    updateSocialLink,
+    deleteSocialLink,
 };

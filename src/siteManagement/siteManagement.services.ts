@@ -14,6 +14,7 @@ import {
 import Portfolio from "./protfolio.schems";
 import BreakingNews from "./breakingNew.schema";
 import { Types } from "mongoose";
+import SocialMedia from "./socialMedia.schema";
 
 /* ------------------------------------
    CREATE BANNER
@@ -593,6 +594,105 @@ const reorderPortfolioTabs = async (order: string[], idNo: string) => {
   return portfolio;
 };
 
+
+
+// -----------------------------------------------------------------------
+const getSocialLinks = async () => {
+  const socialMedia = await SocialMedia.findOne({});
+  // No document yet means no links have been added — return an empty list
+  // rather than erroring, since "not configured yet" isn't a failure state.
+  return socialMedia?.links ?? [];
+};
+ 
+// -----------------------------------------------------------------------
+// CREATE
+// -----------------------------------------------------------------------
+const createSocialLink = async (payload: any) => {
+  const { platform, url } = payload;
+ 
+  if (!platform || !url) {
+    throw new AppError(400, "Platform and URL are required");
+  }
+ 
+  const existing = await SocialMedia.findOne({
+    links: { $elemMatch: { platform } },
+  });
+  if (existing) {
+    throw new AppError(400, `Link for platform "${platform}" already exists`);
+  }
+ 
+  const result = await SocialMedia.findOneAndUpdate(
+    {},
+    { $push: { links: { platform, url } } },
+    { new: true, upsert: true },
+  );
+ 
+  if (!result) {
+    throw new AppError(500, "Failed to create social link");
+  }
+  return result;
+};
+ 
+// -----------------------------------------------------------------------
+// UPDATE
+// -----------------------------------------------------------------------
+const updateSocialLink = async (payload: any) => {
+  const { _id, platform, url } = payload;
+ 
+  if (!_id) {
+    throw new AppError(400, "Link id is required");
+  }
+  if (!platform || !url) {
+    throw new AppError(400, "Platform and URL are required");
+  }
+ 
+  // Guard against renaming this link's platform onto one already used by
+  // a different link in the same document.
+  const conflict = await SocialMedia.findOne({
+    links: { $elemMatch: { platform, _id: { $ne: _id } } },
+  });
+  if (conflict) {
+    throw new AppError(400, `Link for platform "${platform}" already exists`);
+  }
+ 
+  const result = await SocialMedia.findOneAndUpdate(
+    { "links._id": _id },
+    {
+      $set: {
+        "links.$.platform": platform,
+        "links.$.url": url,
+      },
+    },
+    { new: true },
+  );
+ 
+  if (!result) {
+    throw new AppError(404, "Social link not found");
+  }
+  return result;
+};
+ 
+// -----------------------------------------------------------------------
+// DELETE
+// -----------------------------------------------------------------------
+const deleteSocialLink = async (id: string) => {
+  if (!id) {
+    throw new AppError(400, "Link id is required");
+  }
+ 
+  const result = await SocialMedia.findOneAndUpdate(
+    { "links._id": id },
+    { $pull: { links: { _id: id } } },
+    { new: true },
+  );
+ 
+  if (!result) {
+    throw new AppError(404, "Social link not found");
+  }
+  return result;
+};
+
+
 export const SiteManagementService = {
   uploadCoverImages,
   getBanners,
@@ -614,5 +714,9 @@ export const SiteManagementService = {
   createBreakingNews,
   deleteBreakingNews,
   renameTabs,
-  reorderPortfolioTabs
+  reorderPortfolioTabs,
+  getSocialLinks,
+  createSocialLink,
+  updateSocialLink,
+  deleteSocialLink,
 };

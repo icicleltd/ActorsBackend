@@ -243,6 +243,46 @@ const reorderPortfolioTabs = (0, catchAsync_1.default)(async (req, res, next) =>
         data: result,
     });
 });
+const getSocialLinks = (0, catchAsync_1.default)(async (req, res, next) => {
+    const result = await siteManagement_services_1.SiteManagementService.getSocialLinks();
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Social links fetched successfully",
+        data: result,
+    });
+});
+const createSocialLink = (0, catchAsync_1.default)(async (req, res, next) => {
+    const payload = req.body;
+    const result = await siteManagement_services_1.SiteManagementService.createSocialLink(payload);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Social link created successfully",
+        data: result,
+    });
+});
+const updateSocialLink = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    const payload = { ...req.body, _id: id };
+    const result = await siteManagement_services_1.SiteManagementService.updateSocialLink(payload);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Social link updated successfully",
+        data: result,
+    });
+});
+const deleteSocialLink = (0, catchAsync_1.default)(async (req, res, next) => {
+    const id = req.params.id;
+    const result = await siteManagement_services_1.SiteManagementService.deleteSocialLink(id);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Social link deleted successfully",
+        data: result,
+    });
+});
 exports.SiteManagementController = {
     uploadCoverImages,
     getBanners,
@@ -264,5 +304,9 @@ exports.SiteManagementController = {
     createBreakingNews,
     deleteBreakingNews,
     renameTabs,
-    reorderPortfolioTabs
+    reorderPortfolioTabs,
+    getSocialLinks,
+    createSocialLink,
+    updateSocialLink,
+    deleteSocialLink,
 };

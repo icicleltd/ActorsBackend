@@ -304,17 +304,35 @@ const renameTabs = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const _id = req.params.id;
     const payload = {
-      id:req.body.id,
-      label:req.body.label,
-      idNo:req.body.idNo,
+      id: req.body.id,
+      label: req.body.label,
+      idNo: req.body.idNo,
     };
-  
-    const result = await SiteManagementService.renameTabs(payload, new Types.ObjectId(_id));
+
+    const result = await SiteManagementService.renameTabs(
+      payload,
+      new Types.ObjectId(_id),
+    );
 
     sendResponse(res, {
       statusCode: 200,
       success: true,
       message: "Tab rename successfully",
+      data: result,
+    });
+  },
+);
+
+const reorderPortfolioTabs = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { order,idNo } = req.body; // order: string[] of tab _ids, new sequence
+
+    const result = await SiteManagementService.reorderPortfolioTabs(order, idNo);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Tabs reordered successfully",
       data: result,
     });
   },
@@ -340,5 +358,6 @@ export const SiteManagementController = {
   deleteTab,
   createBreakingNews,
   deleteBreakingNews,
-  renameTabs
+  renameTabs,
+  reorderPortfolioTabs
 };

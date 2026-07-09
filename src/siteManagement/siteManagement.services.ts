@@ -557,6 +557,42 @@ const renameTabs = async (payload: RenamePortfolioTab, _id: Types.ObjectId) => {
   return rename;
 };
 
+
+const reorderPortfolioTabs = async (order: string[], idNo: string) => {
+  if (!idNo) {
+    throw new AppError(400, "Actor ID No is required");
+  }
+  if (!Array.isArray(order) || order.length === 0) {
+    throw new AppError(400, "Tab order is required");
+  }
+
+  const actor = await Actor.findOne({ idNo });
+  if (!actor) {
+    throw new AppError(404, "Actor not found");
+  }
+
+  const portfolio = await Portfolio.findOne({ actorId: actor._id });
+  if (!portfolio) {
+    throw new AppError(404, "Portfolio not found");
+  }
+
+  const tabMap = new Map(
+    portfolio.tabs.map((tab: any) => [tab._id.toString(), tab])
+  );
+
+  const reordered = order.map((id) => tabMap.get(id)).filter(Boolean);
+
+  // Guard against a stale payload (tab added/deleted since drag started)
+  if (reordered.length !== portfolio.tabs.length) {
+    throw new AppError(400, "Tab order does not match current tabs");
+  }
+
+  portfolio.tabs = reordered as any;
+  await portfolio.save();
+
+  return portfolio;
+};
+
 export const SiteManagementService = {
   uploadCoverImages,
   getBanners,
@@ -578,4 +614,5 @@ export const SiteManagementService = {
   createBreakingNews,
   deleteBreakingNews,
   renameTabs,
+  reorderPortfolioTabs
 };

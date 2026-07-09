@@ -32,6 +32,7 @@ router.put(
 );
 router.put("/profile-news/:id", SiteManagementController.addProfileNews);
 router.put("/profile-edit-news/:id", SiteManagementController.editProfileNews);
+router.put("/portfolio/tab/:id", SiteManagementController.renameTabs);
 
 /**
  * Delete site Management all module

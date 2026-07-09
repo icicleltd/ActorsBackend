@@ -13,6 +13,7 @@ import {
 } from "./siteManagement.interface";
 import Portfolio from "./protfolio.schems";
 import BreakingNews from "./breakingNew.schema";
+import { Types } from "mongoose";
 
 /* ------------------------------------
    CREATE BANNER
@@ -515,6 +516,47 @@ const uploadWorks = async (payload: any, idNo: string) => {
   return result;
 };
 
+export interface RenamePortfolioTab {
+  idNo: string;
+  label: string;
+  id: string;
+}
+
+// update potfolio tab
+const renameTabs = async (payload: RenamePortfolioTab, _id: Types.ObjectId) => {
+  const { id, label, idNo } = payload;
+  if (!idNo) {
+    throw new AppError(400, "Actor ID No is required");
+  }
+  if (!Types.ObjectId.isValid(_id)) {
+    throw new AppError(400, "Not valid objectId");
+  }
+  if (!id || !label) {
+    throw new AppError(400, "Tab id and label are required");
+  }
+  const actor = await Actor.findOne({ idNo: idNo });
+  if (!actor) {
+    throw new AppError(404, "Actor not found");
+  }
+  const rename = await Portfolio.findOneAndUpdate(
+    {
+      actorId: actor._id,
+      "tabs._id": _id,
+    },
+    {
+      $set: {
+        "tabs.$.id": id,
+        "tabs.$.label": label,
+      },
+    },
+    { returnDocument: "after", runValidators: true },
+  );
+  if (!rename) {
+    throw new AppError(400, `Tab with id "${label}" failed to rename`);
+  }
+  return rename;
+};
+
 export const SiteManagementService = {
   uploadCoverImages,
   getBanners,
@@ -535,4 +577,5 @@ export const SiteManagementService = {
   getBreakingNews,
   createBreakingNews,
   deleteBreakingNews,
+  renameTabs,
 };

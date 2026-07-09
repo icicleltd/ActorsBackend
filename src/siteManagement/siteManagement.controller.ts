@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import catchAsync from "../shared/catchAsync";
 import { SiteManagementService } from "./siteManagement.services";
+import { Types } from "mongoose";
 
 const uploadCoverImages = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -299,6 +300,26 @@ const uploadWork = catchAsync(
   },
 );
 
+const renameTabs = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const _id = req.params.id;
+    const payload = {
+      id:req.body.id,
+      label:req.body.label,
+      idNo:req.body.idNo,
+    };
+  
+    const result = await SiteManagementService.renameTabs(payload, new Types.ObjectId(_id));
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Tab rename successfully",
+      data: result,
+    });
+  },
+);
+
 export const SiteManagementController = {
   uploadCoverImages,
   getBanners,
@@ -319,4 +340,5 @@ export const SiteManagementController = {
   deleteTab,
   createBreakingNews,
   deleteBreakingNews,
+  renameTabs
 };

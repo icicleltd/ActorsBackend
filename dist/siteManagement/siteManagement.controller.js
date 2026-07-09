@@ -7,6 +7,7 @@ exports.SiteManagementController = void 0;
 const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const siteManagement_services_1 = require("./siteManagement.services");
+const mongoose_1 = require("mongoose");
 const uploadCoverImages = (0, catchAsync_1.default)(async (req, res, next) => {
     const { urls, idNo } = req.body;
     const result = await siteManagement_services_1.SiteManagementService.uploadCoverImages({
@@ -217,6 +218,31 @@ const uploadWork = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const renameTabs = (0, catchAsync_1.default)(async (req, res, next) => {
+    const _id = req.params.id;
+    const payload = {
+        id: req.body.id,
+        label: req.body.label,
+        idNo: req.body.idNo,
+    };
+    const result = await siteManagement_services_1.SiteManagementService.renameTabs(payload, new mongoose_1.Types.ObjectId(_id));
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Tab rename successfully",
+        data: result,
+    });
+});
+const reorderPortfolioTabs = (0, catchAsync_1.default)(async (req, res, next) => {
+    const { order, idNo } = req.body; // order: string[] of tab _ids, new sequence
+    const result = await siteManagement_services_1.SiteManagementService.reorderPortfolioTabs(order, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Tabs reordered successfully",
+        data: result,
+    });
+});
 exports.SiteManagementController = {
     uploadCoverImages,
     getBanners,
@@ -237,4 +263,6 @@ exports.SiteManagementController = {
     deleteTab,
     createBreakingNews,
     deleteBreakingNews,
+    renameTabs,
+    reorderPortfolioTabs
 };

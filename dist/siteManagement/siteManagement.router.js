@@ -27,6 +27,8 @@ router.put("/profile-performance/:id", siteManagement_controller_1.SiteManagemen
 router.put("/profile-media-archives/:id", siteManagement_controller_1.SiteManagementController.addProfileMediaArchives);
 router.put("/profile-news/:id", siteManagement_controller_1.SiteManagementController.addProfileNews);
 router.put("/profile-edit-news/:id", siteManagement_controller_1.SiteManagementController.editProfileNews);
+router.put("/portfolio/tab/:id", siteManagement_controller_1.SiteManagementController.renameTabs);
+router.put("/portfolio/tabs/reorder", siteManagement_controller_1.SiteManagementController.reorderPortfolioTabs);
 /**
  * Delete site Management all module
  */

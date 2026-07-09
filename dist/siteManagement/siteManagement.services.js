@@ -9,6 +9,7 @@ const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
 const protfolio_schems_1 = __importDefault(require("./protfolio.schems"));
 const breakingNew_schema_1 = __importDefault(require("./breakingNew.schema"));
+const mongoose_1 = require("mongoose");
 /* ------------------------------------
    CREATE BANNER
 ------------------------------------- */
@@ -381,6 +382,61 @@ const uploadWorks = async (payload, idNo) => {
     }
     return result;
 };
+// update potfolio tab
+const renameTabs = async (payload, _id) => {
+    const { id, label, idNo } = payload;
+    if (!idNo) {
+        throw new error_1.AppError(400, "Actor ID No is required");
+    }
+    if (!mongoose_1.Types.ObjectId.isValid(_id)) {
+        throw new error_1.AppError(400, "Not valid objectId");
+    }
+    if (!id || !label) {
+        throw new error_1.AppError(400, "Tab id and label are required");
+    }
+    const actor = await actor_schema_1.default.findOne({ idNo: idNo });
+    if (!actor) {
+        throw new error_1.AppError(404, "Actor not found");
+    }
+    const rename = await protfolio_schems_1.default.findOneAndUpdate({
+        actorId: actor._id,
+        "tabs._id": _id,
+    }, {
+        $set: {
+            "tabs.$.id": id,
+            "tabs.$.label": label,
+        },
+    }, { returnDocument: "after", runValidators: true });
+    if (!rename) {
+        throw new error_1.AppError(400, `Tab with id "${label}" failed to rename`);
+    }
+    return rename;
+};
+const reorderPortfolioTabs = async (order, idNo) => {
+    if (!idNo) {
+        throw new error_1.AppError(400, "Actor ID No is required");
+    }
+    if (!Array.isArray(order) || order.length === 0) {
+        throw new error_1.AppError(400, "Tab order is required");
+    }
+    const actor = await actor_schema_1.default.findOne({ idNo });
+    if (!actor) {
+        throw new error_1.AppError(404, "Actor not found");
+    }
+    const portfolio = await protfolio_schems_1.default.findOne({ actorId: actor._id });
+    if (!portfolio) {
+        throw new error_1.AppError(404, "Portfolio not found");
+    }
+    const tabMap = new Map(portfolio.tabs.map((tab) => [tab._id.toString(), tab]));
+    const reordered = order.map((id) => tabMap.get(id)).filter(Boolean);
+    // Guard against a stale payload (tab added/deleted since drag started)
+    if (reordered.length !== portfolio.tabs.length) {
+        throw new error_1.AppError(400, "Tab order does not match current tabs");
+    }
+    portfolio.tabs = reordered;
+    await portfolio.save();
+    return portfolio;
+};
 exports.SiteManagementService = {
     uploadCoverImages,
     getBanners,
@@ -401,4 +457,6 @@ exports.SiteManagementService = {
     getBreakingNews,
     createBreakingNews,
     deleteBreakingNews,
+    renameTabs,
+    reorderPortfolioTabs
 };

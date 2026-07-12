@@ -616,7 +616,7 @@ const updateActor = async (payload, files, id) => {
 const getActorForModal = async (id, search, limit, sortBy, sortWith, alive) => {
     let filter = {};
     const fields = ["email", "idNo", "phoneNumber", "fullName"];
-    if (id) {
+    if (id && id !== undefined && id !== "") {
         filter._id = { $nin: new mongoose_1.Types.ObjectId(id) };
     }
     if (alive?.trim() === "alive") {
@@ -644,6 +644,19 @@ const getActorForModal = async (id, search, limit, sortBy, sortWith, alive) => {
         .sort({ [sortBy]: sortWith });
     return { actors };
 };
+const updateProfilePhoto = async (url, idNo) => {
+    if (!url)
+        throw new error_1.AppError(404, "Image url not found");
+    if (!idNo)
+        throw new error_1.AppError(404, "idNo not found");
+    const existing = await actor_schema_1.default.findOne({ idNo });
+    if (!existing) {
+        throw new error_1.AppError(404, "This actor not found");
+    }
+    existing.photo = url;
+    await existing.save();
+    return null;
+};
 exports.default = {
     updateActor,
 };
@@ -654,4 +667,5 @@ exports.ActorService = {
     filterByRank,
     updateActor,
     getActorForModal,
+    updateProfilePhoto
 };

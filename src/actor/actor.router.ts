@@ -10,19 +10,21 @@ actorRouter.post(
     { name: "leftPhoto", maxCount: 1 }, // single
     { name: "rightPhoto", maxCount: 1 }, // single
   ]),
-  ActorController.createActor
+  ActorController.createActor,
 );
+actorRouter.put("/photo", ActorController.updateProfilePhoto);
 actorRouter.put(
   "/:id",
   fileUploader.upload.fields([
     { name: "coverImages", maxCount: 10 }, // Multiple cover images
-    { name: "photo", maxCount: 1 },        // Single profile photo
+    { name: "photo", maxCount: 1 }, // Single profile photo
   ]),
-  ActorController.updateActor
+  ActorController.updateActor,
 );
 
-actorRouter.get('/modal',ActorController.getActorForModal);
-actorRouter.get('/',ActorController.getAllActor);
-actorRouter.get('/:id',ActorController.getSingleActor)
-actorRouter.get('/rank/:rank',ActorController.filterByRank)
+
+actorRouter.get("/modal", ActorController.getActorForModal);
+actorRouter.get("/", ActorController.getAllActor);
+actorRouter.get("/:id", ActorController.getSingleActor);
+actorRouter.get("/rank/:rank", ActorController.filterByRank);
 export default actorRouter;

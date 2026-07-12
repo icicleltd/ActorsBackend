@@ -141,6 +141,20 @@ const getActorForModal = catchAsync(
     });
   },
 );
+const updateProfilePhoto = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    console.log("in updateProfilePhoto ")
+    console.log("body",req.body)
+    const {url,idNo}=req.body;
+    const result = await ActorService.updateProfilePhoto(url, idNo);
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Actor Profile photo updated successfully",
+      data: result,
+    });
+  }
+);
 // const test = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
 //     let a: any;
@@ -162,4 +176,5 @@ export const ActorController = {
   filterByRank,
   updateActor,
   getActorForModal,
+  updateProfilePhoto
 };

@@ -104,6 +104,18 @@ const getActorForModal = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
+const updateProfilePhoto = (0, catchAsync_1.default)(async (req, res, next) => {
+    console.log("in updateProfilePhoto ");
+    console.log("body", req.body);
+    const { url, idNo } = req.body;
+    const result = await actor_services_1.ActorService.updateProfilePhoto(url, idNo);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Actor Profile photo updated successfully",
+        data: result,
+    });
+});
 // const test = catchAsync(
 //   async (req: Request, res: Response, next: NextFunction) => {
 //     let a: any;
@@ -124,4 +136,5 @@ exports.ActorController = {
     filterByRank,
     updateActor,
     getActorForModal,
+    updateProfilePhoto
 };

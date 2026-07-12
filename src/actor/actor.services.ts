@@ -693,7 +693,7 @@ const getActorForModal = async (
 ) => {
   let filter: Partial<Record<string, unknown>> = {};
   const fields = ["email", "idNo", "phoneNumber", "fullName"];
-  if (id) {
+  if (id && id !==undefined && id !== "") {
     filter._id = { $nin: new Types.ObjectId(id) };
   }
   if (alive?.trim() === "alive") {
@@ -722,6 +722,17 @@ const getActorForModal = async (
     .sort({ [sortBy]: sortWith });
   return { actors };
 };
+const updateProfilePhoto = async(url:string,idNo:string)=>{
+  if(!url) throw new AppError(404,"Image url not found");
+  if(!idNo) throw new AppError(404,"idNo not found");
+  const existing =  await Actor.findOne({idNo});
+  if(!existing){
+    throw new AppError(404,"This actor not found");
+  }
+   existing.photo= url;
+   await existing.save();
+   return null;
+}
 
 export default {
   updateActor,
@@ -734,4 +745,5 @@ export const ActorService = {
   filterByRank,
   updateActor,
   getActorForModal,
+  updateProfilePhoto
 };

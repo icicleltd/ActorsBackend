@@ -9,6 +9,7 @@ const actorPaymentInfo = catchAsync(
     const search = req.query.search as string;
     const alive = req.query.alive as string;
     const limit = parseInt(req.query.limit as string) || 20;
+    const page = parseInt(req.query.page as string) || 1;
     const sortBy = (req.query.sortBy as string) || "createdAt";
     const sortWith: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
     const year = parseInt(req.query.year as string);
@@ -23,6 +24,7 @@ const actorPaymentInfo = catchAsync(
       alive,
       year,
       status,
+      page,
     );
     sendResponse(res, {
       statusCode: 200,
@@ -161,6 +163,22 @@ const getMergedPayments = catchAsync(async (req: Request, res: Response) => {
   //   data: result.data,
   // });
 });
+const recordActorPayment = catchAsync(async (req: Request, res: Response) => {
+  const result = await ActorPaymentService.recordActorPayment(req.body);
+  sendResponse(res, {
+    statusCode: 201,
+    success: true,
+    message: "Payments record successfully",
+    data: result,
+  });
+
+  // res.status(200).json({
+  //   success: true,
+  //   message: "Payments retrieved successfully",
+  //   meta: result.meta,
+  //   data: result.data,
+  // });
+});
 
 export const ActorPaymentController = {
   actorPaymentInfo,
@@ -171,4 +189,5 @@ export const ActorPaymentController = {
   verifyActorPayment,
   getPaymentDashboardStats,
   getMergedPayments,
+  recordActorPayment,
 };

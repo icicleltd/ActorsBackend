@@ -2,9 +2,9 @@ export interface ISponcer {
   url: string;
   name: string;
   discount: string;
-  terms: string;
-  description: string;
-  validity: string;
+  terms?: string;
+  description?: string;
+  validity?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

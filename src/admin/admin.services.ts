@@ -13,7 +13,9 @@ import { Admin } from "./admin.schema";
 import { TokenPayload } from "../auth/auth.interface";
 import { jwtHelper } from "../helper/jwtHelper";
 import { Secret } from "jsonwebtoken";
-import ActorPayment from "../actor payment/actor.payment.schema";
+import ActorPayment, {
+  NotifyPayment,
+} from "../actor payment/actor.payment.schema";
 
 const createAdmin = async (payload: PayloadAdmin) => {
   if (!payload) {
@@ -432,7 +434,7 @@ const fetchActorPayments = async (
     filter.status = status;
   }
   const [actorPayments, total] = await Promise.all([
-   await ActorPayment.find(filter)
+    await ActorPayment.find(filter)
       .sort({ createdAt: -1 })
       .populate("actor", "fullName")
       .skip(skip)
@@ -455,6 +457,22 @@ const fetchPaymentHistory = async (
   if (status && status !== "all") {
     filter.status = status;
   }
+
+  // if (status === "alllll") {
+  //   console.log(" in  all block");
+  //   const [paidPayments, pendingPayments] = await Promise.all([
+  //     NotifyPayment.find({ status: "request" })
+  //       .sort({ createdAt: -1 })
+  //       .populate("actorId", "fullName")
+  //       .lean(),
+  //     ActorPayment.find({ status: "verified" })
+  //       .sort({ createdAt: -1 })
+  //       .populate("actor", "fullName")
+  //       .lean(),
+  //   ]);
+  //   console.log("paidPayments", "pendingPayments",paidPayments, pendingPayments);
+  //   return { paidPayments, pendingPayments };
+  // }
   const actorPayments = await ActorPayment.find(filter)
     .sort({ createdAt: -1 })
     .populate("actor", "fullName")
@@ -469,8 +487,8 @@ const getGroupedYears = async (): Promise<
   return years
     .sort((a, b) => Number(b) - Number(a))
     .map((year) => ({
-      label: year,
-      value: year,
+      label: String(year),
+      value: String(year),
     }));
 };
 const toggleActorStatus = async ({ actorId }: { actorId: string }) => {

@@ -4,8 +4,8 @@ export interface IActorPayment {
   actor: mongoose.Types.ObjectId;
   notifyPayment: mongoose.Types.ObjectId;
   type: "membership" | "event";
-  year?: string;
-  eventName?: string;
+  year?: number;
+  eventId?: Types.ObjectId;
   number: string;
   amount: number;
   desc?: string;
@@ -14,20 +14,24 @@ export interface IActorPayment {
 
   status: "pending" | "verified" | "rejected";
 
-  verifiedBy?: mongoose.Types.ObjectId;
-  verifiedAt?: Date;
+  verifiedBy: mongoose.Types.ObjectId; 
+  verifiedAt: Date;
 
   note?: string;
 }
 
 export interface INotifyPayment {
   actorId: Types.ObjectId;
+  type: "membership" | "event";
+  eventId?: Types.ObjectId;
+  transactionId?: string;
   amount: number;
   number: string;
   desc?: string;
   year?: string;
   isView: boolean;
-  status: "request" | "paid";
+  status: "request" | "paid" | "rejected";
+  rejectionReason?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

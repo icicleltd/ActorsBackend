@@ -1,7 +1,11 @@
 import mongoose, { Types } from "mongoose";
 import Actor from "../actor/actor.schema";
 import { AppError } from "../middleware/error";
-import { INotifyActorPayload, INotifyPayment } from "./actor.payment.interface";
+import {
+  IActorPayment,
+  INotifyActorPayload,
+  INotifyPayment,
+} from "./actor.payment.interface";
 import { Notification } from "../notification/notification.schema";
 import ActorPayment, { NotifyPayment } from "./actor.payment.schema";
 import { INotification } from "../notification/notification.interface";
@@ -19,6 +23,7 @@ const actorPaymentInfo = async (
   alive: string,
   year: number,
   status?: "paid" | "pending",
+  page: number = 1,
 ) => {
   if (!year) {
     throw new AppError(400, "Year is required");
@@ -47,8 +52,8 @@ const actorPaymentInfo = async (
     ];
   }
 
-  // Aggregation pipeline
-  const pipeline: any[] = [
+  // Base pipeline: match -> lookup payments -> compute paid/amount
+  const basePipeline: any[] = [
     { $match: matchFilter },
 
     {
@@ -79,33 +84,53 @@ const actorPaymentInfo = async (
     },
   ];
 
-  // Status filtering
+  // Status filtering — applied before the $facet split so both
+  // the data branch and the count branch reflect the same filter
   if (status === "paid") {
-    pipeline.push({ $match: { paid: true } });
+    basePipeline.push({ $match: { paid: true } });
   }
 
   if (status === "pending") {
-    pipeline.push({ $match: { paid: false } });
+    basePipeline.push({ $match: { paid: false } });
   }
 
-  // Final projection + sorting + limit
-  pipeline.push(
+  // $facet: paginated data + total count in a single query
+  const pipeline: any[] = [
+    ...basePipeline,
     {
-      $project: {
-        fullName: 1,
-        idNo: 1,
-        dob: 1,
-        paid: 1,
-        amount: 1,
-        status: 1,
+      $facet: {
+        data: [
+          {
+            $project: {
+              fullName: 1,
+              idNo: 1,
+              dob: 1,
+              paid: 1,
+              amount: 1,
+              status: 1,
+            },
+          },
+          { $sort: { [sortBy]: sortWith } },
+          { $skip: (page - 1) * limit },
+          { $limit: limit },
+        ],
+        totalCount: [{ $count: "count" }],
       },
     },
-    { $sort: { [sortBy]: sortWith } },
-    { $limit: limit },
-  );
+    {
+      $project: {
+        data: 1,
+        total: { $ifNull: [{ $arrayElemAt: ["$totalCount.count", 0] }, 0] },
+      },
+    },
+  ];
 
-  const actors = await Actor.aggregate(pipeline);
-  return { actors };
+  const result = await Actor.aggregate(pipeline);
+  const actors = result[0]?.data ?? [];
+  const total = result[0]?.total ?? 0;
+  const totalPages = Math.max(Math.ceil(total / limit), 1);
+
+  return { actors, total, totalPages, page, limit };
 };
 
 const notifyActorForPayment = async (payload: INotifyActorPayload) => {
@@ -243,7 +268,7 @@ const paymentSubmitted = async (
         {
           $set: {
             status: "paid",
-            isView: true
+            isView: true,
           },
         },
         {
@@ -261,7 +286,7 @@ const paymentSubmitted = async (
             actor: actorId,
             notifyPayment: updateNotifyPayment._id,
             type,
-            year,
+            year: Number(year),
             amount: Number(amount),
             transactionId,
             number: senderNumber,
@@ -271,9 +296,9 @@ const paymentSubmitted = async (
         { session },
       );
       await Notification.findOneAndDelete({
-        notifyPayment:notifyPaymentId,
-        recipient:actor._id
-      })
+        notifyPayment: notifyPaymentId,
+        recipient: actor._id,
+      });
       await Notification.create(
         [
           {
@@ -701,6 +726,44 @@ const getMergedPaymentsFromDB = async (query: QueryParams) => {
   };
 };
 
+export interface IRecordActorPayment {
+  actorIds: string[];
+  desc: string;
+  fee: number;
+  year: number;
+}
+const recordActorPayment = async (
+  payload: IRecordActorPayment,
+  userId: Types.ObjectId,
+) => {
+  const { actorIds, fee, year, desc } = payload;
+
+  actorIds.forEach((actorId) => {
+    if (!Types.ObjectId.isValid(actorId)) {
+      throw new AppError(404, "Invalid actorId");
+    }
+  });
+  if (!fee) throw new AppError(400, "Fee is required");
+  if (!year) throw new AppError(400, "Year is required");
+  // if (!desc) throw new AppError(400, "Payment type  is required");
+  const recordedActorPayment: Omit<
+    IActorPayment,
+    "notifyPayment" | "transactionId" | "number"
+  >[] = actorIds.map((actorId) => ({
+    actor: new Types.ObjectId(actorId),
+    type: "membership",
+    year,
+    amount: fee,
+    desc,
+    method: "Cash",
+    status: "verified",
+    verifiedAt: new Date(),
+    verifiedBy: userId,
+  }));
+  console.log(recordedActorPayment);
+  // const result = await ActorPayment.create({});
+};
+
 export const ActorPaymentService = {
   actorPaymentInfo,
   notifyActorForPayment,
@@ -710,4 +773,5 @@ export const ActorPaymentService = {
   verifyActorPayment,
   getPaymentDashboardStats,
   getMergedPaymentsFromDB,
+  recordActorPayment,
 };

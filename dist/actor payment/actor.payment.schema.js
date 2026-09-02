@@ -22,7 +22,16 @@ const actorPaymentSchema = new mongoose_1.Schema({
     },
     year: {
         type: String,
-        required: true,
+        required: function () {
+            return this.type === "membership";
+        },
+    },
+    eventId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Event",
+        required: function () {
+            return this.type === "event";
+        },
     },
     number: {
         type: String,
@@ -32,7 +41,6 @@ const actorPaymentSchema = new mongoose_1.Schema({
         type: String,
         trim: true,
     },
-    eventName: String,
     amount: {
         type: Number,
         required: true,
@@ -47,17 +55,20 @@ const actorPaymentSchema = new mongoose_1.Schema({
     status: {
         type: String,
         enum: ["pending", "verified", "rejected"],
-        default: "pending",
+        default: "verified",
     },
     verifiedBy: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Admin",
+        required: true,
     },
-    verifiedAt: Date,
+    verifiedAt: { type: Date, required: true, default: Date.now },
     note: String,
 }, { timestamps: true });
 // Prevent duplicate yearly membership payment
 actorPaymentSchema.index({ actor: 1, type: 1, year: 1 }, { unique: true, partialFilterExpression: { type: "membership" } });
+actorPaymentSchema.index({ actor: 1, type: 1, eventId: 1 }, { unique: true, partialFilterExpression: { type: "event" } });
+actorPaymentSchema.index({ transactionId: 1 }, { unique: true, sparse: true });
 const ActorPayment = (0, mongoose_1.model)("ActorPayment", actorPaymentSchema);
 exports.default = ActorPayment;
 const NotifyPaymentSchema = new mongoose_1.Schema({
@@ -65,6 +76,25 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Actor",
         required: true,
+    },
+    type: {
+        type: String,
+        enum: ["membership", "event"],
+        default: "membership",
+        required: true,
+    },
+    year: {
+        type: Number,
+        required: function () {
+            return (this.type = "membership");
+        },
+    },
+    eventId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Event",
+        required: function () {
+            return this.type === "event";
+        },
     },
     amount: {
         type: Number,
@@ -75,24 +105,31 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
         required: true,
         trim: true,
     },
-    year: {
-        type: Number,
-        required: true,
+    desc: {
+        type: String,
+        trim: true,
     },
     status: {
         type: String,
         enum: ["request", "paid"],
         default: "request",
     },
-    desc: {
-        type: String,
-        trim: true,
-    },
+    rejectionReason: { type: String, trim: true },
     isView: {
         type: Boolean,
         default: false,
     },
 }, {
     timestamps: true,
+});
+// Block duplicate PENDING requests for the same membership year
+NotifyPaymentSchema.index({ actorId: 1, type: 1, year: 1 }, {
+    unique: true,
+    partialFilterExpression: { type: "membership", status: "request" },
+});
+// Block duplicate PENDING requests for the same event
+NotifyPaymentSchema.index({ actorId: 1, type: 1, eventId: 1 }, {
+    unique: true,
+    partialFilterExpression: { type: "event", status: "request" },
 });
 exports.NotifyPayment = (0, mongoose_1.model)("NotifyPayment", NotifyPaymentSchema);

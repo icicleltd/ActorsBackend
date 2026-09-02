@@ -370,8 +370,8 @@ const getGroupedYears = async () => {
     return years
         .sort((a, b) => Number(b) - Number(a))
         .map((year) => ({
-        label: year,
-        value: year,
+        label: String(year),
+        value: String(year),
     }));
 };
 const toggleActorStatus = async ({ actorId }) => {

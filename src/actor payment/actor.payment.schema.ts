@@ -12,7 +12,9 @@ const actorPaymentSchema = new Schema<IActorPayment>(
     notifyPayment: {
       type: Schema.Types.ObjectId,
       ref: "NotifyPayment",
-      required: true,
+      required: function (this: any) {
+        return this.method !== "Cash";
+      },
     },
 
     type: {
@@ -24,18 +26,27 @@ const actorPaymentSchema = new Schema<IActorPayment>(
 
     year: {
       type: String,
-      required: true,
+      required: function (this: any) {
+        return this.type === "membership";
+      },
+    },
+    eventId: {
+      type: Schema.Types.ObjectId,
+      ref: "Event",
+      required: function (this: any) {
+        return this.type === "event";
+      },
     },
     number: {
       type: String,
-      required: true,
+      required: function (this: any) {
+        return this.method !== "Cash";
+      },
     },
-     desc: {
+    desc: {
       type: String,
       trim: true,
     },
-
-    eventName: String,
 
     amount: {
       type: Number,
@@ -54,15 +65,16 @@ const actorPaymentSchema = new Schema<IActorPayment>(
     status: {
       type: String,
       enum: ["pending", "verified", "rejected"],
-      default: "pending",
+      default: "verified",
     },
 
     verifiedBy: {
       type: Schema.Types.ObjectId,
       ref: "Admin",
+      required: true,
     },
 
-    verifiedAt: Date,
+    verifiedAt: { type: Date, required: true, default: Date.now },
 
     note: String,
   },
@@ -74,6 +86,11 @@ actorPaymentSchema.index(
   { actor: 1, type: 1, year: 1 },
   { unique: true, partialFilterExpression: { type: "membership" } },
 );
+actorPaymentSchema.index(
+  { actor: 1, type: 1, eventId: 1 },
+  { unique: true, partialFilterExpression: { type: "event" } },
+);
+actorPaymentSchema.index({ transactionId: 1 }, { unique: true, sparse: true });
 
 const ActorPayment = model<IActorPayment>("ActorPayment", actorPaymentSchema);
 
@@ -86,6 +103,25 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
       ref: "Actor",
       required: true,
     },
+    type: {
+      type: String,
+      enum: ["membership", "event"],
+      default: "membership",
+      required: true,
+    },
+    year: {
+      type: Number,
+      required: function (this: any) {
+        return (this.type = "membership");
+      },
+    },
+    eventId: {
+      type: Schema.Types.ObjectId,
+      ref: "Event",
+      required: function (this: any) {
+        return this.type === "event";
+      },
+    },
 
     amount: {
       type: Number,
@@ -97,20 +133,17 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
       required: true,
       trim: true,
     },
-    year: {
-      type: Number,
-      required: true,
+    desc: {
+      type: String,
+      trim: true,
     },
+
     status: {
       type: String,
       enum: ["request", "paid"],
       default: "request",
     },
-
-    desc: {
-      type: String,
-      trim: true,
-    },
+    rejectionReason: { type: String, trim: true },
 
     isView: {
       type: Boolean,
@@ -119,6 +152,23 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
   },
   {
     timestamps: true,
+  },
+);
+
+// Block duplicate PENDING requests for the same membership year
+NotifyPaymentSchema.index(
+  { actorId: 1, type: 1, year: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { type: "membership", status: "request" },
+  },
+);
+// Block duplicate PENDING requests for the same event
+NotifyPaymentSchema.index(
+  { actorId: 1, type: 1, eventId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { type: "event", status: "request" },
   },
 );
 

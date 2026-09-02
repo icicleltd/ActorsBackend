@@ -22,7 +22,7 @@ router.post(
   VerifyLogin,
   ActorPaymentController.verifyActorPayment,
 );
-
+router.post("/record-payment", ActorPaymentController.recordActorPayment);
 // Get all (Public/Admin)
 router.get(
   "/notify-actor",

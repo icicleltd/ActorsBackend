@@ -244,7 +244,7 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                     actor: actorId,
                     notifyPayment: updateNotifyPayment._id,
                     type,
-                    year,
+                    year: Number(year),
                     amount: Number(amount),
                     transactionId,
                     number: senderNumber,

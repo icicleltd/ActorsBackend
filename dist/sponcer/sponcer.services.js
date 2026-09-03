@@ -12,12 +12,12 @@ const createSponcer = async (payload) => {
     const { name, url, description, discount, validity, terms } = payload;
     (0, requiredName_1.requiredString)(name, "Name");
     (0, requiredName_1.requiredString)(url, "URL");
-    (0, requiredName_1.requiredString)(description, "Description");
+    // requiredString(description, "Description");
     (0, requiredName_1.requiredString)(discount, "Discount");
-    (0, requiredName_1.requiredString)(terms, "Terms & Conditions");
-    if (!validity || isNaN(Date.parse(validity))) {
-        throw new error_1.AppError(400, "Valid validity date is required");
-    }
+    // requiredString(terms, "Terms & Conditions");
+    // if (!validity || isNaN(Date.parse(validity))) {
+    //   throw new AppError(400, "Valid validity date is required");
+    // }
     const result = await sponcer_schema_1.Sponcer.create(payload);
     if (!result) {
         throw new error_1.AppError(404, "Banner not created");

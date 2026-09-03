@@ -12,11 +12,12 @@ const actorPaymentInfo = (0, catchAsync_1.default)(async (req, res, next) => {
     const search = req.query.search;
     const alive = req.query.alive;
     const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
     const sortBy = req.query.sortBy || "createdAt";
     const sortWith = req.query.sortWith === "asc" ? 1 : -1;
     const year = parseInt(req.query.year);
     const status = req.query.status || "pending";
-    const result = await actor_payment_services_1.ActorPaymentService.actorPaymentInfo(id, search, limit, sortBy, sortWith, alive, year, status);
+    const result = await actor_payment_services_1.ActorPaymentService.actorPaymentInfo(id, search, limit, sortBy, sortWith, alive, year, status, page);
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -98,7 +99,9 @@ const getMergedPayments = (0, catchAsync_1.default)(async (req, res) => {
     const sortBy = req.query.sortBy || "createdAt";
     const sortOrder = req.query.sortWith === "asc" ? 1 : -1;
     const year = req.query.year ? Number(req.query.year) : undefined;
+    console.log("year", year);
     const filter = req.query.filter;
+    console.log("filter", filter);
     const skip = (page - 1) * limit;
     const result = await actor_payment_services_1.ActorPaymentService.getMergedPaymentsFromDB({
         search,
@@ -123,6 +126,84 @@ const getMergedPayments = (0, catchAsync_1.default)(async (req, res) => {
     //   data: result.data,
     // });
 });
+const yearlyActorPaymentStats = (0, catchAsync_1.default)(async (req, res) => {
+    const id = req.query.id;
+    const search = req.query.search;
+    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortWith === "asc" ? 1 : -1;
+    const year = req.query.year ? Number(req.query.year) : undefined;
+    console.log("year", year);
+    const filter = req.query.filter;
+    console.log("filter", filter);
+    const skip = (page - 1) * limit;
+    const result = await actor_payment_services_1.ActorPaymentService.yearlyActorPaymentStats({
+        search,
+        limit,
+        page,
+        skip,
+        sortBy,
+        sortOrder,
+        filter,
+        year,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payments stats successfully",
+        data: result,
+    });
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Payments retrieved successfully",
+    //   meta: result.meta,
+    //   data: result.data,
+    // });
+});
+const recordActorPayment = (0, catchAsync_1.default)(async (req, res) => {
+    const userId = req.user.data._id;
+    const result = await actor_payment_services_1.ActorPaymentService.recordActorPayment(req.body, userId);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 201,
+        success: true,
+        message: "Payments record successfully",
+        data: result,
+    });
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Payments retrieved successfully",
+    //   meta: result.meta,
+    //   data: result.data,
+    // });
+});
+const actorPaymentHistory = (0, catchAsync_1.default)(async (req, res) => {
+    const id = req.query.id;
+    const search = req.query.search;
+    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortWith === "asc" ? 1 : -1;
+    const year = req.query.year ? Number(req.query.year) : undefined;
+    const filter = req.query.filter;
+    const skip = (page - 1) * limit;
+    const result = await actor_payment_services_1.ActorPaymentService.actorPaymentHistory({
+        search,
+        limit,
+        page,
+        skip,
+        sortBy,
+        sortOrder,
+        filter,
+        year,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payments stats successfully",
+        data: result,
+    });
+});
 exports.ActorPaymentController = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -132,4 +213,7 @@ exports.ActorPaymentController = {
     verifyActorPayment,
     getPaymentDashboardStats,
     getMergedPayments,
+    recordActorPayment,
+    yearlyActorPaymentStats,
+    actorPaymentHistory,
 };

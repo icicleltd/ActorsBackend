@@ -157,7 +157,7 @@ const notifyActorForPayment = async (payload: INotifyActorPayload) => {
       const amount = Number(fee);
       const existing = await NotifyPayment.find({
         actorId: { $in: actorId },
-        year,
+        year: Number(year),
         number,
         amount,
       }).session(session);
@@ -524,6 +524,16 @@ interface QueryParams {
   skip: number;
   year?: number;
 }
+interface ActorPaymentStatusQuery {
+  search?: string;
+  filter?: "paid" | "unpaid" | "all";
+  page?: number;
+  limit?: number;
+  sortBy: string;
+  sortOrder: 1 | -1;
+  skip: number;
+  year?: number;
+}
 
 const getMergedPaymentsFromDB = async (query: QueryParams) => {
   const {
@@ -725,6 +735,207 @@ const getMergedPaymentsFromDB = async (query: QueryParams) => {
     data,
   };
 };
+const yearlyActorPaymentStats = async (query: QueryParams) => {
+  const {
+    search,
+    filter,
+    page = 1,
+    limit = 10,
+    sortBy = "createdAt",
+    sortOrder = -1,
+    skip = 0,
+    year,
+  } = query;
+
+  if (filter && !["unpaid", "needVerified", "paid", "all"].includes(filter)) {
+    throw new AppError(
+      400,
+      "Invalid filter value. Must be 'unpaid', 'needVerified', 'all', or 'paid'.",
+    );
+  }
+  if (
+    (filter === "paid" || filter === "needVerified" || filter === "unpaid") &&
+    !year
+  ) {
+    throw new AppError(400, `Year is required for '${filter}' filter.`);
+  }
+  const actorLookupStages = (search?: string) => {
+    const stages: any[] = [
+      {
+        $lookup: {
+          from: "actors",
+          localField: "actor",
+          foreignField: "_id",
+          pipeline: [{ $project: { fullName: 1, photo: 1, idNo: 1 } }],
+          as: "actorInfo",
+        },
+      },
+      {
+        $unwind: "$actorInfo",
+      },
+    ];
+    if (search && search.trim()) {
+      stages.push({
+        $match: {
+          $or: [
+            { "actorInfo.fullName": { $regex: search, $options: "i" } },
+            { "actorInfo.idNo": { $regex: search, $options: "i" } },
+          ],
+        },
+      });
+    }
+    return stages;
+  };
+
+  const buildResult = (result: any[], pageNum: number, limitNum: number) => {
+    const data = result[0]?.data ?? [];
+    const total = result[0]?.totalCount?.[0]?.count ?? 0;
+
+    return {
+      data,
+      meta: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    };
+  };
+
+  const paginateFacet = (skip: number, limit: number) => ({
+    $facet: {
+      data: [
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $project: {
+            source: 1,
+            historyStatus: 1,
+            date: 1,
+            amount: 1,
+            method: 1,
+            type: 1,
+            year: 1,
+            status: 1,
+            desc: 1,
+            transactionId: 1,
+            number: 1,
+            actorInfo: 1,
+            createdAt: 1,
+            updatedAt: 1,
+          },
+        },
+      ],
+      totalCount: [{ $count: "count" }],
+    },
+  });
+
+  if (filter === "paid") {
+    const match: Record<string, any> = {
+      type: "membership",
+      ...(year ? { year } : {}),
+    };
+
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $addFields: {
+          source: "ActorPayment",
+          historyStatus: "paid",
+          date: "$verifiedAt",
+        },
+      },
+      ...actorLookupStages(search),
+      { $sort: { date: -1 } },
+      paginateFacet(skip, limit),
+    ];
+
+    const result = await ActorPayment.aggregate(pipeline);
+    return buildResult(result, page, limit);
+  }
+
+  if (filter === "unpaid" || filter === "needVerified") {
+    const filterCondition = filter === "unpaid" ? "request" : "paid";
+    console.log("in unpaid or need verified", filterCondition);
+    const match: Record<string, any> = {
+      type: "membership",
+      status: filterCondition,
+      ...(year ? { year } : {}),
+    };
+    console.log("match", match);
+    const pipeline: any[] = [
+      { $match: match },
+      {
+        $addFields: {
+          source: "NotifyPayment",
+          historyStatus: filter,
+          date: "$createdAt",
+          actor: "$actorId",
+        },
+      },
+      ...actorLookupStages(search),
+      { $sort: { [sortBy]: sortOrder } },
+      paginateFacet(skip, limit),
+    ];
+
+    const result = await NotifyPayment.aggregate(pipeline);
+    return buildResult(result, page, limit);
+  }
+
+  const actorPaymentMatch: Record<string, unknown> = {
+    type: "membership",
+    ...(year ? { year } : {}),
+  };
+  const notifyPaymentMatch: Record<string, unknown> = {
+    type: "membership",
+    status: { $in: ["request", "paid"] },
+    ...(year ? { year } : {}),
+  };
+
+  const pipeline: any[] = [
+    { $match: actorPaymentMatch },
+    {
+      $addFields: {
+        source: "ActorPayment",
+        historyStatus: "paid",
+        date: "$verifiedAt",
+      },
+    },
+    {
+      $unionWith: {
+        coll: "notifypayments",
+        pipeline: [
+          { $match: notifyPaymentMatch },
+          {
+            $addFields: {
+              source: "NotifyPayment",
+              historyStatus: {
+                $cond: [{ $eq: ["$status", "paid"] }, "needVerified", "unpaid"],
+              },
+              date: "$createdAt",
+              actor: "$actorId",
+            },
+          },
+        ],
+      },
+    },
+    ...actorLookupStages(search),
+    { $sort: { date: -1 } },
+    paginateFacet(skip, limit),
+  ];
+
+  const result = await ActorPayment.aggregate(pipeline);
+  return buildResult(result, page, limit);
+
+  // return {
+  //   meta: {
+  //     page,
+  //     limit,
+  //     total,
+  //   },
+  //   data,
+  // };
+};
 
 export interface IRecordActorPayment {
   actorIds: string[];
@@ -760,8 +971,132 @@ const recordActorPayment = async (
     verifiedAt: new Date(),
     verifiedBy: userId,
   }));
-  console.log(recordedActorPayment);
-  // const result = await ActorPayment.create({});
+
+  const result = await ActorPayment.create(recordedActorPayment);
+  if (!result || result.length < 1) {
+    throw new AppError(400, "Failed to record actor payment");
+  }
+  return result;
+};
+
+const actorPaymentHistory = async (query: ActorPaymentStatusQuery) => {
+  const {
+    search,
+    filter,
+    page = 1,
+    limit = 10,
+    sortBy = "idNo",
+    sortOrder = -1,
+    skip = 0,
+    year,
+  } = query;
+
+  if (filter && !["unpaid", "needVerified", "paid", "all"].includes(filter)) {
+    throw new AppError(
+      400,
+      "Invalid filter value. Must be 'unpaid', 'needVerified', 'all', or 'paid'.",
+    );
+  }
+  if ((filter === "paid" || filter === "unpaid") && !year) {
+    throw new AppError(400, `Year is required for '${filter}' filter.`);
+  }
+
+  const pipeline: any[] = [
+    // 1. Only active actors (adjust if you want all)
+    { $match: { isActive: true } },
+
+    // 2. Search by fullName or idNo
+    ...(search
+      ? [
+          {
+            $match: {
+              $or: [
+                { fullName: { $regex: search, $options: "i" } },
+                { idNo: { $regex: search, $options: "i" } },
+              ],
+            },
+          },
+        ]
+      : []),
+
+    // 3. Look up this actor's membership payment for the given year
+    {
+      $lookup: {
+        from: "actorpayments",
+        let: { actorId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$actor", "$$actorId"] },
+                  { $eq: ["$type", "membership"] },
+                  { $eq: ["$year", year] },
+                ],
+              },
+            },
+          },
+          { $limit: 1 }, // unique index guarantees at most 1 anyway
+        ],
+        as: "paymentInfo",
+      },
+    },
+
+    // 4. Derive paid/unpaid status
+    {
+      $addFields: {
+        paymentStatus: {
+          $cond: [{ $gt: [{ $size: "$paymentInfo" }, 0] }, "paid", "unpaid"],
+        },
+        payment: { $arrayElemAt: ["$paymentInfo", 0] },
+      },
+    },
+
+    // 5. Apply filter
+    ...(filter !== "all" ? [{ $match: { paymentStatus: filter } }] : []),
+
+    // 6. Shape output + paginate
+    {
+      $project: {
+        _id: 1,
+        fullName: 1,
+        idNo: 1,
+        photo: 1,
+        dob: 1,
+        phoneNumber: 1,
+        paymentStatus: 1,
+        payment: {
+          _id: 1,
+          amount: 1,
+          method: 1,
+          transactionId: 1,
+          verifiedAt: 1,
+          status: 1,
+        },
+      },
+    },
+    { $sort: { idNo: 1 } },
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ];
+
+  const result = await Actor.aggregate(pipeline);
+  const data = result[0]?.data ?? [];
+  const total = result[0]?.totalCount?.[0]?.count ?? 0;
+
+  return {
+    data,
+    meta: {
+      page: page,
+      limit: limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const ActorPaymentService = {
@@ -774,4 +1109,6 @@ export const ActorPaymentService = {
   getPaymentDashboardStats,
   getMergedPaymentsFromDB,
   recordActorPayment,
+  yearlyActorPaymentStats,
+  actorPaymentHistory,
 };

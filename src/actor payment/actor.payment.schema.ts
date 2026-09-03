@@ -25,7 +25,7 @@ const actorPaymentSchema = new Schema<IActorPayment>(
     },
 
     year: {
-      type: String,
+      type: Number,
       required: function (this: any) {
         return this.type === "membership";
       },

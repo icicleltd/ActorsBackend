@@ -16,12 +16,12 @@ const sponcerSchema = new mongoose_1.Schema({
     description: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
     },
     terms: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
     },
     discount: {
         type: String,
@@ -31,7 +31,7 @@ const sponcerSchema = new mongoose_1.Schema({
     validity: {
         type: String,
         trim: true,
-        required: true,
+        // required: true,
     },
 }, {
     timestamps: true,

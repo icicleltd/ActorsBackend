@@ -13,11 +13,14 @@ const router = express_1.default.Router();
 router.post("/notify-actor", verifyLogin_1.VerifyLogin, verifyAdmin_1.VerifyAdmin, actor_payment_controller_1.ActorPaymentController.notifyActorForPayment);
 router.post("/save-payment/:id", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.paymentSubmitted);
 router.post("/verify-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.verifyActorPayment);
+router.post("/record-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.recordActorPayment);
 // Get all (Public/Admin)
 router.get("/notify-actor", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.fetchNotifyPayments);
 router.get("/actor-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.fetchActorPayments);
 router.get("/payments-stats", actor_payment_controller_1.ActorPaymentController.getPaymentDashboardStats);
 router.get("/marge-payment-stats", actor_payment_controller_1.ActorPaymentController.getMergedPayments);
+router.get("/yearly-payment-stats", actor_payment_controller_1.ActorPaymentController.yearlyActorPaymentStats);
+router.get("/payment-history", actor_payment_controller_1.ActorPaymentController.actorPaymentHistory);
 router.get("/", actor_payment_controller_1.ActorPaymentController.actorPaymentInfo);
 // Delete (Admin)
 // router.delete(

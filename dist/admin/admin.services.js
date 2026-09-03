@@ -359,6 +359,21 @@ const fetchPaymentHistory = async (year, status, search) => {
     if (status && status !== "all") {
         filter.status = status;
     }
+    // if (status === "alllll") {
+    //   console.log(" in  all block");
+    //   const [paidPayments, pendingPayments] = await Promise.all([
+    //     NotifyPayment.find({ status: "request" })
+    //       .sort({ createdAt: -1 })
+    //       .populate("actorId", "fullName")
+    //       .lean(),
+    //     ActorPayment.find({ status: "verified" })
+    //       .sort({ createdAt: -1 })
+    //       .populate("actor", "fullName")
+    //       .lean(),
+    //   ]);
+    //   console.log("paidPayments", "pendingPayments",paidPayments, pendingPayments);
+    //   return { paidPayments, pendingPayments };
+    // }
     const actorPayments = await actor_payment_schema_1.default.find(filter)
         .sort({ createdAt: -1 })
         .populate("actor", "fullName")

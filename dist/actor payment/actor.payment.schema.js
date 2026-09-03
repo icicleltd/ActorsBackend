@@ -12,7 +12,9 @@ const actorPaymentSchema = new mongoose_1.Schema({
     notifyPayment: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "NotifyPayment",
-        required: true,
+        required: function () {
+            return this.method !== "Cash";
+        },
     },
     type: {
         type: String,
@@ -21,7 +23,7 @@ const actorPaymentSchema = new mongoose_1.Schema({
         required: true,
     },
     year: {
-        type: String,
+        type: Number,
         required: function () {
             return this.type === "membership";
         },
@@ -35,7 +37,9 @@ const actorPaymentSchema = new mongoose_1.Schema({
     },
     number: {
         type: String,
-        required: true,
+        required: function () {
+            return this.method !== "Cash";
+        },
     },
     desc: {
         type: String,

@@ -28,7 +28,7 @@ export interface INotifyPayment {
   amount: number;
   number: string;
   desc?: string;
-  year?: string;
+  year?: number;
   isView: boolean;
   status: "request" | "paid" | "rejected";
   rejectionReason?: string;

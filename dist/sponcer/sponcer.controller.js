@@ -13,7 +13,6 @@ const sponcer_services_1 = require("./sponcer.services");
 ------------------------------------- */
 const createSponcer = (0, catchAsync_1.default)(async (req, res, next) => {
     const payload = req.body;
-    console.log(payload);
     const result = await sponcer_services_1.SponsorService.createSponcer(payload);
     (0, sendResponse_1.default)(res, {
         statusCode: 201,

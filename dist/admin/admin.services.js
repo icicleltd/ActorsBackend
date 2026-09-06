@@ -419,7 +419,6 @@ const getGroupedYears = async () => {
         actor_payment_schema_1.NotifyPayment.distinct("year", { type: "membership", }),
     ]);
     const uniqueYears = Array.from(new Set([...actorPaymentYears, ...notifyPaymentYears].map(Number)));
-    console.log("uniqueYears", uniqueYears);
     return uniqueYears
         .sort((a, b) => Number(b) - Number(a))
         .map((year) => ({

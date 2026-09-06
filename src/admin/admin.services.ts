@@ -489,7 +489,6 @@ const getGroupedYears = async (): Promise<
   const uniqueYears = Array.from(
     new Set([...actorPaymentYears, ...notifyPaymentYears].map(Number)),
   );
-  console.log("uniqueYears",uniqueYears);
   return uniqueYears
     .sort((a, b) => Number(b) - Number(a))
     .map((year) => ({

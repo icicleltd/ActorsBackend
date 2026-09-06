@@ -25,6 +25,7 @@ import { ContactRoutes } from "./contact/contact.router";
 import { ActorPayment } from "./actor payment/actor.payment.router";
 import { HelpDeskRouter } from "./onlineHelpDesk/onlineHelpDesk.router";
 import { BeAMemberPaymentRouter } from "./payment/payment.router";
+import { UserRouter } from "./user/user.router";
 dotenv.config();
 
 const app = express();
@@ -102,6 +103,7 @@ app.use(
 app.use("/api/v1/galary", galaryRouter);
 app.use("/api/v1/news", newsRouter);
 app.use("/api/v1/about", aboutRouter);
+app.use("/api/v1/users", UserRouter);
 app.use("/api/v1/banner", bannerRouter);
 app.use("/api/v1/appointment", appointmentRouter);
 app.use("/api/v1/youtube", youtubeRouter);

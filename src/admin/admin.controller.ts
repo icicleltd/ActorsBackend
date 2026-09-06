@@ -239,7 +239,7 @@ const getNotifyActorPaidPayment = catchAsync(
       search,
       limit,
       page,
-      skip
+      skip,
     );
     sendResponse(res, {
       statusCode: 200,
@@ -266,5 +266,5 @@ export const AdminController = {
   getGroupedYears,
   fetchPaymentHistory,
   toggleActorStatus,
-  getNotifyActorPaidPayment
+  getNotifyActorPaidPayment,
 };

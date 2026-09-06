@@ -8,6 +8,7 @@ import { requiredString } from "../hepler/requiredName";
 import { ActorOTP } from "./otp.schema";
 import { otpEmailTemplate } from "../helper/mailTempate/sentOTP";
 import { sendMail } from "../helper/emailHelper";
+import { User } from "../user/user.schema";
 
 const createAuth = async (payload: IPayload, otp: string) => {
   const { password, identifier, role } = payload;
@@ -90,12 +91,13 @@ const getAuths = async (payload: any) => {
   if (!_id) {
     throw new AppError(401, "Unathorize");
   }
-  const [user, admin] = await Promise.all([
+  const [user, admin, account] = await Promise.all([
     Actor.findById(_id),
     Admin.findById(_id),
+    User.findById(_id),
   ]);
 
-  if (!user && !admin) {
+  if (!user && !admin && !account) {
     throw new AppError(404, "Not found");
   }
   let accessToken = payload.accessToken;
@@ -115,7 +117,7 @@ const getAuths = async (payload: any) => {
       throw new AppError(400, "Token not found");
     }
   }
-  return { user, admin, accessToken };
+  return { user, admin, account, accessToken };
 };
 
 const getAdminAuths = async (adminId: string) => {

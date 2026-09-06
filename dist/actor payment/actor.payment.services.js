@@ -221,7 +221,7 @@ const fetchNotifyPayments = async (idNo) => {
     }
     return notifyPayments;
 };
-const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, actorId, type, year, amount, idNo) => {
+const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, actorId, type, year, amount, idNo, method) => {
     if (!senderNumber) {
         throw new error_1.AppError(400, "senderNumber is required");
     }
@@ -252,13 +252,19 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
             const updateNotifyPayment = await actor_payment_schema_1.NotifyPayment.findByIdAndUpdate(notifyPaymentId, {
                 $set: {
                     status: "paid",
+                    number: senderNumber,
+                    year: Number(year),
+                    amount: Number(amount),
+                    transactionId,
                     isView: true,
+                    method: method,
                 },
             }, {
-                new: true,
+                returnDocument: "after",
                 runValidators: true,
                 session,
             });
+            console.log("updateNotifyPayment", updateNotifyPayment);
             if (!updateNotifyPayment) {
                 throw new error_1.AppError(400, "Updated failed");
             }
@@ -272,12 +278,13 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                     transactionId,
                     number: senderNumber,
                     desc: updateNotifyPayment.desc,
+                    status: "pending",
                 },
             ], { session });
             await notification_schema_1.Notification.findOneAndDelete({
                 notifyPayment: notifyPaymentId,
                 recipient: actor._id,
-            });
+            }, { session });
             await notification_schema_1.Notification.create([
                 {
                     recipientRole: ["admin", "superadmin"],
@@ -290,8 +297,9 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
             ], { session });
         });
     }
-    catch (error) { }
-    session.endSession();
+    finally {
+        await session.endSession();
+    }
 };
 const fetchActorPayments = async (idNo) => {
     if (!idNo) {
@@ -307,10 +315,7 @@ const fetchActorPayments = async (idNo) => {
     }
     return actorPayments;
 };
-const verifyActorPayment = async (paymentId, notifyPayment) => {
-    if (!paymentId) {
-        throw new error_1.AppError(400, "paymentId is required");
-    }
+const verifyActorPayment = async (notifyPayment) => {
     if (!notifyPayment) {
         throw new error_1.AppError(400, "notifyPayment is required");
     }
@@ -321,21 +326,32 @@ const verifyActorPayment = async (paymentId, notifyPayment) => {
     const session = await mongoose_1.default.startSession();
     try {
         await session.withTransaction(async () => {
-            const updateNotifyPayment = await actor_payment_schema_1.NotifyPayment.findByIdAndUpdate(notifyPayment, {
-                $set: {
-                    status: "paid",
-                },
-            }, {
-                new: true,
-                runValidators: true,
-                session,
-            });
-            if (!updateNotifyPayment) {
+            // const updateNotifyPayment = await NotifyPayment.findByIdAndUpdate(
+            //   notifyPayment,
+            //   {
+            //     $set: {
+            //       status: "paid",
+            //     },
+            //   },
+            //   {
+            //     new: true,
+            //     runValidators: true,
+            //     session,
+            //   },
+            // );
+            // if (!updateNotifyPayment) {
+            //   throw new AppError(400, "Updated failed");
+            // }
+            await notification_schema_1.Notification.findOneAndUpdate({ notifyPayment, type: "PAYMENT_SUBMITTED" }, { $set: { isRead: true } }, { new: true, runValidators: true, session });
+            const updateActorPayment = await actor_payment_schema_1.default.findOneAndUpdate({ notifyPayment: new mongoose_1.Types.ObjectId(notifyPayment) }, {
+                $set: { status: "verified" },
+            }, { session });
+            if (!updateActorPayment) {
                 throw new error_1.AppError(400, "Updated failed");
             }
-            await notification_schema_1.Notification.findOneAndUpdate({ notifyPayment, type: "PAYMENT_SUBMITTED" }, { $set: { isRead: true } }, { new: true, runValidators: true, session });
-            await actor_payment_schema_1.default.findByIdAndUpdate(paymentId, {
-                $set: { status: "verified" },
+            await actor_payment_schema_1.NotifyPayment.findOneAndDelete({
+                _id: notifyPayment,
+                status: "paid",
             }, { session });
             // await Notification.create(
             //   [
@@ -704,9 +720,11 @@ const yearlyActorPaymentStats = async (query) => {
             totalCount: [{ $count: "count" }],
         },
     });
-    if (filter === "paid") {
+    if (filter === "paid" || filter === "needVerified") {
+        const filterCondition = filter === "paid" ? "verified" : "pending";
         const match = {
             type: "membership",
+            status: filterCondition,
             ...(year ? { year } : {}),
         };
         const pipeline = [
@@ -714,7 +732,10 @@ const yearlyActorPaymentStats = async (query) => {
             {
                 $addFields: {
                     source: "ActorPayment",
-                    historyStatus: "paid",
+                    // historyStatus: "paid",
+                    historyStatus: {
+                        $cond: [{ $eq: ["$status", "verified"] }, "paid", "needVerified"],
+                    },
                     date: "$verifiedAt",
                 },
             },
@@ -725,12 +746,11 @@ const yearlyActorPaymentStats = async (query) => {
         const result = await actor_payment_schema_1.default.aggregate(pipeline);
         return buildResult(result, page, limit);
     }
-    if (filter === "unpaid" || filter === "needVerified") {
+    if (filter === "unpaid") {
         const filterCondition = filter === "unpaid" ? "request" : "paid";
-        console.log("in unpaid or need verified", filterCondition);
         const match = {
             type: "membership",
-            status: filterCondition,
+            status: "request",
             ...(year ? { year } : {}),
         };
         console.log("match", match);
@@ -753,11 +773,12 @@ const yearlyActorPaymentStats = async (query) => {
     }
     const actorPaymentMatch = {
         type: "membership",
+        status: { $in: ["pending", "verified"] },
         ...(year ? { year } : {}),
     };
     const notifyPaymentMatch = {
         type: "membership",
-        status: { $in: ["request", "paid"] },
+        status: { $in: ["request"] },
         ...(year ? { year } : {}),
     };
     const pipeline = [
@@ -765,7 +786,9 @@ const yearlyActorPaymentStats = async (query) => {
         {
             $addFields: {
                 source: "ActorPayment",
-                historyStatus: "paid",
+                historyStatus: {
+                    $cond: [{ $eq: ["$status", "verified"] }, "paid", "needVerified"],
+                },
                 date: "$verifiedAt",
             },
         },
@@ -777,9 +800,10 @@ const yearlyActorPaymentStats = async (query) => {
                     {
                         $addFields: {
                             source: "NotifyPayment",
-                            historyStatus: {
-                                $cond: [{ $eq: ["$status", "paid"] }, "needVerified", "unpaid"],
-                            },
+                            // historyStatus: {
+                            //   $cond: [{ $eq: ["$status", "paid"] }, "needVerified", "unpaid"],
+                            // },
+                            historyStatus: "unpaid",
                             date: "$createdAt",
                             actor: "$actorId",
                         },

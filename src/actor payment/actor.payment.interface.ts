@@ -31,6 +31,7 @@ export interface INotifyPayment {
   year?: number;
   isView: boolean;
   status: "request" | "paid" | "rejected";
+    method?: "bkash" | "Nagad" | "Cash";
   rejectionReason?: string;
   createdAt?: Date;
   updatedAt?: Date;

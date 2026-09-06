@@ -231,6 +231,7 @@ const paymentSubmitted = async (
   year: string,
   amount: string,
   idNo: string,
+  method: "bkash" | "Nagad" | "Cash",
 ) => {
   if (!senderNumber) {
     throw new AppError(400, "senderNumber is required");
@@ -268,15 +269,21 @@ const paymentSubmitted = async (
         {
           $set: {
             status: "paid",
+            number: senderNumber,
+            year: Number(year),
+            amount: Number(amount),
+            transactionId,
             isView: true,
+            method: method,
           },
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
           session,
         },
       );
+      console.log("updateNotifyPayment", updateNotifyPayment);
       if (!updateNotifyPayment) {
         throw new AppError(400, "Updated failed");
       }
@@ -291,14 +298,18 @@ const paymentSubmitted = async (
             transactionId,
             number: senderNumber,
             desc: updateNotifyPayment.desc,
+            status: "pending",
           },
         ],
         { session },
       );
-      await Notification.findOneAndDelete({
-        notifyPayment: notifyPaymentId,
-        recipient: actor._id,
-      });
+      await Notification.findOneAndDelete(
+        {
+          notifyPayment: notifyPaymentId,
+          recipient: actor._id,
+        },
+        { session },
+      );
       await Notification.create(
         [
           {
@@ -314,8 +325,9 @@ const paymentSubmitted = async (
         { session },
       );
     });
-  } catch (error) {}
-  session.endSession();
+  } finally {
+    await session.endSession();
+  }
 };
 
 const fetchActorPayments = async (idNo: string) => {
@@ -332,10 +344,7 @@ const fetchActorPayments = async (idNo: string) => {
   }
   return actorPayments;
 };
-const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
-  if (!paymentId) {
-    throw new AppError(400, "paymentId is required");
-  }
+const verifyActorPayment = async (notifyPayment: string) => {
   if (!notifyPayment) {
     throw new AppError(400, "notifyPayment is required");
   }
@@ -348,32 +357,42 @@ const verifyActorPayment = async (paymentId: string, notifyPayment: string) => {
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
-      const updateNotifyPayment = await NotifyPayment.findByIdAndUpdate(
-        notifyPayment,
-        {
-          $set: {
-            status: "paid",
-          },
-        },
-        {
-          new: true,
-          runValidators: true,
-          session,
-        },
-      );
-      if (!updateNotifyPayment) {
-        throw new AppError(400, "Updated failed");
-      }
+      // const updateNotifyPayment = await NotifyPayment.findByIdAndUpdate(
+      //   notifyPayment,
+      //   {
+      //     $set: {
+      //       status: "paid",
+      //     },
+      //   },
+      //   {
+      //     new: true,
+      //     runValidators: true,
+      //     session,
+      //   },
+      // );
+      // if (!updateNotifyPayment) {
+      //   throw new AppError(400, "Updated failed");
+      // }
       await Notification.findOneAndUpdate(
         { notifyPayment, type: "PAYMENT_SUBMITTED" },
 
         { $set: { isRead: true } },
         { new: true, runValidators: true, session },
       );
-      await ActorPayment.findByIdAndUpdate(
-        paymentId,
+      const updateActorPayment = await ActorPayment.findOneAndUpdate(
+        { notifyPayment: new Types.ObjectId(notifyPayment) },
         {
           $set: { status: "verified" },
+        },
+        { session },
+      );
+      if (!updateActorPayment) {
+        throw new AppError(400, "Updated failed");
+      }
+      await NotifyPayment.findOneAndDelete(
+        {
+          _id: notifyPayment,
+          status: "paid",
         },
         { session },
       );
@@ -830,9 +849,11 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
     },
   });
 
-  if (filter === "paid") {
+  if (filter === "paid" || filter === "needVerified") {
+    const filterCondition = filter === "paid" ? "verified" : "pending";
     const match: Record<string, any> = {
       type: "membership",
+      status: filterCondition,
       ...(year ? { year } : {}),
     };
 
@@ -841,7 +862,10 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
       {
         $addFields: {
           source: "ActorPayment",
-          historyStatus: "paid",
+          // historyStatus: "paid",
+          historyStatus: {
+            $cond: [{ $eq: ["$status", "verified"] }, "paid", "needVerified"],
+          },
           date: "$verifiedAt",
         },
       },
@@ -854,12 +878,11 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
     return buildResult(result, page, limit);
   }
 
-  if (filter === "unpaid" || filter === "needVerified") {
+  if (filter === "unpaid") {
     const filterCondition = filter === "unpaid" ? "request" : "paid";
-    console.log("in unpaid or need verified", filterCondition);
     const match: Record<string, any> = {
       type: "membership",
-      status: filterCondition,
+      status: "request",
       ...(year ? { year } : {}),
     };
     console.log("match", match);
@@ -884,11 +907,12 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
 
   const actorPaymentMatch: Record<string, unknown> = {
     type: "membership",
+    status: { $in: ["pending", "verified"] },
     ...(year ? { year } : {}),
   };
   const notifyPaymentMatch: Record<string, unknown> = {
     type: "membership",
-    status: { $in: ["request", "paid"] },
+    status: { $in: ["request"] },
     ...(year ? { year } : {}),
   };
 
@@ -897,7 +921,9 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
     {
       $addFields: {
         source: "ActorPayment",
-        historyStatus: "paid",
+        historyStatus: {
+          $cond: [{ $eq: ["$status", "verified"] }, "paid", "needVerified"],
+        },
         date: "$verifiedAt",
       },
     },
@@ -909,9 +935,10 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
           {
             $addFields: {
               source: "NotifyPayment",
-              historyStatus: {
-                $cond: [{ $eq: ["$status", "paid"] }, "needVerified", "unpaid"],
-              },
+              // historyStatus: {
+              //   $cond: [{ $eq: ["$status", "paid"] }, "needVerified", "unpaid"],
+              // },
+              historyStatus: "unpaid",
               date: "$createdAt",
               actor: "$actorId",
             },

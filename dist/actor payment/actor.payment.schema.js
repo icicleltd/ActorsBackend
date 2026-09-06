@@ -59,12 +59,14 @@ const actorPaymentSchema = new mongoose_1.Schema({
     status: {
         type: String,
         enum: ["pending", "verified", "rejected"],
-        default: "verified",
+        default: "pending",
     },
     verifiedBy: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "Admin",
-        required: true,
+        required: function () {
+            return this.status === "verified" || this.status === "rejected";
+        },
     },
     verifiedAt: { type: Date, required: true, default: Date.now },
     note: String,
@@ -118,6 +120,13 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
         enum: ["request", "paid"],
         default: "request",
     },
+    method: {
+        type: String,
+        enum: ["bkash", "Nagad", "Cash"],
+        default: "bkash",
+        required: function () { this.status === "paid"; },
+    },
+    transactionId: { type: String, trim: true },
     rejectionReason: { type: String, trim: true },
     isView: {
         type: Boolean,

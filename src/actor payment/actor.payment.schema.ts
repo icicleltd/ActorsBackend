@@ -65,13 +65,15 @@ const actorPaymentSchema = new Schema<IActorPayment>(
     status: {
       type: String,
       enum: ["pending", "verified", "rejected"],
-      default: "verified",
+      default: "pending",
     },
 
     verifiedBy: {
       type: Schema.Types.ObjectId,
       ref: "Admin",
-      required: true,
+      required: function (this: any) {
+        return this.status === "verified" || this.status === "rejected";
+      },
     },
 
     verifiedAt: { type: Date, required: true, default: Date.now },
@@ -143,6 +145,13 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
       enum: ["request", "paid"],
       default: "request",
     },
+    method: {
+      type: String,
+      enum: ["bkash", "Nagad", "Cash"],
+      default: "bkash",
+      required: function(this:any){this.status === "paid"},
+    },
+    transactionId: { type: String, trim: true },
     rejectionReason: { type: String, trim: true },
 
     isView: {

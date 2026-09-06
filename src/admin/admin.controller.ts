@@ -157,10 +157,16 @@ const fetchActorPayments = catchAsync(
     const year = req.query.year as string;
     const search = req.query.search as string;
     const status = req.query.status as "pending" | "verified" | "rejected";
-    const limit = parseInt(req.query.limit as string) || 10
-    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10;
+    const page = parseInt(req.query.page as string) || 1;
 
-    const result = await AdminService.fetchActorPayments(year, status,search,limit,page);
+    const result = await AdminService.fetchActorPayments(
+      year,
+      status,
+      search,
+      limit,
+      page,
+    );
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -174,7 +180,7 @@ const fetchPaymentHistory = catchAsync(
     const year = req.query.year as string;
     const search = req.query.search as string;
     const status = req.query.status as "pending" | "verified" | "rejected";
-    const result = await AdminService.fetchPaymentHistory(year, status,search);
+    const result = await AdminService.fetchPaymentHistory(year, status, search);
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -196,8 +202,8 @@ const getGroupedYears = catchAsync(
 );
 const toggleActorStatus = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const actorId = req.params.id
-    const result = await AdminService.toggleActorStatus({actorId});
+    const actorId = req.params.id;
+    const result = await AdminService.toggleActorStatus({ actorId });
     sendResponse(res, {
       statusCode: 201,
       success: true,
@@ -213,6 +219,32 @@ const test = catchAsync(
       statusCode: 201,
       success: true,
       message: "Actor Promoted successfully",
+      data: result,
+    });
+  },
+);
+
+const getNotifyActorPaidPayment = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const year = req.query.year as string;
+    const search = req.query.search as string;
+    const status = req.query.status as "pending" | "verified" | "rejected";
+    const limit = parseInt(req.query.limit as string) || 10;
+    const page = parseInt(req.query.page as string) || 1;
+    const skip = (page - 1) * limit;
+
+    const result = await AdminService.getNotifyActorPaidPayment(
+      year,
+      status,
+      search,
+      limit,
+      page,
+      skip
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Actor payment get successfully",
       data: result,
     });
   },
@@ -234,4 +266,5 @@ export const AdminController = {
   getGroupedYears,
   fetchPaymentHistory,
   toggleActorStatus,
+  getNotifyActorPaidPayment
 };

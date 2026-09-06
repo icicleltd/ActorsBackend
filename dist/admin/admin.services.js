@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -11,7 +44,7 @@ const senitizePayload_1 = require("../helper/senitizePayload");
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("./admin.schema");
 const jwtHelper_1 = require("../helper/jwtHelper");
-const actor_payment_schema_1 = __importDefault(require("../actor payment/actor.payment.schema"));
+const actor_payment_schema_1 = __importStar(require("../actor payment/actor.payment.schema"));
 const createAdmin = async (payload) => {
     if (!payload) {
         throw new error_1.AppError(400, "No data provided");
@@ -381,8 +414,13 @@ const fetchPaymentHistory = async (year, status, search) => {
     return actorPayments;
 };
 const getGroupedYears = async () => {
-    const years = await actor_payment_schema_1.default.distinct("year");
-    return years
+    const [actorPaymentYears, notifyPaymentYears] = await Promise.all([
+        actor_payment_schema_1.default.distinct("year", { type: "membership" }),
+        actor_payment_schema_1.NotifyPayment.distinct("year", { type: "membership", }),
+    ]);
+    const uniqueYears = Array.from(new Set([...actorPaymentYears, ...notifyPaymentYears].map(Number)));
+    console.log("uniqueYears", uniqueYears);
+    return uniqueYears
         .sort((a, b) => Number(b) - Number(a))
         .map((year) => ({
         label: String(year),
@@ -393,6 +431,26 @@ const toggleActorStatus = async ({ actorId }) => {
     const updateActor = await actor_schema_1.default.findByIdAndUpdate(actorId, [{ $set: { isActive: { $not: "$isActive" } } }], { new: true, updatePipeline: true });
     console.log(updateActor);
     return updateActor;
+};
+const getNotifyActorPaidPayment = async (year, status, search, limit, page, skip) => {
+    const filter = { status: "paid" };
+    if (year) {
+        filter.year = year;
+    }
+    if (status) {
+        filter.status = status;
+    }
+    const [paidNotifyPayments, total] = await Promise.all([
+        await actor_payment_schema_1.NotifyPayment.find(filter)
+            .sort({ createdAt: -1 })
+            .populate("actorId", "fullName")
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+        actor_payment_schema_1.default.countDocuments(filter),
+    ]);
+    const totalPages = Math.floor(total / limit);
+    return { paidNotifyPayments, totalPages };
 };
 const test = async () => {
     return;
@@ -414,4 +472,5 @@ exports.AdminService = {
     getGroupedYears,
     fetchPaymentHistory,
     toggleActorStatus,
+    getNotifyActorPaidPayment,
 };

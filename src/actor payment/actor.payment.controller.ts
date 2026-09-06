@@ -62,8 +62,15 @@ const fetchNotifyPayments = catchAsync(
 
 const paymentSubmitted = catchAsync(
   async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
-    const { notifyPaymentId, senderNumber, transactionId, type, year, amount } =
-      req.body;
+    const {
+      notifyPaymentId,
+      senderNumber,
+      transactionId,
+      type,
+      year,
+      amount,
+      method,
+    } = req.body;
     const actorId = req.user.data._id;
     const idNo = req.body.uid as string;
     const result = await ActorPaymentService.paymentSubmitted(
@@ -75,6 +82,7 @@ const paymentSubmitted = catchAsync(
       year,
       amount,
       idNo,
+      method,
     );
     sendResponse(res, {
       statusCode: 200,
@@ -98,11 +106,8 @@ const fetchActorPayments = catchAsync(
 );
 const verifyActorPayment = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    const { paymentId, notifyPayment } = req.body;
-    const result = await ActorPaymentService.verifyActorPayment(
-      paymentId,
-      notifyPayment,
-    );
+    const { notifyPayment } = req.body;
+    const result = await ActorPaymentService.verifyActorPayment(notifyPayment);
     sendResponse(res, {
       statusCode: 200,
       success: true,

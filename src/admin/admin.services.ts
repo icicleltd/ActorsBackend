@@ -482,9 +482,15 @@ const fetchPaymentHistory = async (
 const getGroupedYears = async (): Promise<
   { label: string; value: string }[]
 > => {
-  const years = await ActorPayment.distinct("year");
-
-  return years
+  const [actorPaymentYears, notifyPaymentYears] = await Promise.all([
+    ActorPayment.distinct("year", { type: "membership" }),
+    NotifyPayment.distinct("year", { type: "membership",}),
+  ]);
+  const uniqueYears = Array.from(
+    new Set([...actorPaymentYears, ...notifyPaymentYears].map(Number)),
+  );
+  console.log("uniqueYears",uniqueYears);
+  return uniqueYears
     .sort((a, b) => Number(b) - Number(a))
     .map((year) => ({
       label: String(year),
@@ -499,6 +505,33 @@ const toggleActorStatus = async ({ actorId }: { actorId: string }) => {
   );
   console.log(updateActor);
   return updateActor;
+};
+const getNotifyActorPaidPayment = async (
+  year: string,
+  status: "pending" | "verified" | "rejected",
+  search: string,
+  limit: number,
+  page: number,
+  skip: number,
+) => {
+  const filter: any = { status: "paid" };
+  if (year) {
+    filter.year = year;
+  }
+  if (status) {
+    filter.status = status;
+  }
+  const [paidNotifyPayments, total] = await Promise.all([
+    await NotifyPayment.find(filter)
+      .sort({ createdAt: -1 })
+      .populate("actorId", "fullName")
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    ActorPayment.countDocuments(filter),
+  ]);
+  const totalPages = Math.floor(total / limit);
+  return { paidNotifyPayments, totalPages };
 };
 const test = async () => {
   return;
@@ -520,4 +553,5 @@ export const AdminService = {
   getGroupedYears,
   fetchPaymentHistory,
   toggleActorStatus,
+  getNotifyActorPaidPayment,
 };

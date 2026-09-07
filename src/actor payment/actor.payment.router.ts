@@ -37,6 +37,7 @@ router.get(
 router.get("/payments-stats", ActorPaymentController.getPaymentDashboardStats);
 router.get("/marge-payment-stats", ActorPaymentController.getMergedPayments);
 router.get("/yearly-payment-stats", ActorPaymentController.yearlyActorPaymentStats);
+router.get("/yearly-payment-report", ActorPaymentController.getPaymentReportCursor);
 router.get("/payment-history", ActorPaymentController.actorPaymentHistory);
 router.get("/", ActorPaymentController.actorPaymentInfo);
 

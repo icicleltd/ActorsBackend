@@ -28,6 +28,7 @@ const contact_router_1 = require("./contact/contact.router");
 const actor_payment_router_1 = require("./actor payment/actor.payment.router");
 const onlineHelpDesk_router_1 = require("./onlineHelpDesk/onlineHelpDesk.router");
 const payment_router_1 = require("./payment/payment.router");
+const user_router_1 = require("./user/user.router");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 // Middleware
@@ -89,6 +90,7 @@ app.use("/api/v1/media-directory", verifyLogin_1.VerifyLogin, mediaDirectory_rou
 app.use("/api/v1/galary", galary_router_1.default);
 app.use("/api/v1/news", news_router_1.default);
 app.use("/api/v1/about", about_router_1.default);
+app.use("/api/v1/users", user_router_1.UserRouter);
 app.use("/api/v1/banner", banner_router_1.default);
 app.use("/api/v1/appointment", appointments_router_1.default);
 app.use("/api/v1/youtube", youtube_router_1.default);

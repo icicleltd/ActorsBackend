@@ -12,6 +12,7 @@ const requiredName_1 = require("../hepler/requiredName");
 const otp_schema_1 = require("./otp.schema");
 const sentOTP_1 = require("../helper/mailTempate/sentOTP");
 const emailHelper_1 = require("../helper/emailHelper");
+const user_schema_1 = require("../user/user.schema");
 const createAuth = async (payload, otp) => {
     const { password, identifier, role } = payload;
     const filter = {};
@@ -82,11 +83,12 @@ const getAuths = async (payload) => {
     if (!_id) {
         throw new error_1.AppError(401, "Unathorize");
     }
-    const [user, admin] = await Promise.all([
+    const [user, admin, account] = await Promise.all([
         actor_schema_1.default.findById(_id),
         admin_schema_1.Admin.findById(_id),
+        user_schema_1.User.findById(_id),
     ]);
-    if (!user && !admin) {
+    if (!user && !admin && !account) {
         throw new error_1.AppError(404, "Not found");
     }
     let accessToken = payload.accessToken;
@@ -102,7 +104,7 @@ const getAuths = async (payload) => {
             throw new error_1.AppError(400, "Token not found");
         }
     }
-    return { user, admin, accessToken };
+    return { user, admin, account, accessToken };
 };
 const getAdminAuths = async (adminId) => {
     return;

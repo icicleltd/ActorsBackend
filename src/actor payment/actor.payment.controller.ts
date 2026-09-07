@@ -177,9 +177,7 @@ const yearlyActorPaymentStats = catchAsync(
     const sortBy = (req.query.sortBy as string) || "createdAt";
     const sortOrder: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
     const year = req.query.year ? Number(req.query.year) : undefined;
-    console.log("year", year);
     const filter = req.query.filter as "unpaid" | "needVerified" | "paid";
-    console.log("filter", filter);
     const skip = (page - 1) * limit;
 
     const result = await ActorPaymentService.yearlyActorPaymentStats({

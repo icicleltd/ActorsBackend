@@ -207,5 +207,5 @@ exports.AdminController = {
     getGroupedYears,
     fetchPaymentHistory,
     toggleActorStatus,
-    getNotifyActorPaidPayment
+    getNotifyActorPaidPayment,
 };

@@ -132,9 +132,7 @@ const yearlyActorPaymentStats = (0, catchAsync_1.default)(async (req, res) => {
     const sortBy = req.query.sortBy || "createdAt";
     const sortOrder = req.query.sortWith === "asc" ? 1 : -1;
     const year = req.query.year ? Number(req.query.year) : undefined;
-    console.log("year", year);
     const filter = req.query.filter;
-    console.log("filter", filter);
     const skip = (page - 1) * limit;
     const result = await actor_payment_services_1.ActorPaymentService.yearlyActorPaymentStats({
         search,

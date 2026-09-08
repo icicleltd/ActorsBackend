@@ -191,7 +191,6 @@ const notifyActorForPayment = async (payload: INotifyActorPayload) => {
         notifyPayment: notify._id,
         isRead: false,
       }));
-      console.log(notificationData, notifyPayments);
       const notifications = await Notification.insertMany(notificationData, {
         session,
       });
@@ -283,7 +282,6 @@ const paymentSubmitted = async (
           session,
         },
       );
-      console.log("updateNotifyPayment", updateNotifyPayment);
       if (!updateNotifyPayment) {
         throw new AppError(400, "Updated failed");
       }
@@ -885,7 +883,6 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
       status: "request",
       ...(year ? { year } : {}),
     };
-    console.log("match", match);
     const pipeline: any[] = [
       { $match: match },
       {

@@ -167,7 +167,6 @@ router.get("/agg", async (req, res) => {
     //     },
     //   },
     // ]);
-    // console.log(result);
     // Top 5 newest actors
     const result = await actor_schema_1.default.aggregate([
         { $sort: { createdAt: -1 } },
@@ -180,7 +179,6 @@ router.get("/agg", async (req, res) => {
             },
         },
     ]);
-    console.log(result);
     res.send({ data: result });
 });
 // add dummy data for payment

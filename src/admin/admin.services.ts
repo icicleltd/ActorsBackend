@@ -368,7 +368,6 @@ const makeAdmin = async (payload: PayloadMakeAdmin) => {
 //   status: "pending" | "verified" | "rejected",
 //   search: string,
 // ) => {
-//   console.log(year, status, search);
 //   const matchStage: any = {};
 
 //   if (year) {
@@ -470,7 +469,6 @@ const fetchPaymentHistory = async (
   //       .populate("actor", "fullName")
   //       .lean(),
   //   ]);
-  //   console.log("paidPayments", "pendingPayments",paidPayments, pendingPayments);
   //   return { paidPayments, pendingPayments };
   // }
   const actorPayments = await ActorPayment.find(filter)
@@ -502,7 +500,6 @@ const toggleActorStatus = async ({ actorId }: { actorId: string }) => {
     [{ $set: { isActive: { $not: "$isActive" } } }],
     { new: true, updatePipeline: true },
   );
-  console.log(updateActor);
   return updateActor;
 };
 const getNotifyActorPaidPayment = async (

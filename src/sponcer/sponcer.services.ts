@@ -40,7 +40,6 @@ const editSponsor = async (id: string, payload: AllowEditSponsorField) => {
     },
     { new: true, runValidators: true },
   );
-  console.log(result);
   if (!result) {
     throw new AppError(404, "Sponsor not Updated");
   }

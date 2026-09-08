@@ -59,7 +59,6 @@ const verifyPayment = async ({
   rejectionReason?: string;
   message?: string;
 }) => {
-  console.log(paymentId,status, adminId, rejectionReason, message)
   const session = await mongoose.startSession();
 
   try {

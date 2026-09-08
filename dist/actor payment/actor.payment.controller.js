@@ -200,6 +200,22 @@ const actorPaymentHistory = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getPaymentReportCursor = (0, catchAsync_1.default)(async (req, res) => {
+    const year = req.query.year;
+    const status = req.query.status;
+    const type = "membership";
+    const result = await actor_payment_services_1.ActorPaymentService.getPaymentReportCursor({
+        year: Number(year),
+        status,
+        type,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payments report get successfully",
+        data: result,
+    });
+});
 exports.ActorPaymentController = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -212,4 +228,5 @@ exports.ActorPaymentController = {
     recordActorPayment,
     yearlyActorPaymentStats,
     actorPaymentHistory,
+    getPaymentReportCursor,
 };

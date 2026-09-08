@@ -69,7 +69,6 @@ const getBeAMemberPayments = async ({ limit, skip, sortBy = "createdAt", sortOrd
     return { beAMemberPayments, totalPages };
 };
 const verifyPayment = async ({ paymentId, status, adminId, rejectionReason, message, }) => {
-    console.log(paymentId, status, adminId, rejectionReason, message);
     const session = await mongoose_1.default.startSession();
     try {
         let updatedPayment;

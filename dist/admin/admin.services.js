@@ -322,7 +322,6 @@ const makeAdmin = async (payload) => {
 //   status: "pending" | "verified" | "rejected",
 //   search: string,
 // ) => {
-//   console.log(year, status, search);
 //   const matchStage: any = {};
 //   if (year) {
 //     matchStage.year = year;
@@ -404,7 +403,6 @@ const fetchPaymentHistory = async (year, status, search) => {
     //       .populate("actor", "fullName")
     //       .lean(),
     //   ]);
-    //   console.log("paidPayments", "pendingPayments",paidPayments, pendingPayments);
     //   return { paidPayments, pendingPayments };
     // }
     const actorPayments = await actor_payment_schema_1.default.find(filter)
@@ -428,7 +426,6 @@ const getGroupedYears = async () => {
 };
 const toggleActorStatus = async ({ actorId }) => {
     const updateActor = await actor_schema_1.default.findByIdAndUpdate(actorId, [{ $set: { isActive: { $not: "$isActive" } } }], { new: true, updatePipeline: true });
-    console.log(updateActor);
     return updateActor;
 };
 const getNotifyActorPaidPayment = async (year, status, search, limit, page, skip) => {

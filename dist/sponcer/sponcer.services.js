@@ -35,7 +35,6 @@ const editSponsor = async (id, payload) => {
     const result = await sponcer_schema_1.Sponcer.findByIdAndUpdate(id, {
         $set: sanitize,
     }, { new: true, runValidators: true });
-    console.log(result);
     if (!result) {
         throw new error_1.AppError(404, "Sponsor not Updated");
     }

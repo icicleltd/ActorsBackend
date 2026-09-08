@@ -110,7 +110,6 @@ const approve = catchAsync(
       email,
       memberName,
     );
-    console.log(result);
     sendResponse(res, {
       statusCode: 200,
       success: true,

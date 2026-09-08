@@ -31,7 +31,6 @@ const getPublicId = (filename: string, folder = "uploads") => {
 
 // ✅ Single image upload
 const CloudinaryUpload = async (file: Express.Multer.File) => {
-  // console.log("file",file)
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { public_id: getPublicId(file.originalname) }, // ✅ no extension

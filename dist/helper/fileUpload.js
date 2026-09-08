@@ -32,7 +32,6 @@ const getPublicId = (filename, folder = "uploads") => {
 };
 // ✅ Single image upload
 const CloudinaryUpload = async (file) => {
-    // console.log("file",file)
     return new Promise((resolve, reject) => {
         const stream = cloudinary_1.v2.uploader.upload_stream({ public_id: getPublicId(file.originalname) }, // ✅ no extension
         (error, result) => {

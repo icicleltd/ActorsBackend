@@ -20,6 +20,7 @@ router.get("/actor-payment", verifyLogin_1.VerifyLogin, actor_payment_controller
 router.get("/payments-stats", actor_payment_controller_1.ActorPaymentController.getPaymentDashboardStats);
 router.get("/marge-payment-stats", actor_payment_controller_1.ActorPaymentController.getMergedPayments);
 router.get("/yearly-payment-stats", actor_payment_controller_1.ActorPaymentController.yearlyActorPaymentStats);
+router.get("/yearly-payment-report", actor_payment_controller_1.ActorPaymentController.getPaymentReportCursor);
 router.get("/payment-history", actor_payment_controller_1.ActorPaymentController.actorPaymentHistory);
 router.get("/", actor_payment_controller_1.ActorPaymentController.actorPaymentInfo);
 // Delete (Admin)

@@ -191,7 +191,6 @@ const notifyActorForPayment = async (payload) => {
                 notifyPayment: notify._id,
                 isRead: false,
             }));
-            console.log(notificationData, notifyPayments);
             const notifications = await notification_schema_1.Notification.insertMany(notificationData, {
                 session,
             });
@@ -264,7 +263,6 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                 runValidators: true,
                 session,
             });
-            console.log("updateNotifyPayment", updateNotifyPayment);
             if (!updateNotifyPayment) {
                 throw new error_1.AppError(400, "Updated failed");
             }
@@ -753,7 +751,6 @@ const yearlyActorPaymentStats = async (query) => {
             status: "request",
             ...(year ? { year } : {}),
         };
-        console.log("match", match);
         const pipeline = [
             { $match: match },
             {
@@ -953,6 +950,56 @@ const actorPaymentHistory = async (query) => {
         },
     };
 };
+const MAX_CLIENT_ROWS = 5000;
+const getPaymentReportCursor = async (filter) => {
+    const query = {
+        type: filter.type,
+        year: filter.year,
+    };
+    if (filter.status)
+        query.status = filter.status;
+    // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
+    const [walkResult, sumResult] = await Promise.all([
+        walkPayments(query),
+        actor_payment_schema_1.default.aggregate([
+            { $match: query },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+        ]),
+    ]);
+    return {
+        totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
+        ...walkResult,
+    };
+};
+async function walkPayments(query) {
+    const cursor = actor_payment_schema_1.default.find(query)
+        .select("actor amount desc status createdAt year method transactionId number type")
+        .populate("actor", "fullName idNo")
+        .lean()
+        .maxTimeMS(60000)
+        // .sort({ actorIdNo: 1 })
+        .sort({ createdAt: 1 })
+        .cursor({ batchSize: 1000 });
+    const results = [];
+    let count = 0;
+    let truncated = false;
+    try {
+        for await (const doc of cursor) {
+            count++;
+            if (results.length < MAX_CLIENT_ROWS) {
+                results.push(doc);
+            }
+            else {
+                truncated = true;
+                break;
+            }
+        }
+    }
+    finally {
+        await cursor.close();
+    }
+    return { total: count, returned: results.length, truncated, data: results };
+}
 exports.ActorPaymentService = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -965,4 +1012,5 @@ exports.ActorPaymentService = {
     recordActorPayment,
     yearlyActorPaymentStats,
     actorPaymentHistory,
+    getPaymentReportCursor,
 };

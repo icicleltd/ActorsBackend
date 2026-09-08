@@ -191,7 +191,6 @@ const notifyActorForPayment = async (payload: INotifyActorPayload) => {
         notifyPayment: notify._id,
         isRead: false,
       }));
-      console.log(notificationData, notifyPayments);
       const notifications = await Notification.insertMany(notificationData, {
         session,
       });
@@ -283,7 +282,6 @@ const paymentSubmitted = async (
           session,
         },
       );
-      console.log("updateNotifyPayment", updateNotifyPayment);
       if (!updateNotifyPayment) {
         throw new AppError(400, "Updated failed");
       }
@@ -885,7 +883,6 @@ const yearlyActorPaymentStats = async (query: QueryParams) => {
       status: "request",
       ...(year ? { year } : {}),
     };
-    console.log("match", match);
     const pipeline: any[] = [
       { $match: match },
       {
@@ -1126,6 +1123,67 @@ const actorPaymentHistory = async (query: ActorPaymentStatusQuery) => {
   };
 };
 
+export interface ReportFilter {
+  year: number;
+  type: "membership" | "event";
+  status?: "pending" | "verified" | "rejected";
+}
+
+const MAX_CLIENT_ROWS = 5000;
+
+const getPaymentReportCursor = async (filter: ReportFilter) => {
+  const query: Record<string, unknown> = {
+    type: filter.type,
+    year: filter.year,
+  };
+  if (filter.status) query.status = filter.status;
+
+  // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
+  const [walkResult, sumResult] = await Promise.all([
+    walkPayments(query),
+    ActorPayment.aggregate([
+      { $match: query },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]),
+  ]);
+
+  return {
+    totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
+    ...walkResult,
+  };
+};
+
+async function walkPayments(query: Record<string, unknown>) {
+  const cursor = ActorPayment.find(query)
+    .select("actor amount desc status createdAt year method transactionId number type")
+    .populate("actor", "fullName idNo")
+    .lean()
+    .maxTimeMS(60_000)
+    // .sort({ actorIdNo: 1 })
+    .sort({ createdAt: 1 })
+    .cursor({ batchSize: 1000 });
+
+  const results: unknown[] = [];
+  let count = 0;
+  let truncated = false;
+
+  try {
+    for await (const doc of cursor) {
+      count++;
+      if (results.length < MAX_CLIENT_ROWS) {
+        results.push(doc);
+      } else {
+        truncated = true;
+        break;
+      }
+    }
+  } finally {
+    await cursor.close();
+  }
+
+  return { total: count, returned: results.length, truncated, data: results };
+}
+
 export const ActorPaymentService = {
   actorPaymentInfo,
   notifyActorForPayment,
@@ -1138,4 +1196,5 @@ export const ActorPaymentService = {
   recordActorPayment,
   yearlyActorPaymentStats,
   actorPaymentHistory,
+  getPaymentReportCursor,
 };

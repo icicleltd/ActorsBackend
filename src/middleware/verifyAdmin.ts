@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import Actor from "../actor/actor.schema";
 import { Admin } from "../admin/admin.schema";
 import { AppError } from "./error";
+import { User } from "../user/user.schema";
 
 export const VerifyAdmin = async (
   req: Request & { user?: any },
@@ -11,7 +12,7 @@ export const VerifyAdmin = async (
   const user = req.user;
   const { _id } = user.data;
   const actor = await Actor.findOne({ _id, role: { $in: ["admin"] } });
-  const admin = await Admin.findOne({
+  const admin = await User.findOne({
     _id,
     role: { $in: ["admin", "superadmin", "moderator"] },
     isActive: true,

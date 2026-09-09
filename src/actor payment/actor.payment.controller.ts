@@ -39,7 +39,7 @@ const notifyActorForPayment = catchAsync(
     const payload = req.body;
     const result = await ActorPaymentService.notifyActorForPayment(payload);
     sendResponse(res, {
-      statusCode: 200,
+      statusCode: 201,
       success: true,
       message: "Notify payment successfully",
       data: result,
@@ -261,7 +261,7 @@ const actorPaymentHistory = catchAsync(async (req: Request, res: Response) => {
 const getPaymentReportCursor = catchAsync(
   async (req: Request, res: Response) => {
     const year = req.query.year;
-    const status = req.query.status as  "pending" | "verified" | "rejected"; 
+    const status = req.query.status as  "needVerified" | "paid" | "unpaid" | "all"; 
     const type = "membership";
 
     const result = await ActorPaymentService.getPaymentReportCursor({

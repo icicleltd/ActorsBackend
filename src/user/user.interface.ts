@@ -1,6 +1,6 @@
 import { Document } from "mongoose";
 
-export const USER_ROLES = ["user", "admin", "account", "superadmin"] as const;
+export const USER_ROLES = ["actor", "admin", "account", "superadmin"] as const;
 
 export type UserRole = (typeof USER_ROLES)[number];
 

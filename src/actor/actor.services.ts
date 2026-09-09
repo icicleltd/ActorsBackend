@@ -3,6 +3,9 @@ import Actor from "./actor.schema";
 import { AppError } from "../middleware/error";
 import { Admin } from "../admin/admin.schema";
 import { Types, type PipelineStage, type SortOrder } from "mongoose";
+import ActorPayment, {
+  NotifyPayment,
+} from "../actor payment/actor.payment.schema";
 
 const createActor = async (files: any, data: any) => {
   const uploadArray = async (fileArr: any[]) => {
@@ -693,7 +696,7 @@ const getActorForModal = async (
 ) => {
   let filter: Partial<Record<string, unknown>> = {};
   const fields = ["email", "idNo", "phoneNumber", "fullName"];
-  if (id && id !==undefined && id !== "") {
+  if (id && id !== undefined && id !== "") {
     filter._id = { $nin: new Types.ObjectId(id) };
   }
   if (alive?.trim() === "alive") {
@@ -722,17 +725,85 @@ const getActorForModal = async (
     .sort({ [sortBy]: sortWith });
   return { actors };
 };
-const updateProfilePhoto = async(url:string,idNo:string)=>{
-  if(!url) throw new AppError(404,"Image url not found");
-  if(!idNo) throw new AppError(404,"idNo not found");
-  const existing =  await Actor.findOne({idNo});
-  if(!existing){
-    throw new AppError(404,"This actor not found");
+const updateProfilePhoto = async (url: string, idNo: string) => {
+  if (!url) throw new AppError(404, "Image url not found");
+  if (!idNo) throw new AppError(404, "idNo not found");
+  const existing = await Actor.findOne({ idNo });
+  if (!existing) {
+    throw new AppError(404, "This actor not found");
   }
-   existing.photo= url;
-   await existing.save();
-   return null;
-}
+  existing.photo = url;
+  await existing.save();
+  return null;
+};
+
+const myPaymentHistory = async (
+  actorId: Types.ObjectId,
+  page: number,
+  limit: number,
+) => {
+  const actorPaymentMatch = {
+    actor: actorId,
+    status: { $in: ["pending", "verified", "rejected"] },
+    type: "membership",
+  };
+  const notifyPaymentMatch = {
+    actorId: actorId,
+    status: { $in: ["request"] },
+    type: "membership",
+  };
+  const [history, totalPaidResult, totalDueResult] = await Promise.all([
+    ActorPayment.aggregate([
+      {
+        $match: actorPaymentMatch,
+      },
+      {
+        $unionWith: {
+          coll: "notifypayments",
+          pipeline: [
+            {
+              $match: notifyPaymentMatch,
+            },
+          ],
+        },
+      },
+      { $sort: { year: -1 } },
+    ]),
+    ActorPayment.aggregate([
+      {
+        $match: {
+          actor: actorId,
+          status: { $in: ["verified"] },
+          type: "membership",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPaid: { $sum: "$amount" },
+        },
+      },
+    ]),
+    NotifyPayment.aggregate([
+      {
+        $match: {
+          actorId: actorId,
+          status: { $in: ["request"] },
+          type: "membership",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalPaid: { $sum: "$amount" },
+        },
+      },
+    ]),
+  ]);
+  const totalPaid = totalPaidResult[0]?.totalPaid ?? 0;
+  const totalDue = totalDueResult[0]?.totalPaid ?? 0;
+  return { history, totalDue, totalPaid };
+};
 
 export default {
   updateActor,
@@ -745,5 +816,6 @@ export const ActorService = {
   filterByRank,
   updateActor,
   getActorForModal,
-  updateProfilePhoto
+  updateProfilePhoto,
+  myPaymentHistory,
 };

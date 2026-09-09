@@ -10,11 +10,12 @@ export interface IActorPayment {
   amount: number;
   desc?: string;
   method: "bkash" | "Nagad" | "Cash";
+  recordedVia: "direct" | "notify";
   transactionId?: string;
 
   status: "pending" | "verified" | "rejected";
 
-  verifiedBy: mongoose.Types.ObjectId; 
+  verifiedBy: mongoose.Types.ObjectId;
   verifiedAt: Date;
 
   note?: string;
@@ -31,7 +32,7 @@ export interface INotifyPayment {
   year?: number;
   isView: boolean;
   status: "request" | "paid" | "rejected";
-    method?: "bkash" | "Nagad" | "Cash";
+  method?: "bkash" | "Nagad" | "Cash";
   rejectionReason?: string;
   createdAt?: Date;
   updatedAt?: Date;

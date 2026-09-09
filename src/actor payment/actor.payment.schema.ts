@@ -13,7 +13,7 @@ const actorPaymentSchema = new Schema<IActorPayment>(
       type: Schema.Types.ObjectId,
       ref: "NotifyPayment",
       required: function (this: any) {
-        return this.method !== "Cash";
+         return this.source === "notify";
       },
     },
 
@@ -56,9 +56,16 @@ const actorPaymentSchema = new Schema<IActorPayment>(
     method: {
       type: String,
       enum: ["bkash", "Nagad", "Cash"],
-      default: "bkash",
+      default: "Cash",
       required: true,
     },
+    recordedVia: {
+      type: String,
+      enum: ["notify", "direct"],
+      default:"direct",
+      required: true,
+    },
+
 
     transactionId: String,
 
@@ -114,7 +121,7 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
     year: {
       type: Number,
       required: function (this: any) {
-        return (this.type = "membership");
+        return this.type === "membership";
       },
     },
     eventId: {
@@ -149,7 +156,9 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
       type: String,
       enum: ["bkash", "Nagad", "Cash"],
       default: "bkash",
-      required: function(this:any){this.status === "paid"},
+      required: function (this: any) {
+        return this.status === "paid";
+      },
     },
     transactionId: { type: String, trim: true },
     rejectionReason: { type: String, trim: true },

@@ -196,6 +196,8 @@ export interface IActor extends Document {
     movies?: string[];
     telefilms?: string[];
   };
+  //! joinYear for only payment management
+  joinYear?: number;
 
   // =========================
   // Timestamps (from schema)

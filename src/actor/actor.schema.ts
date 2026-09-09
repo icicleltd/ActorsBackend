@@ -20,7 +20,7 @@ const actorSchema = new Schema<IActor>(
     dob: { type: Date },
     bloodGroup: {
       type: String,
-      enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-",""],
+      enum: ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", ""],
     },
 
     // Contact
@@ -40,7 +40,7 @@ const actorSchema = new Schema<IActor>(
     instagramLink: { type: String },
     tiktokLink: { type: String },
     youtubeLink: { type: String },
-    twitterLink:{type: String},
+    twitterLink: { type: String },
 
     youtubeVideos: [{ type: String }],
     mediaArchives: [
@@ -172,6 +172,12 @@ const actorSchema = new Schema<IActor>(
     isActive: { type: Boolean, default: true },
     isProfilePublic: { type: Boolean, default: true },
     role: { type: String, default: "member" },
+    //! joinYear for only payment management
+    joinYear: {
+      type: Number,
+      default: null, // unknown until first payment record exists
+      min: 2017, // org founding year — reject anything earlier
+    },
 
     category: { type: String, enum: ["A", "B", "C"] },
     // status: {

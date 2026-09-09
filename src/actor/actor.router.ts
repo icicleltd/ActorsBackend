@@ -24,6 +24,7 @@ actorRouter.put(
 
 
 actorRouter.get("/modal", ActorController.getActorForModal);
+actorRouter.get("/my-payment-history", ActorController.myPaymentHistory);
 actorRouter.get("/", ActorController.getAllActor);
 actorRouter.get("/:id", ActorController.getSingleActor);
 actorRouter.get("/rank/:rank", ActorController.filterByRank);

@@ -11,6 +11,7 @@ import ActorPayment, { NotifyPayment } from "./actor.payment.schema";
 import { INotification } from "../notification/notification.interface";
 import { Payment } from "../payment/payment.schema";
 import { PipelineStage } from "mongoose";
+import { syncActorJoinYear, syncActorJoinYearBulk } from "../helper/actorJoin";
 
 type PaymentStatus = "paid" | "pending";
 
@@ -197,6 +198,7 @@ const notifyActorForPayment = async (payload: INotifyActorPayload) => {
       if (!notifications || notifications.length < 1) {
         throw new AppError(400, "Failed to create Notification");
       }
+      await syncActorJoinYearBulk(actorId, Number(year), session);
     });
   } catch (error: any) {
     if (error.code === 11000) {
@@ -992,15 +994,35 @@ const recordActorPayment = async (
     desc,
     method: "Cash",
     status: "verified",
+    recordedVia: "direct",
     verifiedAt: new Date(),
     verifiedBy: userId,
   }));
-
-  const result = await ActorPayment.create(recordedActorPayment);
-  if (!result || result.length < 1) {
-    throw new AppError(400, "Failed to record actor payment");
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    const record = await ActorPayment.create(recordedActorPayment, {
+      session,
+    });
+    if (!record || record.length < 1) {
+      throw new AppError(400, "Failed to record actor payment");
+    }
+    await syncActorJoinYearBulk(actorIds, Number(year), session);
+    await session.commitTransaction();
+    return record
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    throw error;
+  } finally {
+    await session.endSession();
   }
-  return result;
+  // const result = await ActorPayment.create(recordedActorPayment);
+  // if (!result || result.length < 1) {
+  //   throw new AppError(400, "Failed to record actor payment");
+  // }
+  // return result;
 };
 
 const actorPaymentHistory = async (query: ActorPaymentStatusQuery) => {
@@ -1126,19 +1148,58 @@ const actorPaymentHistory = async (query: ActorPaymentStatusQuery) => {
 export interface ReportFilter {
   year: number;
   type: "membership" | "event";
-  status?: "pending" | "verified" | "rejected";
+  status?: "needVerified" | "paid" | "unpaid" | "all";
 }
 
 const MAX_CLIENT_ROWS = 5000;
 
-const getPaymentReportCursor = async (filter: ReportFilter) => {
-  const query: Record<string, unknown> = {
-    type: filter.type,
-    year: filter.year,
-  };
-  if (filter.status) query.status = filter.status;
+const ACTOR_STATUS_MAP: Record<"needVerified" | "paid", string> = {
+  needVerified: "pending",
+  paid: "verified",
+};
 
-  // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
+function normalizeActorStatus(status: string): string {
+  switch (status) {
+    case "pending":
+      return "need Verified";
+    case "verified":
+      return "paid";
+    case "rejected":
+      return "rejected"; // no client-facing equivalent given — keeping as-is
+    default:
+      return status;
+  }
+}
+
+function normalizeNotifyStatus(status: string): string {
+  switch (status) {
+    case "request":
+      return "unpaid";
+    case "paid":
+      return "paid";
+    default:
+      return status;
+  }
+}
+
+const getPaymentReportCursor = async (filter: ReportFilter) => {
+  const { status = "all", type, year } = filter;
+
+  if (status === "unpaid") {
+    return walkNotifyOnly(type, year);
+  }
+  if (status === "needVerified" || status === "paid") {
+    return walkActorOnly(type, year, ACTOR_STATUS_MAP[status]);
+  }
+  return walkCombined(type, year); // status === "all"
+};
+
+async function walkActorOnly(
+  type: ReportFilter["type"],
+  year: number,
+  status: string,
+) {
+  const query = { type, year, status };
   const [walkResult, sumResult] = await Promise.all([
     walkPayments(query),
     ActorPayment.aggregate([
@@ -1146,20 +1207,64 @@ const getPaymentReportCursor = async (filter: ReportFilter) => {
       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
     ]),
   ]);
+  return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+}
+
+async function walkNotifyOnly(type: ReportFilter["type"], year: number) {
+  const query = { type, year, status: "request" };
+  const [walkResult, sumResult] = await Promise.all([
+    walkNotifyPayments(query),
+    NotifyPayment.aggregate([
+      { $match: query },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]),
+  ]);
+  return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+}
+
+async function walkCombined(type: ReportFilter["type"], year: number) {
+  const actorQuery = { type, year };
+  const notifyQuery = { type, year, status: "request" };
+
+  const [actorWalk, notifyWalk, actorSum, notifySum] = await Promise.all([
+    walkPayments(actorQuery),
+    walkNotifyPayments(notifyQuery),
+    ActorPayment.aggregate([
+      { $match: actorQuery },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]),
+    NotifyPayment.aggregate([
+      { $match: notifyQuery },
+      { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+    ]),
+  ]);
+
+  const merged = [...actorWalk.data, ...notifyWalk.data].sort(
+    (a: any, b: any) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
 
   return {
-    totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
-    ...walkResult,
+    totalAmount:
+      (actorSum[0]?.totalAmount ?? 0) + (notifySum[0]?.totalAmount ?? 0),
+    total: actorWalk.total + notifyWalk.total,
+    returned: Math.min(merged.length, MAX_CLIENT_ROWS),
+    truncated:
+      merged.length > MAX_CLIENT_ROWS ||
+      actorWalk.truncated ||
+      notifyWalk.truncated,
+    data: merged.slice(0, MAX_CLIENT_ROWS),
   };
-};
+}
 
 async function walkPayments(query: Record<string, unknown>) {
   const cursor = ActorPayment.find(query)
-    .select("actor amount desc status createdAt year method transactionId number type")
+    .select(
+      "actor amount desc status createdAt year method transactionId number type",
+    )
     .populate("actor", "fullName idNo")
     .lean()
     .maxTimeMS(60_000)
-    // .sort({ actorIdNo: 1 })
     .sort({ createdAt: 1 })
     .cursor({ batchSize: 1000 });
 
@@ -1168,10 +1273,14 @@ async function walkPayments(query: Record<string, unknown>) {
   let truncated = false;
 
   try {
-    for await (const doc of cursor) {
+    for await (const d of cursor) {
       count++;
       if (results.length < MAX_CLIENT_ROWS) {
-        results.push(doc);
+        results.push({
+          ...d,
+          status: normalizeActorStatus(d.status),
+          source: "ActorPayment",
+        });
       } else {
         truncated = true;
         break;
@@ -1183,6 +1292,187 @@ async function walkPayments(query: Record<string, unknown>) {
 
   return { total: count, returned: results.length, truncated, data: results };
 }
+
+async function walkNotifyPayments(query: Record<string, unknown>) {
+  const cursor = NotifyPayment.find(query)
+    .select(
+      "actorId amount desc status createdAt year eventId number type transactionId rejectionReason",
+    )
+    .populate("actorId", "fullName idNo")
+    .lean()
+    .maxTimeMS(60_000)
+    .sort({ createdAt: 1 })
+    .cursor({ batchSize: 1000 });
+
+  const results: unknown[] = [];
+  let count = 0;
+  let truncated = false;
+
+  try {
+    for await (const doc of cursor) {
+      count++;
+      if (results.length < MAX_CLIENT_ROWS) {
+        const { actorId, status, ...rest } = doc as any;
+        results.push({
+          ...rest,
+          status: normalizeNotifyStatus(status),
+          actor: actorId,
+          source: "NotifyPayment",
+        });
+      } else {
+        truncated = true;
+        break;
+      }
+    }
+  } finally {
+    await cursor.close();
+  }
+
+  return { total: count, returned: results.length, truncated, data: results };
+}
+
+// export interface ReportFilter {
+//   year: number;
+//   type: "membership" | "event";
+//   status?: "needVerified" | "paid" | "unpaid" | "all";
+// }
+
+// const MAX_CLIENT_ROWS = 5000;
+// const mapStatus = {
+//   needVerified: "pending",
+//   paid: "verified",
+//   unpaid: "request",
+//   all: "all",
+// };
+// const ACTOR_STATUS_MAP: Record<"needVerified" | "paid", string> = {
+//   needVerified: "pending",
+//   paid: "verified",
+// };
+
+// const getPaymentReportCursor = async (filter: ReportFilter) => {
+//   const { status = "all", type, year } = filter;
+//   if (status === "unpaid") {
+//     return;
+//   }
+//   if (status === "needVerified" || status === "paid") {
+//     return walkActorOnly(type, year, ACTOR_STATUS_MAP[status]);
+//   }
+//   // return walkCombined(type, year);
+
+//   // const query: Record<string, unknown> = {
+//   //   type: filter.type,
+//   //   year: filter.year,
+//   // };
+
+//   // if (filter.status) {
+//   //   const conditionalStatus = mapStatus[filter.status];
+//   //   query.status = conditionalStatus;
+//   // }
+
+//   // // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
+//   // const [walkResult, sumResult] = await Promise.all([
+//   //   walkPayments(query),
+//   //   ActorPayment.aggregate([
+//   //     { $match: query },
+//   //     { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+//   //   ]),
+//   // ]);
+
+//   // return {
+//   //   totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
+//   //   ...walkResult,
+//   // };
+// };
+
+// async function walkActorOnly(
+//   type: ReportFilter["type"],
+//   year: number,
+//   status: string,
+// ) {
+//   const query = { type, year, status };
+//   const [walkResult, sumResult] = await Promise.all([
+//     walkPayments(query),
+//     ActorPayment.aggregate([
+//       { $match: query },
+//       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+//     ]),
+//   ]);
+//   return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+// }
+// async function walkNotifyOnly(type: ReportFilter["type"], year: number) {
+//   const query = { type, year, status: "request" };
+//   const [walkResult, sumResult] = await Promise.all([
+//     walkNotifyPayments(query),
+//     NotifyPayment.aggregate([
+//       { $match: query },
+//       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+//     ]),
+//   ]);
+//   return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+// }
+// async function walkPayments(query: Record<string, unknown>) {
+//   const cursor = ActorPayment.find(query)
+//     .select(
+//       "actor amount desc status createdAt year method transactionId number type",
+//     )
+//     .populate("actor", "fullName idNo")
+//     .lean()
+//     .maxTimeMS(60_000)
+//     // .sort({ actorIdNo: 1 })
+//     .sort({ createdAt: 1 })
+//     .cursor({ batchSize: 1000 });
+
+//   const results: unknown[] = [];
+//   let count = 0;
+//   let truncated = false;
+
+//   try {
+//     for await (const doc of cursor) {
+//       count++;
+//       if (results.length < MAX_CLIENT_ROWS) {
+//         results.push(doc);
+//       } else {
+//         truncated = true;
+//         break;
+//       }
+//     }
+//   } finally {
+//     await cursor.close();
+//   }
+
+//   return { total: count, returned: results.length, truncated, data: results };
+// }
+
+// async function walkNotifyPayments(query: Record<string, unknown>) {
+//   const cursor = NotifyPayment.find(query)
+//     .select(
+//       "actorId amount desc status createdAt year eventId number type transactionId rejectionReason",
+//     )
+//     .populate("actorId", "fullName idNo")
+//     .lean()
+//     .maxTimeMS(60_000)
+//     .sort({ createdAt: 1 })
+//     .cursor({ batchSize: 1000 });
+
+//   const results: unknown[] = [];
+//   let count = 0;
+//   let truncated = false;
+//   try {
+//     for await (const doc of cursor) {
+//       count++;
+//       if (results.length < MAX_CLIENT_ROWS) {
+//         const { actorId, ...rest } = doc;
+//         results.push({ ...rest, actor: actorId, source: "NotifyPayment" });
+//       } else {
+//         truncated: true;
+//         break;
+//       }
+//     }
+//   } finally {
+//     await cursor.close();
+//   }
+//   return { total: count, returned: results.length, truncated, data: results };
+// }
 
 export const ActorPaymentService = {
   actorPaymentInfo,

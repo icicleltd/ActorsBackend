@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import sendResponse from "../shared/sendResponse";
 import { ActorService } from "./actor.services";
 import catchAsync from "../shared/catchAsync";
-import type { SortOrder } from "mongoose";
+import { Types, type SortOrder } from "mongoose";
 import { AppError } from "../middleware/error";
 
 const createActor = catchAsync(
@@ -143,9 +143,9 @@ const getActorForModal = catchAsync(
 );
 const updateProfilePhoto = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log("in updateProfilePhoto ")
-    console.log("body",req.body)
-    const {url,idNo}=req.body;
+    console.log("in updateProfilePhoto ");
+    console.log("body", req.body);
+    const { url, idNo } = req.body;
     const result = await ActorService.updateProfilePhoto(url, idNo);
     sendResponse(res, {
       statusCode: 200,
@@ -153,21 +153,29 @@ const updateProfilePhoto = catchAsync(
       message: "Actor Profile photo updated successfully",
       data: result,
     });
-  }
+  },
 );
-// const test = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     let a: any;
-//     const b = "abc";
-//     const result = await ActorService.updateActor(a, b);
-//     sendResponse(res, {
-//       statusCode: 201,
-//       success: true,
-//       message: "Actor Promoted successfully",
-//       data: result,
-//     });
-//   }
-// );
+const myPaymentHistory = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const actorId = req.query.actorId as string;
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+    if (!actorId) {
+      throw new AppError(400, "Actor id not found, Unauthorized");
+    }
+    const result = await ActorService.myPaymentHistory(
+      new Types.ObjectId(actorId),
+      page,
+      limit,
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "My payment info get successfully",
+      data: result,
+    });
+  },
+);
 
 export const ActorController = {
   createActor,
@@ -176,5 +184,6 @@ export const ActorController = {
   filterByRank,
   updateActor,
   getActorForModal,
-  updateProfilePhoto
+  updateProfilePhoto,
+  myPaymentHistory,
 };

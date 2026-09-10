@@ -6,14 +6,17 @@ export interface IActorPayment {
   type: "membership" | "event";
   year?: number;
   eventId?: Types.ObjectId;
-  number: string;
   amount: number;
   desc?: string;
-  method: "bkash" | "Nagad" | "Cash";
+  method: "bkash" | "Nagad" | "Cash" | "bank";
   recordedVia: "direct" | "notify";
-  transactionId?: string;
 
   status: "pending" | "verified" | "rejected";
+  transactionId?: string;
+  number?: string;
+  date?: Date;
+  accountNo?: string;
+  bankName?: string;
 
   verifiedBy: mongoose.Types.ObjectId;
   verifiedAt: Date;
@@ -25,15 +28,18 @@ export interface INotifyPayment {
   actorId: Types.ObjectId;
   type: "membership" | "event";
   eventId?: Types.ObjectId;
-  transactionId?: string;
   amount: number;
-  number: string;
   desc?: string;
   year?: number;
   isView: boolean;
   status: "request" | "paid" | "rejected";
-  method?: "bkash" | "Nagad" | "Cash";
+  method?: "bkash" | "Nagad" | "Cash" | "bank";
   rejectionReason?: string;
+  transactionId?: string;
+  number?: string;
+  date?: Date;
+  accountNo?: string;
+  bankName?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

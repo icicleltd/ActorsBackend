@@ -70,10 +70,13 @@ const paymentSubmitted = catchAsync(
       year,
       amount,
       method,
+      bankName,
+      accountNo,
+      date,
     } = req.body;
     const actorId = req.user.data._id;
     const idNo = req.body.uid as string;
-    const result = await ActorPaymentService.paymentSubmitted(
+    const result = await ActorPaymentService.paymentSubmitted({
       senderNumber,
       transactionId,
       notifyPaymentId,
@@ -83,7 +86,10 @@ const paymentSubmitted = catchAsync(
       amount,
       idNo,
       method,
-    );
+      bankName,
+      accountNo,
+      date,
+    });
     sendResponse(res, {
       statusCode: 200,
       success: true,
@@ -121,7 +127,7 @@ const getPaymentDashboardStats = catchAsync(
     const { year } = req.query;
     const yearlyFee = parseInt(req.query.yearlyFee as string);
     const result = await ActorPaymentService.getPaymentDashboardStats({
-      year: year as string,
+      year: Number(year),
       yearlyFee,
     });
     sendResponse(res, {
@@ -261,7 +267,11 @@ const actorPaymentHistory = catchAsync(async (req: Request, res: Response) => {
 const getPaymentReportCursor = catchAsync(
   async (req: Request, res: Response) => {
     const year = req.query.year;
-    const status = req.query.status as  "needVerified" | "paid" | "unpaid" | "all"; 
+    const status = req.query.status as
+      | "needVerified"
+      | "paid"
+      | "unpaid"
+      | "all";
     const type = "membership";
 
     const result = await ActorPaymentService.getPaymentReportCursor({

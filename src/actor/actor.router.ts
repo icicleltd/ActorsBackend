@@ -1,6 +1,7 @@
 import express from "express";
 import { ActorController } from "./actor.controller";
 import { fileUploader } from "../helper/fileUpload";
+import { VerifyLogin } from "../middleware/verifyLogin";
 const actorRouter = express.Router();
 actorRouter.post(
   "/",
@@ -24,7 +25,7 @@ actorRouter.put(
 
 
 actorRouter.get("/modal", ActorController.getActorForModal);
-actorRouter.get("/my-payment-history", ActorController.myPaymentHistory);
+actorRouter.get("/my-payment-history", VerifyLogin, ActorController.myPaymentHistory);
 actorRouter.get("/", ActorController.getAllActor);
 actorRouter.get("/:id", ActorController.getSingleActor);
 actorRouter.get("/rank/:rank", ActorController.filterByRank);

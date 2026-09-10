@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -9,6 +42,7 @@ const actor_schema_1 = __importDefault(require("./actor.schema"));
 const error_1 = require("../middleware/error");
 const admin_schema_1 = require("../admin/admin.schema");
 const mongoose_1 = require("mongoose");
+const actor_payment_schema_1 = __importStar(require("../actor payment/actor.payment.schema"));
 const createActor = async (files, data) => {
     const uploadArray = async (fileArr) => {
         if (!fileArr || fileArr.length === 0)
@@ -657,6 +691,123 @@ const updateProfilePhoto = async (url, idNo) => {
     await existing.save();
     return null;
 };
+const myPaymentHistory = async (actorId, page, limit, uid) => {
+    console.log("first actorId", actorId);
+    if (uid) {
+        console.log(uid);
+        const actor = await actor_schema_1.default.findOne({ idNo: uid }).select("id").lean();
+        if (actor) {
+            actorId = actor._id;
+        }
+    }
+    console.log("last actorId", actorId);
+    const actorPaymentMatch = {
+        actor: actorId,
+        status: { $in: ["pending", "verified", "rejected"] },
+        type: "membership",
+    };
+    const notifyPaymentMatch = {
+        actorId: actorId,
+        status: { $in: ["request"] },
+        type: "membership",
+    };
+    const [history, totalPaidResult, totalDueResult, totalNeedVerifyResult] = await Promise.all([
+        actor_payment_schema_1.default.aggregate([
+            {
+                $match: actorPaymentMatch,
+            },
+            {
+                $unionWith: {
+                    coll: "notifypayments",
+                    pipeline: [
+                        {
+                            $match: notifyPaymentMatch,
+                        },
+                    ],
+                },
+            },
+            { $sort: { year: -1 } },
+            {
+                $project: {
+                    year: 1,
+                    paid: { $cond: [{ $eq: ["$status", "verified"] }, "$amount", 0] },
+                    due: {
+                        $cond: {
+                            if: { $eq: ["$status", "request"] },
+                            then: "$amount",
+                            else: 0,
+                        },
+                    },
+                    verifying: {
+                        $cond: [{ $eq: ["$status", "pending"] }, "$amount", 0],
+                    },
+                    status: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $eq: ["$status", "pending"] },
+                                    then: "Need Verify",
+                                },
+                                { case: { $eq: ["$status", "verified"] }, then: "Paid" },
+                                { case: { $eq: ["$status", "request"] }, then: "Unpaid" },
+                            ],
+                            default: "Unknown",
+                        },
+                    },
+                },
+            },
+        ]),
+        actor_payment_schema_1.default.aggregate([
+            {
+                $match: {
+                    actor: actorId,
+                    status: { $in: ["verified"] },
+                    type: "membership",
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaid: { $sum: "$amount" },
+                },
+            },
+        ]),
+        actor_payment_schema_1.NotifyPayment.aggregate([
+            {
+                $match: {
+                    actorId: actorId,
+                    status: { $in: ["request"] },
+                    type: "membership",
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaid: { $sum: "$amount" },
+                },
+            },
+        ]),
+        actor_payment_schema_1.default.aggregate([
+            {
+                $match: {
+                    actor: actorId,
+                    status: { $in: ["pending"] },
+                    type: "membership",
+                },
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaid: { $sum: "$amount" },
+                },
+            },
+        ]),
+    ]);
+    const totalPaid = totalPaidResult[0]?.totalPaid ?? 0;
+    const totalDue = totalDueResult[0]?.totalPaid ?? 0;
+    const totalNeedVerify = totalNeedVerifyResult[0]?.totalPaid ?? 0;
+    return { history, totalDue, totalPaid, totalNeedVerify };
+};
 exports.default = {
     updateActor,
 };
@@ -667,5 +818,6 @@ exports.ActorService = {
     filterByRank,
     updateActor,
     getActorForModal,
-    updateProfilePhoto
+    updateProfilePhoto,
+    myPaymentHistory,
 };

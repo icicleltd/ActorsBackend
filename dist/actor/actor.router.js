@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const actor_controller_1 = require("./actor.controller");
 const fileUpload_1 = require("../helper/fileUpload");
+const verifyLogin_1 = require("../middleware/verifyLogin");
 const actorRouter = express_1.default.Router();
 actorRouter.post("/", fileUpload_1.fileUploader.upload.fields([
     // { name: "characterPhoto", maxCount: 10 }, // array
@@ -19,6 +20,7 @@ actorRouter.put("/:id", fileUpload_1.fileUploader.upload.fields([
     { name: "photo", maxCount: 1 }, // Single profile photo
 ]), actor_controller_1.ActorController.updateActor);
 actorRouter.get("/modal", actor_controller_1.ActorController.getActorForModal);
+actorRouter.get("/my-payment-history", verifyLogin_1.VerifyLogin, actor_controller_1.ActorController.myPaymentHistory);
 actorRouter.get("/", actor_controller_1.ActorController.getAllActor);
 actorRouter.get("/:id", actor_controller_1.ActorController.getSingleActor);
 actorRouter.get("/rank/:rank", actor_controller_1.ActorController.filterByRank);

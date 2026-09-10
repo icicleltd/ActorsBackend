@@ -13,7 +13,7 @@ const actorPaymentSchema = new Schema<IActorPayment>(
       type: Schema.Types.ObjectId,
       ref: "NotifyPayment",
       required: function (this: any) {
-         return this.source === "notify";
+        return this.source === "notify";
       },
     },
 
@@ -39,10 +39,39 @@ const actorPaymentSchema = new Schema<IActorPayment>(
     },
     number: {
       type: String,
+      trim: true,
       required: function (this: any) {
-        return this.method !== "Cash";
+        return this.method == "bkash";
       },
     },
+    transactionId: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bkash";
+      },
+    },
+    accountNo: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bank";
+      },
+    },
+    bankName: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bank";
+      },
+    },
+    date: {
+      type: Date,
+      required: function (this: any) {
+        return this.method == "bank";
+      },
+    },
+
     desc: {
       type: String,
       trim: true,
@@ -55,19 +84,16 @@ const actorPaymentSchema = new Schema<IActorPayment>(
 
     method: {
       type: String,
-      enum: ["bkash", "Nagad", "Cash"],
+      enum: ["bkash", "Nagad", "Cash", "bank"],
       default: "Cash",
       required: true,
     },
     recordedVia: {
       type: String,
       enum: ["notify", "direct"],
-      default:"direct",
+      default: "direct",
       required: true,
     },
-
-
-    transactionId: String,
 
     status: {
       type: String,
@@ -136,12 +162,6 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
       type: Number,
       required: true,
     },
-
-    number: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     desc: {
       type: String,
       trim: true,
@@ -154,13 +174,45 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
     },
     method: {
       type: String,
-      enum: ["bkash", "Nagad", "Cash"],
-      default: "bkash",
+      enum: ["bkash", "Nagad", "Cash","bank"],
       required: function (this: any) {
         return this.status === "paid";
       },
     },
-    transactionId: { type: String, trim: true },
+    number: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bkash";
+      },
+    },
+    transactionId: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bkash";
+      },
+    },
+    accountNo: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bank";
+      },
+    },
+    bankName: {
+      type: String,
+      trim: true,
+      required: function (this: any) {
+        return this.method == "bank";
+      },
+    },
+    date: {
+      type: Date,
+      required: function (this: any) {
+        return this.method == "bank";
+      },
+    },
     rejectionReason: { type: String, trim: true },
 
     isView: {

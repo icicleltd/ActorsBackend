@@ -156,10 +156,12 @@ const updateProfilePhoto = catchAsync(
   },
 );
 const myPaymentHistory = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const actorId = req.query.actorId as string;
+  async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
+    const actorId = req.user?.data?._id;
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+    const uid = req.query.uid as string;
+    console.log("query",req.query)
     if (!actorId) {
       throw new AppError(400, "Actor id not found, Unauthorized");
     }
@@ -167,6 +169,7 @@ const myPaymentHistory = catchAsync(
       new Types.ObjectId(actorId),
       page,
       limit,
+      uid
     );
     sendResponse(res, {
       statusCode: 200,

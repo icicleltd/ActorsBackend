@@ -43,6 +43,7 @@ const error_1 = require("../middleware/error");
 const notification_schema_1 = require("../notification/notification.schema");
 const actor_payment_schema_1 = __importStar(require("./actor.payment.schema"));
 const payment_schema_1 = require("../payment/payment.schema");
+const actorJoin_1 = require("../helper/actorJoin");
 const actorPaymentInfo = async (id, search, limit, sortBy, sortWith, alive, year, status, page = 1) => {
     if (!year) {
         throw new error_1.AppError(400, "Year is required");
@@ -197,6 +198,7 @@ const notifyActorForPayment = async (payload) => {
             if (!notifications || notifications.length < 1) {
                 throw new error_1.AppError(400, "Failed to create Notification");
             }
+            await (0, actorJoin_1.syncActorJoinYearBulk)(actorId, Number(year), session);
         });
     }
     catch (error) {
@@ -220,12 +222,31 @@ const fetchNotifyPayments = async (idNo) => {
     }
     return notifyPayments;
 };
-const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, actorId, type, year, amount, idNo, method) => {
-    if (!senderNumber) {
-        throw new error_1.AppError(400, "senderNumber is required");
+const paymentSubmitted = async (payload) => {
+    const { senderNumber, transactionId, method, idNo, type, year, actorId, accountNo, amount, notifyPaymentId, bankName, date, } = payload;
+    if (!method) {
+        throw new error_1.AppError(400, "method is required");
     }
-    if (!transactionId) {
-        throw new error_1.AppError(400, "Member transactionId is required");
+    if (method) {
+        if (method === "bkash") {
+            if (!senderNumber) {
+                throw new error_1.AppError(400, "senderNumber is required");
+            }
+            if (!transactionId) {
+                throw new error_1.AppError(400, "Member transactionId is required");
+            }
+        }
+        if (method === "bank") {
+            if (!accountNo) {
+                throw new error_1.AppError(400, "Account No is required");
+            }
+            if (!bankName) {
+                throw new error_1.AppError(400, "Bank Name is required");
+            }
+            if (!date) {
+                throw new error_1.AppError(400, "Date is required");
+            }
+        }
     }
     if (!type || !year || !amount) {
         throw new error_1.AppError(400, "type,year,amount is required");
@@ -241,6 +262,8 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
     if (!isSame) {
         throw new error_1.AppError(403, "You are not authorized to submit payment for this actor.");
     }
+    const isBank = method === "bank";
+    const isBkash = method === "bkash";
     const existing = await actor_payment_schema_1.NotifyPayment.findById(notifyPaymentId).lean();
     if (!existing) {
         throw new error_1.AppError(400, "This notify payment not found");
@@ -251,10 +274,13 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
             const updateNotifyPayment = await actor_payment_schema_1.NotifyPayment.findByIdAndUpdate(notifyPaymentId, {
                 $set: {
                     status: "paid",
-                    number: senderNumber,
                     year: Number(year),
                     amount: Number(amount),
-                    transactionId,
+                    number: isBkash ? senderNumber : "",
+                    transactionId: isBkash ? transactionId : "",
+                    bankName: isBank ? bankName : "",
+                    accountNo: isBank ? accountNo : "",
+                    date: isBank ? new Date(date?.toString()) : "",
                     isView: true,
                     method: method,
                 },
@@ -273,9 +299,13 @@ const paymentSubmitted = async (senderNumber, transactionId, notifyPaymentId, ac
                     type,
                     year: Number(year),
                     amount: Number(amount),
-                    transactionId,
-                    number: senderNumber,
                     desc: updateNotifyPayment.desc,
+                    number: isBkash ? senderNumber : "",
+                    transactionId: isBkash ? transactionId : "",
+                    bankName: isBank ? bankName : "",
+                    accountNo: isBank ? accountNo : "",
+                    date: isBank ? new Date(date?.toString()) : "",
+                    method,
                     status: "pending",
                 },
             ], { session });
@@ -374,11 +404,11 @@ const getPaymentDashboardStats = async ({ year }) => {
        🎯 PAID AMOUNT
     ====================================== */
     const amountResult = await actor_payment_schema_1.default.aggregate([
-        { $match: { year } },
+        { $match: { year, type: "membership" } },
         {
             $facet: {
                 verified: [
-                    { $match: { status: "verified" } },
+                    { $match: { status: { $in: ["verified"] } } },
                     {
                         $group: {
                             _id: null,
@@ -388,7 +418,7 @@ const getPaymentDashboardStats = async ({ year }) => {
                     },
                 ],
                 pending: [
-                    { $match: { status: "pending" } },
+                    { $match: { status: { $in: ["pending"] } } },
                     {
                         $group: {
                             _id: null,
@@ -412,6 +442,7 @@ const getPaymentDashboardStats = async ({ year }) => {
             $match: {
                 year: Number(year),
                 status: "request",
+                type: "membership",
             },
         },
         {
@@ -843,14 +874,37 @@ const recordActorPayment = async (payload, userId) => {
         desc,
         method: "Cash",
         status: "verified",
+        recordedVia: "direct",
         verifiedAt: new Date(),
         verifiedBy: userId,
     }));
-    const result = await actor_payment_schema_1.default.create(recordedActorPayment);
-    if (!result || result.length < 1) {
-        throw new error_1.AppError(400, "Failed to record actor payment");
+    const session = await mongoose_1.default.startSession();
+    try {
+        session.startTransaction();
+        const record = await actor_payment_schema_1.default.create(recordedActorPayment, {
+            session,
+        });
+        if (!record || record.length < 1) {
+            throw new error_1.AppError(400, "Failed to record actor payment");
+        }
+        await (0, actorJoin_1.syncActorJoinYearBulk)(actorIds, Number(year), session);
+        await session.commitTransaction();
+        return record;
     }
-    return result;
+    catch (error) {
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
+        throw error;
+    }
+    finally {
+        await session.endSession();
+    }
+    // const result = await ActorPayment.create(recordedActorPayment);
+    // if (!result || result.length < 1) {
+    //   throw new AppError(400, "Failed to record actor payment");
+    // }
+    // return result;
 };
 const actorPaymentHistory = async (query) => {
     const { search, filter, page = 1, limit = 10, sortBy = "idNo", sortOrder = -1, skip = 0, year, } = query;
@@ -951,14 +1005,44 @@ const actorPaymentHistory = async (query) => {
     };
 };
 const MAX_CLIENT_ROWS = 5000;
+const ACTOR_STATUS_MAP = {
+    needVerified: "pending",
+    paid: "verified",
+};
+function normalizeActorStatus(status) {
+    switch (status) {
+        case "pending":
+            return "need Verified";
+        case "verified":
+            return "paid";
+        case "rejected":
+            return "rejected"; // no client-facing equivalent given — keeping as-is
+        default:
+            return status;
+    }
+}
+function normalizeNotifyStatus(status) {
+    switch (status) {
+        case "request":
+            return "unpaid";
+        case "paid":
+            return "paid";
+        default:
+            return status;
+    }
+}
 const getPaymentReportCursor = async (filter) => {
-    const query = {
-        type: filter.type,
-        year: filter.year,
-    };
-    if (filter.status)
-        query.status = filter.status;
-    // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
+    const { status = "all", type, year } = filter;
+    if (status === "unpaid") {
+        return walkNotifyOnly(type, year);
+    }
+    if (status === "needVerified" || status === "paid") {
+        return walkActorOnly(type, year, ACTOR_STATUS_MAP[status]);
+    }
+    return walkCombined(type, year); // status === "all"
+};
+async function walkActorOnly(type, year, status) {
+    const query = { type, year, status };
     const [walkResult, sumResult] = await Promise.all([
         walkPayments(query),
         actor_payment_schema_1.default.aggregate([
@@ -966,28 +1050,65 @@ const getPaymentReportCursor = async (filter) => {
             { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
         ]),
     ]);
+    return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+}
+async function walkNotifyOnly(type, year) {
+    const query = { type, year, status: "request" };
+    const [walkResult, sumResult] = await Promise.all([
+        walkNotifyPayments(query),
+        actor_payment_schema_1.NotifyPayment.aggregate([
+            { $match: query },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+        ]),
+    ]);
+    return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+}
+async function walkCombined(type, year) {
+    const actorQuery = { type, year };
+    const notifyQuery = { type, year, status: "request" };
+    const [actorWalk, notifyWalk, actorSum, notifySum] = await Promise.all([
+        walkPayments(actorQuery),
+        walkNotifyPayments(notifyQuery),
+        actor_payment_schema_1.default.aggregate([
+            { $match: actorQuery },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+        ]),
+        actor_payment_schema_1.NotifyPayment.aggregate([
+            { $match: notifyQuery },
+            { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+        ]),
+    ]);
+    const merged = [...actorWalk.data, ...notifyWalk.data].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     return {
-        totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
-        ...walkResult,
+        totalAmount: (actorSum[0]?.totalAmount ?? 0) + (notifySum[0]?.totalAmount ?? 0),
+        total: actorWalk.total + notifyWalk.total,
+        returned: Math.min(merged.length, MAX_CLIENT_ROWS),
+        truncated: merged.length > MAX_CLIENT_ROWS ||
+            actorWalk.truncated ||
+            notifyWalk.truncated,
+        data: merged.slice(0, MAX_CLIENT_ROWS),
     };
-};
+}
 async function walkPayments(query) {
     const cursor = actor_payment_schema_1.default.find(query)
         .select("actor amount desc status createdAt year method transactionId number type")
         .populate("actor", "fullName idNo")
         .lean()
         .maxTimeMS(60000)
-        // .sort({ actorIdNo: 1 })
         .sort({ createdAt: 1 })
         .cursor({ batchSize: 1000 });
     const results = [];
     let count = 0;
     let truncated = false;
     try {
-        for await (const doc of cursor) {
+        for await (const d of cursor) {
             count++;
             if (results.length < MAX_CLIENT_ROWS) {
-                results.push(doc);
+                results.push({
+                    ...d,
+                    status: normalizeActorStatus(d.status),
+                    source: "ActorPayment",
+                });
             }
             else {
                 truncated = true;
@@ -1000,6 +1121,170 @@ async function walkPayments(query) {
     }
     return { total: count, returned: results.length, truncated, data: results };
 }
+async function walkNotifyPayments(query) {
+    const cursor = actor_payment_schema_1.NotifyPayment.find(query)
+        .select("actorId amount desc status createdAt year eventId number type transactionId rejectionReason")
+        .populate("actorId", "fullName idNo")
+        .lean()
+        .maxTimeMS(60000)
+        .sort({ createdAt: 1 })
+        .cursor({ batchSize: 1000 });
+    const results = [];
+    let count = 0;
+    let truncated = false;
+    try {
+        for await (const doc of cursor) {
+            count++;
+            if (results.length < MAX_CLIENT_ROWS) {
+                const { actorId, status, ...rest } = doc;
+                results.push({
+                    ...rest,
+                    status: normalizeNotifyStatus(status),
+                    actor: actorId,
+                    source: "NotifyPayment",
+                });
+            }
+            else {
+                truncated = true;
+                break;
+            }
+        }
+    }
+    finally {
+        await cursor.close();
+    }
+    return { total: count, returned: results.length, truncated, data: results };
+}
+// export interface ReportFilter {
+//   year: number;
+//   type: "membership" | "event";
+//   status?: "needVerified" | "paid" | "unpaid" | "all";
+// }
+// const MAX_CLIENT_ROWS = 5000;
+// const mapStatus = {
+//   needVerified: "pending",
+//   paid: "verified",
+//   unpaid: "request",
+//   all: "all",
+// };
+// const ACTOR_STATUS_MAP: Record<"needVerified" | "paid", string> = {
+//   needVerified: "pending",
+//   paid: "verified",
+// };
+// const getPaymentReportCursor = async (filter: ReportFilter) => {
+//   const { status = "all", type, year } = filter;
+//   if (status === "unpaid") {
+//     return;
+//   }
+//   if (status === "needVerified" || status === "paid") {
+//     return walkActorOnly(type, year, ACTOR_STATUS_MAP[status]);
+//   }
+//   // return walkCombined(type, year);
+//   // const query: Record<string, unknown> = {
+//   //   type: filter.type,
+//   //   year: filter.year,
+//   // };
+//   // if (filter.status) {
+//   //   const conditionalStatus = mapStatus[filter.status];
+//   //   query.status = conditionalStatus;
+//   // }
+//   // // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
+//   // const [walkResult, sumResult] = await Promise.all([
+//   //   walkPayments(query),
+//   //   ActorPayment.aggregate([
+//   //     { $match: query },
+//   //     { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+//   //   ]),
+//   // ]);
+//   // return {
+//   //   totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
+//   //   ...walkResult,
+//   // };
+// };
+// async function walkActorOnly(
+//   type: ReportFilter["type"],
+//   year: number,
+//   status: string,
+// ) {
+//   const query = { type, year, status };
+//   const [walkResult, sumResult] = await Promise.all([
+//     walkPayments(query),
+//     ActorPayment.aggregate([
+//       { $match: query },
+//       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+//     ]),
+//   ]);
+//   return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+// }
+// async function walkNotifyOnly(type: ReportFilter["type"], year: number) {
+//   const query = { type, year, status: "request" };
+//   const [walkResult, sumResult] = await Promise.all([
+//     walkNotifyPayments(query),
+//     NotifyPayment.aggregate([
+//       { $match: query },
+//       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+//     ]),
+//   ]);
+//   return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
+// }
+// async function walkPayments(query: Record<string, unknown>) {
+//   const cursor = ActorPayment.find(query)
+//     .select(
+//       "actor amount desc status createdAt year method transactionId number type",
+//     )
+//     .populate("actor", "fullName idNo")
+//     .lean()
+//     .maxTimeMS(60_000)
+//     // .sort({ actorIdNo: 1 })
+//     .sort({ createdAt: 1 })
+//     .cursor({ batchSize: 1000 });
+//   const results: unknown[] = [];
+//   let count = 0;
+//   let truncated = false;
+//   try {
+//     for await (const doc of cursor) {
+//       count++;
+//       if (results.length < MAX_CLIENT_ROWS) {
+//         results.push(doc);
+//       } else {
+//         truncated = true;
+//         break;
+//       }
+//     }
+//   } finally {
+//     await cursor.close();
+//   }
+//   return { total: count, returned: results.length, truncated, data: results };
+// }
+// async function walkNotifyPayments(query: Record<string, unknown>) {
+//   const cursor = NotifyPayment.find(query)
+//     .select(
+//       "actorId amount desc status createdAt year eventId number type transactionId rejectionReason",
+//     )
+//     .populate("actorId", "fullName idNo")
+//     .lean()
+//     .maxTimeMS(60_000)
+//     .sort({ createdAt: 1 })
+//     .cursor({ batchSize: 1000 });
+//   const results: unknown[] = [];
+//   let count = 0;
+//   let truncated = false;
+//   try {
+//     for await (const doc of cursor) {
+//       count++;
+//       if (results.length < MAX_CLIENT_ROWS) {
+//         const { actorId, ...rest } = doc;
+//         results.push({ ...rest, actor: actorId, source: "NotifyPayment" });
+//       } else {
+//         truncated: true;
+//         break;
+//       }
+//     }
+//   } finally {
+//     await cursor.close();
+//   }
+//   return { total: count, returned: results.length, truncated, data: results };
+// }
 exports.ActorPaymentService = {
     actorPaymentInfo,
     notifyActorForPayment,

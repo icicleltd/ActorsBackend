@@ -7,6 +7,7 @@ exports.ActorController = void 0;
 const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const actor_services_1 = require("./actor.services");
 const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
+const mongoose_1 = require("mongoose");
 const error_1 = require("../middleware/error");
 const createActor = (0, catchAsync_1.default)(async (req, res, next) => {
     const files = req.files;
@@ -116,19 +117,23 @@ const updateProfilePhoto = (0, catchAsync_1.default)(async (req, res, next) => {
         data: result,
     });
 });
-// const test = catchAsync(
-//   async (req: Request, res: Response, next: NextFunction) => {
-//     let a: any;
-//     const b = "abc";
-//     const result = await ActorService.updateActor(a, b);
-//     sendResponse(res, {
-//       statusCode: 201,
-//       success: true,
-//       message: "Actor Promoted successfully",
-//       data: result,
-//     });
-//   }
-// );
+const myPaymentHistory = (0, catchAsync_1.default)(async (req, res, next) => {
+    const actorId = req.user?.data?._id;
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+    const uid = req.query.uid;
+    console.log("query", req.query);
+    if (!actorId) {
+        throw new error_1.AppError(400, "Actor id not found, Unauthorized");
+    }
+    const result = await actor_services_1.ActorService.myPaymentHistory(new mongoose_1.Types.ObjectId(actorId), page, limit, uid);
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "My payment info get successfully",
+        data: result,
+    });
+});
 exports.ActorController = {
     createActor,
     getSingleActor,
@@ -136,5 +141,6 @@ exports.ActorController = {
     filterByRank,
     updateActor,
     getActorForModal,
-    updateProfilePhoto
+    updateProfilePhoto,
+    myPaymentHistory,
 };

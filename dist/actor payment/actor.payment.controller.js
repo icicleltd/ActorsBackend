@@ -29,7 +29,7 @@ const notifyActorForPayment = (0, catchAsync_1.default)(async (req, res, next) =
     const payload = req.body;
     const result = await actor_payment_services_1.ActorPaymentService.notifyActorForPayment(payload);
     (0, sendResponse_1.default)(res, {
-        statusCode: 200,
+        statusCode: 201,
         success: true,
         message: "Notify payment successfully",
         data: result,
@@ -46,10 +46,23 @@ const fetchNotifyPayments = (0, catchAsync_1.default)(async (req, res, next) => 
     });
 });
 const paymentSubmitted = (0, catchAsync_1.default)(async (req, res, next) => {
-    const { notifyPaymentId, senderNumber, transactionId, type, year, amount, method, } = req.body;
+    const { notifyPaymentId, senderNumber, transactionId, type, year, amount, method, bankName, accountNo, date, } = req.body;
     const actorId = req.user.data._id;
     const idNo = req.body.uid;
-    const result = await actor_payment_services_1.ActorPaymentService.paymentSubmitted(senderNumber, transactionId, notifyPaymentId, actorId, type, year, amount, idNo, method);
+    const result = await actor_payment_services_1.ActorPaymentService.paymentSubmitted({
+        senderNumber,
+        transactionId,
+        notifyPaymentId,
+        actorId,
+        type,
+        year,
+        amount,
+        idNo,
+        method,
+        bankName,
+        accountNo,
+        date,
+    });
     (0, sendResponse_1.default)(res, {
         statusCode: 200,
         success: true,
@@ -81,7 +94,7 @@ const getPaymentDashboardStats = (0, catchAsync_1.default)(async (req, res, next
     const { year } = req.query;
     const yearlyFee = parseInt(req.query.yearlyFee);
     const result = await actor_payment_services_1.ActorPaymentService.getPaymentDashboardStats({
-        year: year,
+        year: Number(year),
         yearlyFee,
     });
     (0, sendResponse_1.default)(res, {

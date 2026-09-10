@@ -6,6 +6,7 @@ import { Types, type PipelineStage, type SortOrder } from "mongoose";
 import ActorPayment, {
   NotifyPayment,
 } from "../actor payment/actor.payment.schema";
+import { convertStatus } from "../helper/makePayementStatus";
 
 const createActor = async (files: any, data: any) => {
   const uploadArray = async (fileArr: any[]) => {
@@ -741,7 +742,17 @@ const myPaymentHistory = async (
   actorId: Types.ObjectId,
   page: number,
   limit: number,
+  uid?: string,
 ) => {
+  console.log("first actorId",actorId)
+  if (uid) {
+    console.log(uid);
+    const actor = await Actor.findOne({ idNo: uid }).select("id").lean();
+    if (actor) {
+      actorId = actor._id;
+    }
+  }
+  console.log("last actorId",actorId)
   const actorPaymentMatch = {
     actor: actorId,
     status: { $in: ["pending", "verified", "rejected"] },
@@ -752,57 +763,103 @@ const myPaymentHistory = async (
     status: { $in: ["request"] },
     type: "membership",
   };
-  const [history, totalPaidResult, totalDueResult] = await Promise.all([
-    ActorPayment.aggregate([
-      {
-        $match: actorPaymentMatch,
-      },
-      {
-        $unionWith: {
-          coll: "notifypayments",
-          pipeline: [
-            {
-              $match: notifyPaymentMatch,
+  const [history, totalPaidResult, totalDueResult, totalNeedVerifyResult] =
+    await Promise.all([
+      ActorPayment.aggregate([
+        {
+          $match: actorPaymentMatch,
+        },
+        {
+          $unionWith: {
+            coll: "notifypayments",
+            pipeline: [
+              {
+                $match: notifyPaymentMatch,
+              },
+            ],
+          },
+        },
+        { $sort: { year: -1 } },
+        {
+          $project: {
+            year: 1,
+            paid: { $cond: [{ $eq: ["$status", "verified"] }, "$amount", 0] },
+            due: {
+              $cond: {
+                if: { $eq: ["$status", "request"] },
+                then: "$amount",
+                else: 0,
+              },
             },
-          ],
+            verifying: {
+              $cond: [{ $eq: ["$status", "pending"] }, "$amount", 0],
+            },
+            status: {
+              $switch: {
+                branches: [
+                  {
+                    case: { $eq: ["$status", "pending"] },
+                    then: "Need Verify",
+                  },
+                  { case: { $eq: ["$status", "verified"] }, then: "Paid" },
+                  { case: { $eq: ["$status", "request"] }, then: "Unpaid" },
+                ],
+                default: "Unknown",
+              },
+            },
+          },
         },
-      },
-      { $sort: { year: -1 } },
-    ]),
-    ActorPayment.aggregate([
-      {
-        $match: {
-          actor: actorId,
-          status: { $in: ["verified"] },
-          type: "membership",
+      ]),
+      ActorPayment.aggregate([
+        {
+          $match: {
+            actor: actorId,
+            status: { $in: ["verified"] },
+            type: "membership",
+          },
         },
-      },
-      {
-        $group: {
-          _id: null,
-          totalPaid: { $sum: "$amount" },
+        {
+          $group: {
+            _id: null,
+            totalPaid: { $sum: "$amount" },
+          },
         },
-      },
-    ]),
-    NotifyPayment.aggregate([
-      {
-        $match: {
-          actorId: actorId,
-          status: { $in: ["request"] },
-          type: "membership",
+      ]),
+      NotifyPayment.aggregate([
+        {
+          $match: {
+            actorId: actorId,
+            status: { $in: ["request"] },
+            type: "membership",
+          },
         },
-      },
-      {
-        $group: {
-          _id: null,
-          totalPaid: { $sum: "$amount" },
+        {
+          $group: {
+            _id: null,
+            totalPaid: { $sum: "$amount" },
+          },
         },
-      },
-    ]),
-  ]);
+      ]),
+      ActorPayment.aggregate([
+        {
+          $match: {
+            actor: actorId,
+            status: { $in: ["pending"] },
+            type: "membership",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalPaid: { $sum: "$amount" },
+          },
+        },
+      ]),
+    ]);
   const totalPaid = totalPaidResult[0]?.totalPaid ?? 0;
   const totalDue = totalDueResult[0]?.totalPaid ?? 0;
-  return { history, totalDue, totalPaid };
+  const totalNeedVerify = totalNeedVerifyResult[0]?.totalPaid ?? 0;
+  return { history, totalDue, totalPaid, totalNeedVerify };
 };
 
 export default {

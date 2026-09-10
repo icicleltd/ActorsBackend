@@ -13,7 +13,7 @@ const actorPaymentSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: "NotifyPayment",
         required: function () {
-            return this.method !== "Cash";
+            return this.source === "notify";
         },
     },
     type: {
@@ -37,8 +37,36 @@ const actorPaymentSchema = new mongoose_1.Schema({
     },
     number: {
         type: String,
+        trim: true,
         required: function () {
-            return this.method !== "Cash";
+            return this.method == "bkash";
+        },
+    },
+    transactionId: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bkash";
+        },
+    },
+    accountNo: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bank";
+        },
+    },
+    bankName: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bank";
+        },
+    },
+    date: {
+        type: Date,
+        required: function () {
+            return this.method == "bank";
         },
     },
     desc: {
@@ -51,11 +79,16 @@ const actorPaymentSchema = new mongoose_1.Schema({
     },
     method: {
         type: String,
-        enum: ["bkash", "Nagad", "Cash"],
-        default: "bkash",
+        enum: ["bkash", "Nagad", "Cash", "bank"],
+        default: "Cash",
         required: true,
     },
-    transactionId: String,
+    recordedVia: {
+        type: String,
+        enum: ["notify", "direct"],
+        default: "direct",
+        required: true,
+    },
     status: {
         type: String,
         enum: ["pending", "verified", "rejected"],
@@ -92,7 +125,7 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
     year: {
         type: Number,
         required: function () {
-            return (this.type = "membership");
+            return this.type === "membership";
         },
     },
     eventId: {
@@ -106,11 +139,6 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
         type: Number,
         required: true,
     },
-    number: {
-        type: String,
-        required: true,
-        trim: true,
-    },
     desc: {
         type: String,
         trim: true,
@@ -122,11 +150,45 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
     },
     method: {
         type: String,
-        enum: ["bkash", "Nagad", "Cash"],
-        default: "bkash",
-        required: function () { this.status === "paid"; },
+        enum: ["bkash", "Nagad", "Cash", "bank"],
+        required: function () {
+            return this.status === "paid";
+        },
     },
-    transactionId: { type: String, trim: true },
+    number: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bkash";
+        },
+    },
+    transactionId: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bkash";
+        },
+    },
+    accountNo: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bank";
+        },
+    },
+    bankName: {
+        type: String,
+        trim: true,
+        required: function () {
+            return this.method == "bank";
+        },
+    },
+    date: {
+        type: Date,
+        required: function () {
+            return this.method == "bank";
+        },
+    },
     rejectionReason: { type: String, trim: true },
     isView: {
         type: Boolean,

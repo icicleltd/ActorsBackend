@@ -222,24 +222,61 @@ const fetchNotifyPayments = async (idNo: string) => {
   }
   return notifyPayments;
 };
+interface IPaymentSubmittedPayload {
+  senderNumber?: string;
+  transactionId?: string;
+  accountNo?: string;
+  bankName?: string;
+  date?: string;
+  notifyPaymentId: string;
+  actorId: string;
+  type: string;
+  year: string;
+  amount: string;
+  idNo: string;
+  method: "bkash" | "Nagad" | "Cash" | "bank";
+}
 
-const paymentSubmitted = async (
-  senderNumber: string,
-  transactionId: string,
-  notifyPaymentId: string,
-  actorId: string,
-  type: string,
-  year: string,
-  amount: string,
-  idNo: string,
-  method: "bkash" | "Nagad" | "Cash",
-) => {
-  if (!senderNumber) {
-    throw new AppError(400, "senderNumber is required");
+const paymentSubmitted = async (payload: IPaymentSubmittedPayload) => {
+  const {
+    senderNumber,
+    transactionId,
+    method,
+    idNo,
+    type,
+    year,
+    actorId,
+    accountNo,
+    amount,
+    notifyPaymentId,
+    bankName,
+    date,
+  } = payload;
+  if (!method) {
+    throw new AppError(400, "method is required");
   }
-  if (!transactionId) {
-    throw new AppError(400, "Member transactionId is required");
+  if (method) {
+    if (method === "bkash") {
+      if (!senderNumber) {
+        throw new AppError(400, "senderNumber is required");
+      }
+      if (!transactionId) {
+        throw new AppError(400, "Member transactionId is required");
+      }
+    }
+    if (method === "bank") {
+      if (!accountNo) {
+        throw new AppError(400, "Account No is required");
+      }
+      if (!bankName) {
+        throw new AppError(400, "Bank Name is required");
+      }
+      if (!date) {
+        throw new AppError(400, "Date is required");
+      }
+    }
   }
+
   if (!type || !year || !amount) {
     throw new AppError(400, "type,year,amount is required");
   }
@@ -257,6 +294,8 @@ const paymentSubmitted = async (
       "You are not authorized to submit payment for this actor.",
     );
   }
+  const isBank = method === "bank";
+  const isBkash = method === "bkash";
 
   const existing = await NotifyPayment.findById(notifyPaymentId).lean();
   if (!existing) {
@@ -270,10 +309,13 @@ const paymentSubmitted = async (
         {
           $set: {
             status: "paid",
-            number: senderNumber,
             year: Number(year),
             amount: Number(amount),
-            transactionId,
+            number: isBkash ? senderNumber : "",
+            transactionId: isBkash ? transactionId : "",
+            bankName: isBank ? bankName : "",
+            accountNo: isBank ? accountNo : "",
+            date: isBank ? new Date(date?.toString()!) : "",
             isView: true,
             method: method,
           },
@@ -295,9 +337,13 @@ const paymentSubmitted = async (
             type,
             year: Number(year),
             amount: Number(amount),
-            transactionId,
-            number: senderNumber,
             desc: updateNotifyPayment.desc,
+            number: isBkash ? senderNumber : "",
+            transactionId: isBkash ? transactionId : "",
+            bankName: isBank ? bankName : "",
+            accountNo: isBank ? accountNo : "",
+            date: isBank ? new Date(date?.toString()!) : "",
+            method,
             status: "pending",
           },
         ],
@@ -414,7 +460,7 @@ const verifyActorPayment = async (notifyPayment: string) => {
   session.endSession();
 };
 interface DashboardParams {
-  year: string;
+  year: number;
   yearlyFee: number;
 }
 
@@ -424,11 +470,11 @@ const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
   ====================================== */
 
   const amountResult = await ActorPayment.aggregate([
-    { $match: { year } },
+    { $match: { year, type: "membership" } },
     {
       $facet: {
         verified: [
-          { $match: { status: "verified" } },
+          { $match: { status: { $in: ["verified"] } } },
           {
             $group: {
               _id: null,
@@ -438,7 +484,7 @@ const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
           },
         ],
         pending: [
-          { $match: { status: "pending" } },
+          { $match: { status: { $in: ["pending"] } } },
           {
             $group: {
               _id: null,
@@ -465,6 +511,7 @@ const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
       $match: {
         year: Number(year),
         status: "request",
+        type: "membership",
       },
     },
     {
@@ -1009,7 +1056,7 @@ const recordActorPayment = async (
     }
     await syncActorJoinYearBulk(actorIds, Number(year), session);
     await session.commitTransaction();
-    return record
+    return record;
   } catch (error) {
     if (session.inTransaction()) {
       await session.abortTransaction();

@@ -20,7 +20,6 @@ export async function syncActorJoinYearBulk(
   candidateYear: number,
   session?: ClientSession,
 ) {
-  console.log(actorIds, candidateYear);
   await Actor.updateMany(
     {
       _id: { $in: actorIds },

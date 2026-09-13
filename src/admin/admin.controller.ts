@@ -249,6 +249,36 @@ const getNotifyActorPaidPayment = catchAsync(
     });
   },
 );
+
+const getPaymentChartData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AdminService.getPaymentChartData({
+      page: 1,
+      limit: 30,
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Payment Chart Data get successfully",
+      data: result,
+    });
+  },
+);
+const getBecomeMemberChartData = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AdminService.getBecomeMemberChartData({
+      page: 1,
+      limit: 30,
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Become a Member Chart Data get successfully",
+      data: result,
+    });
+  },
+);
+
 export const AdminController = {
   createAdmin,
   getAdmin,
@@ -267,4 +297,6 @@ export const AdminController = {
   fetchPaymentHistory,
   toggleActorStatus,
   getNotifyActorPaidPayment,
+  getPaymentChartData,
+  getBecomeMemberChartData
 };

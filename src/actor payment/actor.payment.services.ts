@@ -1050,6 +1050,7 @@ const recordActorPayment = async (
     session.startTransaction();
     const record = await ActorPayment.create(recordedActorPayment, {
       session,
+      ordered: true,
     });
     if (!record || record.length < 1) {
       throw new AppError(400, "Failed to record actor payment");

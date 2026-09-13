@@ -1,5 +1,4 @@
 export const convertStatus = (status: string) => {
-    console.log(status)
   switch (status) {
     case "pending":
       return "Need Verified";

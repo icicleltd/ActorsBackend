@@ -16,6 +16,7 @@ import { Secret } from "jsonwebtoken";
 import ActorPayment, {
   NotifyPayment,
 } from "../actor payment/actor.payment.schema";
+import BeAMember from "../beAMember/beAMember.schema";
 
 const createAdmin = async (payload: PayloadAdmin) => {
   if (!payload) {
@@ -482,7 +483,7 @@ const getGroupedYears = async (): Promise<
 > => {
   const [actorPaymentYears, notifyPaymentYears] = await Promise.all([
     ActorPayment.distinct("year", { type: "membership" }),
-    NotifyPayment.distinct("year", { type: "membership",}),
+    NotifyPayment.distinct("year", { type: "membership" }),
   ]);
   const uniqueYears = Array.from(
     new Set([...actorPaymentYears, ...notifyPaymentYears].map(Number)),
@@ -529,6 +530,49 @@ const getNotifyActorPaidPayment = async (
   const totalPages = Math.floor(total / limit);
   return { paidNotifyPayments, totalPages };
 };
+
+const getPaymentChartData = async (query: { page?: number; limit: number }) => {
+  const data = await ActorPayment.aggregate([
+    { $match: { status: "verified" } },
+    {
+      $group: {
+        _id: "$year",
+        amount: { $sum: "$amount" },
+      },
+    },
+    { $sort: { _id: -1 } },
+    {
+      $project: {
+        year: "$_id",
+        amount: 1,
+        _id: 0,
+      },
+    },
+  ]);
+  return data;
+};
+const getBecomeMemberChartData = async (query: {
+  page?: number;
+  limit: number;
+}) => {
+  const data = await BeAMember.aggregate([
+    { $match: { status: { $in: ["pending"] } } },
+    {
+      $group: {
+        _id: { $year: "$updatedAt" },
+        join: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: -1 } },{
+      $project:{
+        year:"$_id",
+        join:1,
+        _id:0
+      }
+    }
+  ]);
+  return data;
+};
 const test = async () => {
   return;
 };
@@ -550,4 +594,6 @@ export const AdminService = {
   fetchPaymentHistory,
   toggleActorStatus,
   getNotifyActorPaidPayment,
+  getPaymentChartData,
+  getBecomeMemberChartData,
 };

@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.convertStatus = void 0;
 const convertStatus = (status) => {
-    console.log(status);
     switch (status) {
         case "pending":
             return "Need Verified";

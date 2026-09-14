@@ -19,6 +19,8 @@ adminRouter.delete("/gallery/:id", admin_controller_1.AdminController.deleteImag
 adminRouter.delete("/deletemember/:id", admin_controller_1.AdminController.deleteMember);
 adminRouter.get("/actor-payment", admin_controller_1.AdminController.fetchActorPayments);
 adminRouter.get("/notify-paid-actor-payment", admin_controller_1.AdminController.getNotifyActorPaidPayment);
+adminRouter.get("/payment-chart", admin_controller_1.AdminController.getPaymentChartData);
+adminRouter.get("/be-member-chart", admin_controller_1.AdminController.getBecomeMemberChartData);
 adminRouter.get("/payment-history", admin_controller_1.AdminController.fetchPaymentHistory);
 adminRouter.get("/payments/years", admin_controller_1.AdminController.getGroupedYears);
 adminRouter.get("/", admin_controller_1.AdminController.getAdmin);

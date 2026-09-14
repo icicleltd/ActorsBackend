@@ -45,6 +45,7 @@ const error_1 = require("../middleware/error");
 const admin_schema_1 = require("./admin.schema");
 const jwtHelper_1 = require("../helper/jwtHelper");
 const actor_payment_schema_1 = __importStar(require("../actor payment/actor.payment.schema"));
+const beAMember_schema_1 = __importDefault(require("../beAMember/beAMember.schema"));
 const createAdmin = async (payload) => {
     if (!payload) {
         throw new error_1.AppError(400, "No data provided");
@@ -414,7 +415,7 @@ const fetchPaymentHistory = async (year, status, search) => {
 const getGroupedYears = async () => {
     const [actorPaymentYears, notifyPaymentYears] = await Promise.all([
         actor_payment_schema_1.default.distinct("year", { type: "membership" }),
-        actor_payment_schema_1.NotifyPayment.distinct("year", { type: "membership", }),
+        actor_payment_schema_1.NotifyPayment.distinct("year", { type: "membership" }),
     ]);
     const uniqueYears = Array.from(new Set([...actorPaymentYears, ...notifyPaymentYears].map(Number)));
     return uniqueYears
@@ -448,6 +449,45 @@ const getNotifyActorPaidPayment = async (year, status, search, limit, page, skip
     const totalPages = Math.floor(total / limit);
     return { paidNotifyPayments, totalPages };
 };
+const getPaymentChartData = async (query) => {
+    const data = await actor_payment_schema_1.default.aggregate([
+        { $match: { status: "verified" } },
+        {
+            $group: {
+                _id: "$year",
+                amount: { $sum: "$amount" },
+            },
+        },
+        { $sort: { _id: -1 } },
+        {
+            $project: {
+                year: "$_id",
+                amount: 1,
+                _id: 0,
+            },
+        },
+    ]);
+    return data;
+};
+const getBecomeMemberChartData = async (query) => {
+    const data = await beAMember_schema_1.default.aggregate([
+        { $match: { status: { $in: ["pending"] } } },
+        {
+            $group: {
+                _id: { $year: "$updatedAt" },
+                join: { $sum: 1 },
+            },
+        },
+        { $sort: { _id: -1 } }, {
+            $project: {
+                year: "$_id",
+                join: 1,
+                _id: 0
+            }
+        }
+    ]);
+    return data;
+};
 const test = async () => {
     return;
 };
@@ -469,4 +509,6 @@ exports.AdminService = {
     fetchPaymentHistory,
     toggleActorStatus,
     getNotifyActorPaidPayment,
+    getPaymentChartData,
+    getBecomeMemberChartData,
 };

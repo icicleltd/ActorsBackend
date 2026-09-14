@@ -14,7 +14,6 @@ async function syncActorJoinYear(actorId, candidateYear, session) {
     }, { $set: { joinYear: candidateYear } }, { session });
 }
 async function syncActorJoinYearBulk(actorIds, candidateYear, session) {
-    console.log(actorIds, candidateYear);
     await actor_schema_1.default.updateMany({
         _id: { $in: actorIds },
         $or: [{ joinYear: null }, { joinYear: { $gt: candidateYear } }],

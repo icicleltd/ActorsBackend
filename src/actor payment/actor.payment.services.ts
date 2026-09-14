@@ -465,118 +465,118 @@ interface DashboardParams {
 }
 
 const getPaymentDashboardStats = async ({ year }: DashboardParams) => {
-  /* =====================================
-     🎯 PAID AMOUNT
-  ====================================== */
+  if (!year) throw new AppError(400, "Year is required");
 
-  const amountResult = await ActorPayment.aggregate([
-    { $match: { year, type: "membership" } },
-    {
-      $facet: {
-        verified: [
-          { $match: { status: { $in: ["verified"] } } },
-          {
-            $group: {
-              _id: null,
-              totalAmount: { $sum: "$amount" },
-              count: { $sum: 1 },
+  const numericYear = Number(year);
+  const start = new Date(`${numericYear}-01-01`);
+  const end = new Date(`${numericYear}-12-31T23:59:59.999Z`);
+
+  const [actorPaymentResult, notifyPaymentResult, beMemberResult] =
+    await Promise.all([
+      ActorPayment.aggregate([
+        {
+          $match: {
+            year: numericYear,
+            type: "membership",
+            status: { $in: ["verified", "pending"] },
+          },
+        },
+        {
+          $group: {
+            _id: null, // merge into a single doc, don't split by status
+            totalPaidAmount: {
+              $sum: { $cond: [{ $eq: ["$status", "verified"] }, "$amount", 0] },
+            },
+            totalPaidActors: {
+              $sum: { $cond: [{ $eq: ["$status", "verified"] }, 1, 0] },
+            },
+            totalUnverifiedAmount: {
+              $sum: { $cond: [{ $eq: ["$status", "pending"] }, "$amount", 0] },
+            },
+            totalUnverifiedPaidActors: {
+              $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
             },
           },
-        ],
-        pending: [
-          { $match: { status: { $in: ["pending"] } } },
-          {
-            $group: {
-              _id: null,
-              totalAmount: { $sum: "$amount" },
-              count: { $sum: 1 },
+        },
+      ]),
+
+      NotifyPayment.aggregate([
+        {
+          $match: {
+            year: numericYear,
+            type: "membership",
+            status: "request",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalUnpaidAmount: { $sum: "$amount" },
+            totalUnpaidActors: { $sum: 1 },
+          },
+        },
+      ]),
+
+      Payment.aggregate([
+        {
+          $match: {
+            status: { $in: ["pending", "verified"] },
+            createdAt: { $gte: start, $lte: end }, // reverted to createdAt — confirm this is what you want
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalPaidNewMemberAmount: {
+              $sum: { $cond: [{ $eq: ["$status", "verified"] }, "$amount", 0] },
+            },
+            totalPaidNewMembers: {
+              $sum: { $cond: [{ $eq: ["$status", "verified"] }, 1, 0] },
+            },
+            totalUnverifiedNewMemberAmount: {
+              $sum: { $cond: [{ $eq: ["$status", "pending"] }, "$amount", 0] },
+            },
+            totalUnverifiedNewMembers: {
+              $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] },
             },
           },
-        ],
-      },
-    },
-  ]);
-  const totalPaidAmount = amountResult[0].verified[0]?.totalAmount || 0;
-  const needVerifyAmount = amountResult[0].pending[0]?.totalAmount || 0;
+        },
+      ]),
+    ]);
 
-  const totalPaidActor = amountResult[0].verified[0]?.count || 0;
-  const needVerifyCount = amountResult[0].pending[0]?.count || 0;
+  const actorPayment = actorPaymentResult[0] ?? {};
+  const notifyPayment = notifyPaymentResult[0] ?? {};
+  const beMemberPayment = beMemberResult[0] ?? {};
 
-  /* =====================================
-     🎯 UNPAID ACTORS
-  ====================================== */
+  const paidAmount = actorPayment.totalPaidAmount ?? 0;
+  const paidActors = actorPayment.totalPaidActors ?? 0;
+  const totalUnverifiedAmount = actorPayment.totalUnverifiedAmount ?? 0;
+  const totalUnverifiedPaidActors = actorPayment.totalUnverifiedPaidActors ?? 0;
 
-  const unpaidAmountResult = await NotifyPayment.aggregate([
-    {
-      $match: {
-        year: Number(year),
-        status: "request",
-        type: "membership",
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalAmount: { $sum: "$amount" },
-        actor: { $sum: 1 },
-      },
-    },
-  ]);
-  const totalActorUnpaidAmount = unpaidAmountResult[0]?.totalAmount || 0;
-  const totalActorUnpaid = unpaidAmountResult[0]?.actor || 0;
-  /* =====================================
-     🎯 NEW MEMBER PAYMENT
-  ====================================== */
+  const unPaidAmount = notifyPayment.totalUnpaidAmount ?? 0;
+  const unPaidActors = notifyPayment.totalUnpaidActors ?? 0;
 
-  const start = new Date(`${year}-01-01`);
-  const end = new Date(`${year}-12-31T23:59:59.999Z`);
+  const beMemberPaidAmount = beMemberPayment.totalPaidNewMemberAmount ?? 0;
+  const beMemberPaidBeMembers = beMemberPayment.totalPaidNewMembers ?? 0;
+  const totalUnverifiedBeMemberAmount =
+    beMemberPayment.totalUnverifiedNewMemberAmount ?? 0;
+  const totalUnverifiedPaidBeMembers =
+    beMemberPayment.totalUnverifiedNewMembers ?? 0;
 
-  const newMemberData = await Payment.aggregate([
-    {
-      $match: {
-        status: "verified",
-        createdAt: { $gte: start, $lte: end },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalMembers: { $sum: 1 },
-        totalAmount: { $sum: "$amount" },
-      },
-    },
-  ]);
-
-  const totalNewMemberPaid =
-    newMemberData.length > 0 ? newMemberData[0].totalMembers : 0;
-
-  const totalNewMemberAmount =
-    newMemberData.length > 0 ? newMemberData[0].totalAmount : 0;
-
-  const totalHandCash = totalPaidAmount + totalNewMemberAmount;
-  /* =====================================
-     🎯 RETURN
-  ====================================== */
+  // fixed: was mixing a count (paidActors) with a currency amount (beMemberPaidAmount)
+  const totalHandCash = paidAmount + beMemberPaidAmount;
 
   return {
-    actor: {
-      paid: {
-        totalActors: totalPaidActor,
-        totalAmount: totalPaidAmount,
-      },
-      paymentVerifying: {
-        totalActors: needVerifyCount,
-        totalAmount: needVerifyAmount,
-      },
-      unpaid: {
-        totalActors: totalActorUnpaid,
-        totalAmount: totalActorUnpaidAmount,
-      },
-    },
-    newMember: {
-      totalMembers: totalNewMemberPaid,
-      totalAmount: totalNewMemberAmount,
-    },
+    paidAmount,
+    paidActors,
+    totalUnverifiedAmount,
+    totalUnverifiedPaidActors,
+    unPaidAmount,
+    unPaidActors,
+    beMemberPaidAmount,
+    beMemberPaidBeMembers,
+    totalUnverifiedBeMemberAmount,
+    totalUnverifiedPaidBeMembers,
     totalHandCash,
   };
 };

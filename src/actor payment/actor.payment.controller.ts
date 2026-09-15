@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import catchAsync from "../shared/catchAsync";
 import { ActorPaymentService } from "./actor.payment.services";
 import sendResponse from "../shared/sendResponse";
+import { AppError } from "../middleware/error";
 
 const actorPaymentInfo = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -264,6 +265,7 @@ const actorPaymentHistory = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
 const getPaymentReportCursor = catchAsync(
   async (req: Request, res: Response) => {
     const year = req.query.year;
@@ -287,6 +289,32 @@ const getPaymentReportCursor = catchAsync(
     });
   },
 );
+const actorUnpaidYearList = catchAsync(async (req: Request, res: Response) => {
+  const idNo = req.query.idNo as string;
+
+  const result = await ActorPaymentService.actorUnpaidYearList(idNo);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Actor unpaid years get successfully",
+    data: result,
+  });
+});
+const generateMemberShipBilling = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const userId = req.user.data?._id;
+    if (!userId) throw new AppError(403, "Unauthorized.Admin id not found");
+    const result = await ActorPaymentService.generateMemberShipBilling(userId,
+      req.body,
+    );
+    sendResponse(res, {
+      statusCode: 201,
+      success: true,
+      message: "Unpaid payment collect successfully",
+      data: result,
+    });
+  },
+);
 
 export const ActorPaymentController = {
   actorPaymentInfo,
@@ -301,4 +329,6 @@ export const ActorPaymentController = {
   yearlyActorPaymentStats,
   actorPaymentHistory,
   getPaymentReportCursor,
+  actorUnpaidYearList,
+  generateMemberShipBilling,
 };

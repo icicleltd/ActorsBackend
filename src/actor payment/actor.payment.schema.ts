@@ -84,8 +84,8 @@ const actorPaymentSchema = new Schema<IActorPayment>(
 
     method: {
       type: String,
-      enum: ["bkash", "Nagad", "Cash", "bank"],
-      default: "Cash",
+      enum: ["bkash", "nagad", "cash", "bank"],
+      default: "cash",
       required: true,
     },
     recordedVia: {
@@ -174,7 +174,7 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
     },
     method: {
       type: String,
-      enum: ["bkash", "Nagad", "Cash","bank"],
+      enum: ["bkash", "nagad", "cash","bank"],
       required: function (this: any) {
         return this.status === "paid";
       },

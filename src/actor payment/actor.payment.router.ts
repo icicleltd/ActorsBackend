@@ -23,6 +23,8 @@ router.post(
   ActorPaymentController.verifyActorPayment,
 );
 router.post("/record-payment",VerifyLogin, ActorPaymentController.recordActorPayment);
+router.post("/collect",VerifyLogin, ActorPaymentController.generateMemberShipBilling);
+
 // Get all (Public/Admin)
 router.get(
   "/notify-actor",
@@ -35,6 +37,7 @@ router.get(
   ActorPaymentController.fetchActorPayments,
 );
 router.get("/payments-stats", ActorPaymentController.getPaymentDashboardStats);
+router.get("/actor-unpaid-years", ActorPaymentController.actorUnpaidYearList);
 router.get("/marge-payment-stats", ActorPaymentController.getMergedPayments);
 router.get("/yearly-payment-stats", ActorPaymentController.yearlyActorPaymentStats);
 router.get("/yearly-payment-report", ActorPaymentController.getPaymentReportCursor);

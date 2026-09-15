@@ -1,4 +1,4 @@
-import mongoose, { Types } from "mongoose";
+import mongoose, { startSession, Types } from "mongoose";
 import Actor from "../actor/actor.schema";
 import { AppError } from "../middleware/error";
 import {
@@ -1039,7 +1039,7 @@ const recordActorPayment = async (
     year,
     amount: fee,
     desc,
-    method: "Cash",
+    method: "cash",
     status: "verified",
     recordedVia: "direct",
     verifiedAt: new Date(),
@@ -1379,148 +1379,166 @@ async function walkNotifyPayments(query: Record<string, unknown>) {
   return { total: count, returned: results.length, truncated, data: results };
 }
 
-// export interface ReportFilter {
-//   year: number;
-//   type: "membership" | "event";
-//   status?: "needVerified" | "paid" | "unpaid" | "all";
-// }
+const actorUnpaidYearList = async (idNo: string) => {
+  if (!idNo) throw new AppError(400, "Member id is required");
 
-// const MAX_CLIENT_ROWS = 5000;
-// const mapStatus = {
-//   needVerified: "pending",
-//   paid: "verified",
-//   unpaid: "request",
-//   all: "all",
-// };
-// const ACTOR_STATUS_MAP: Record<"needVerified" | "paid", string> = {
-//   needVerified: "pending",
-//   paid: "verified",
-// };
+  const value = idNo.trim();
 
-// const getPaymentReportCursor = async (filter: ReportFilter) => {
-//   const { status = "all", type, year } = filter;
-//   if (status === "unpaid") {
-//     return;
-//   }
-//   if (status === "needVerified" || status === "paid") {
-//     return walkActorOnly(type, year, ACTOR_STATUS_MAP[status]);
-//   }
-//   // return walkCombined(type, year);
+  if (!/^[a-zA-Z0-9-]+$/.test(value))
+    throw new AppError(
+      400,
+      "Member ID can only contain letters, numbers, and hyphens",
+    );
+  const existing = await Actor.findOne({
+    idNo: value.toUpperCase(),
+  })
+    .select("id fullName idNo")
+    .lean();
+  if (!existing) throw new AppError(404, "Member not found by this id");
+  const result = await NotifyPayment.find({
+    actorId: existing._id,
+    status: "request",
+    type: "membership",
+  })
+    .select("-_id year amount")
+    .sort({ year: 1 })
+    .lean();
+  if (!result) {
+    return { ...existing, unpaidYears: [] };
+  }
 
-//   // const query: Record<string, unknown> = {
-//   //   type: filter.type,
-//   //   year: filter.year,
-//   // };
+  return { ...existing, unpaidYears: result };
+};
+interface IGenerateMemberShipBillingPayload {
+  actorId: string;
+  years: number[];
+  method: "bkash" | "nagad" | "cash" | "bank";
+  bankName?: string;
+  accountName?: string;
+  onlineBakNumber?: string;
+  transactionId?: string;
+  fee?: string;
+  note?: string;
+}
+const generateMemberShipBilling = async (
+  userId: string,
+  payload: IGenerateMemberShipBillingPayload,
+) => {
+  const {
+    actorId,
+    years,
+    method,
+    bankName,
+    accountName,
+    onlineBakNumber,
+    transactionId,
+    fee,
+    note,
+  } = payload;
 
-//   // if (filter.status) {
-//   //   const conditionalStatus = mapStatus[filter.status];
-//   //   query.status = conditionalStatus;
-//   // }
+  const sanitizeMethod = method.toLowerCase().trim() as
+    | "bkash"
+    | "nagad"
+    | "cash"
+    | "bank";
+  const sanitizeTransactionId = transactionId?.trim();
+  const sanitizeOnlineBakNumber = onlineBakNumber?.trim();
+  const sanitizeAccountName = accountName?.trim();
+  const sanitizeBankName = bankName?.trim();
+  const isBank = method === "bank";
+  const isBkash = method === "bkash";
+  if (!years) throw new AppError(400, "Years is required");
 
-//   // // run the cursor walk and the sum aggregation concurrently — independent queries, no need to wait sequentially
-//   // const [walkResult, sumResult] = await Promise.all([
-//   //   walkPayments(query),
-//   //   ActorPayment.aggregate([
-//   //     { $match: query },
-//   //     { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-//   //   ]),
-//   // ]);
+  const numYears = years.map((year) => Number(year));
 
-//   // return {
-//   //   totalAmount: sumResult[0]?.totalAmount ?? 0, // sum across ALL matching rows, not just returned ones
-//   //   ...walkResult,
-//   // };
-// };
+  if (!["bkash", "nagad", "cash", "bank"].includes(sanitizeMethod)) {
+    throw new AppError(400, "Invalid method");
+  }
 
-// async function walkActorOnly(
-//   type: ReportFilter["type"],
-//   year: number,
-//   status: string,
-// ) {
-//   const query = { type, year, status };
-//   const [walkResult, sumResult] = await Promise.all([
-//     walkPayments(query),
-//     ActorPayment.aggregate([
-//       { $match: query },
-//       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-//     ]),
-//   ]);
-//   return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
-// }
-// async function walkNotifyOnly(type: ReportFilter["type"], year: number) {
-//   const query = { type, year, status: "request" };
-//   const [walkResult, sumResult] = await Promise.all([
-//     walkNotifyPayments(query),
-//     NotifyPayment.aggregate([
-//       { $match: query },
-//       { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
-//     ]),
-//   ]);
-//   return { totalAmount: sumResult[0]?.totalAmount ?? 0, ...walkResult };
-// }
-// async function walkPayments(query: Record<string, unknown>) {
-//   const cursor = ActorPayment.find(query)
-//     .select(
-//       "actor amount desc status createdAt year method transactionId number type",
-//     )
-//     .populate("actor", "fullName idNo")
-//     .lean()
-//     .maxTimeMS(60_000)
-//     // .sort({ actorIdNo: 1 })
-//     .sort({ createdAt: 1 })
-//     .cursor({ batchSize: 1000 });
+  if (sanitizeMethod === "bank" && (!sanitizeAccountName || !sanitizeBankName))
+    throw new AppError(
+      400,
+      "For Method Bank. Bank Name and account number is required",
+    );
+  if (
+    sanitizeMethod === "bkash" &&
+    (!sanitizeOnlineBakNumber || !sanitizeTransactionId)
+  )
+    throw new AppError(
+      400,
+      "For Method Bksah. Bkash number and transactionId is required",
+    );
+  if (
+    sanitizeOnlineBakNumber &&
+    !/^01[3-9]\d{8}$/.test(sanitizeOnlineBakNumber)
+  )
+    throw new AppError(400, "Invalid bashNumber");
 
-//   const results: unknown[] = [];
-//   let count = 0;
-//   let truncated = false;
-
-//   try {
-//     for await (const doc of cursor) {
-//       count++;
-//       if (results.length < MAX_CLIENT_ROWS) {
-//         results.push(doc);
-//       } else {
-//         truncated = true;
-//         break;
-//       }
-//     }
-//   } finally {
-//     await cursor.close();
-//   }
-
-//   return { total: count, returned: results.length, truncated, data: results };
-// }
-
-// async function walkNotifyPayments(query: Record<string, unknown>) {
-//   const cursor = NotifyPayment.find(query)
-//     .select(
-//       "actorId amount desc status createdAt year eventId number type transactionId rejectionReason",
-//     )
-//     .populate("actorId", "fullName idNo")
-//     .lean()
-//     .maxTimeMS(60_000)
-//     .sort({ createdAt: 1 })
-//     .cursor({ batchSize: 1000 });
-
-//   const results: unknown[] = [];
-//   let count = 0;
-//   let truncated = false;
-//   try {
-//     for await (const doc of cursor) {
-//       count++;
-//       if (results.length < MAX_CLIENT_ROWS) {
-//         const { actorId, ...rest } = doc;
-//         results.push({ ...rest, actor: actorId, source: "NotifyPayment" });
-//       } else {
-//         truncated: true;
-//         break;
-//       }
-//     }
-//   } finally {
-//     await cursor.close();
-//   }
-//   return { total: count, returned: results.length, truncated, data: results };
-// }
+  const recordCollect: Omit<IActorPayment, "notifyPayment">[] = numYears.map(
+    (year) => ({
+      actor: new Types.ObjectId(actorId),
+      type: "membership",
+      year,
+      amount: fee ? Number(fee) : 2000,
+      desc: note ?? "",
+      method: sanitizeMethod,
+      transactionId: isBkash ? sanitizeTransactionId : "",
+      number: isBkash ? sanitizeOnlineBakNumber : "",
+      bankName: isBank ? sanitizeBankName : "",
+      accountNo: isBank ? sanitizeAccountName : "",
+      status: "verified",
+      recordedVia: "direct",
+      verifiedAt: new Date(),
+      verifiedBy: new Types.ObjectId(userId),
+    }),
+  );
+  const session = await startSession();
+  try {
+    session.startTransaction();
+    const actualUnpaid = await NotifyPayment.find(
+      {
+        actorId: new Types.ObjectId(actorId),
+        type: "membership",
+        status: "request",
+      },
+      { year: 1, _id: 0 },
+      { session },
+    ).lean();
+    const actualUnpaidYears = new Set(actualUnpaid.map((d) => d.year));
+    // const invalidYears = numYears.filter((y)=>)
+    const notifyPaymentResult = await NotifyPayment.deleteMany(
+      {
+        actorId: new Types.ObjectId(actorId),
+        type: "membership",
+        status: { $in: ["request", "paid"] },
+        year: { $in: numYears },
+      },
+      { session },
+    );
+    const actorPaymentResult = await ActorPayment.deleteMany(
+      {
+        actor: new Types.ObjectId(actorId),
+        type: "membership",
+        status: { $in: ["pending"] },
+        year: { $in: numYears },
+      },
+      { session },
+    );
+    // create
+    const result = await ActorPayment.create(recordCollect, {
+      session,
+      ordered: true,
+    });
+    console.log(result);
+    // sent mail
+    // await session.commitTransaction()
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
 
 export const ActorPaymentService = {
   actorPaymentInfo,
@@ -1535,4 +1553,6 @@ export const ActorPaymentService = {
   yearlyActorPaymentStats,
   actorPaymentHistory,
   getPaymentReportCursor,
+  actorUnpaidYearList,
+  generateMemberShipBilling,
 };

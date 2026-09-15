@@ -8,7 +8,7 @@ export interface IActorPayment {
   eventId?: Types.ObjectId;
   amount: number;
   desc?: string;
-  method: "bkash" | "Nagad" | "Cash" | "bank";
+  method: "bkash" | "nagad" | "cash" | "bank";
   recordedVia: "direct" | "notify";
 
   status: "pending" | "verified" | "rejected";
@@ -33,7 +33,7 @@ export interface INotifyPayment {
   year?: number;
   isView: boolean;
   status: "request" | "paid" | "rejected";
-  method?: "bkash" | "Nagad" | "Cash" | "bank";
+  method?: "bkash" | "nagad" | "cash" | "bank";
   rejectionReason?: string;
   transactionId?: string;
   number?: string;

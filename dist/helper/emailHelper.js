@@ -27,7 +27,8 @@ const sendMail = async ({ to, subject, text, html, }) => {
             text,
             html,
         };
-        await exports.mailTransporter.sendMail(mailOptions);
+        const res = await exports.mailTransporter.sendMail(mailOptions);
+        console.log("res mail", res);
     }
     catch (error) {
         console.error("Email failed:", error);

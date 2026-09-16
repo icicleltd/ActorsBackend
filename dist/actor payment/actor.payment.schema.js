@@ -79,8 +79,8 @@ const actorPaymentSchema = new mongoose_1.Schema({
     },
     method: {
         type: String,
-        enum: ["bkash", "Nagad", "Cash", "bank"],
-        default: "Cash",
+        enum: ["bkash", "nagad", "cash", "bank"],
+        default: "cash",
         required: true,
     },
     recordedVia: {
@@ -107,7 +107,10 @@ const actorPaymentSchema = new mongoose_1.Schema({
 // Prevent duplicate yearly membership payment
 actorPaymentSchema.index({ actor: 1, type: 1, year: 1 }, { unique: true, partialFilterExpression: { type: "membership" } });
 actorPaymentSchema.index({ actor: 1, type: 1, eventId: 1 }, { unique: true, partialFilterExpression: { type: "event" } });
-actorPaymentSchema.index({ transactionId: 1 }, { unique: true, sparse: true });
+// actorPaymentSchema.index(
+//   { transactionId: 1, year: 1 },
+//   { unique: true, sparse: true },
+// );
 const ActorPayment = (0, mongoose_1.model)("ActorPayment", actorPaymentSchema);
 exports.default = ActorPayment;
 const NotifyPaymentSchema = new mongoose_1.Schema({
@@ -150,7 +153,7 @@ const NotifyPaymentSchema = new mongoose_1.Schema({
     },
     method: {
         type: String,
-        enum: ["bkash", "Nagad", "Cash", "bank"],
+        enum: ["bkash", "nagad", "cash", "bank"],
         required: function () {
             return this.status === "paid";
         },

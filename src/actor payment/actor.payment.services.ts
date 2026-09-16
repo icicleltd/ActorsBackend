@@ -1,4 +1,5 @@
 import mongoose, { startSession, Types } from "mongoose";
+import { toWords } from "number-to-words";
 import Actor from "../actor/actor.schema";
 import { AppError } from "../middleware/error";
 import {
@@ -12,6 +13,8 @@ import { INotification } from "../notification/notification.interface";
 import { Payment } from "../payment/payment.schema";
 import { PipelineStage } from "mongoose";
 import { syncActorJoinYear, syncActorJoinYearBulk } from "../helper/actorJoin";
+import { sendMail } from "../helper/emailHelper";
+import { buildReceiptEmailHtml } from "../helper/mailTempate/receiptEmail";
 
 type PaymentStatus = "paid" | "pending";
 
@@ -338,11 +341,12 @@ const paymentSubmitted = async (payload: IPaymentSubmittedPayload) => {
             year: Number(year),
             amount: Number(amount),
             desc: updateNotifyPayment.desc,
-            number: isBkash ? senderNumber : "",
-            transactionId: isBkash ? transactionId : "",
-            bankName: isBank ? bankName : "",
-            accountNo: isBank ? accountNo : "",
-            date: isBank ? new Date(date?.toString()!) : "",
+            ...(isBkash && { number: senderNumber, transactionId }),
+            ...(isBank && {
+              bankName,
+              accountNo,
+              date: new Date(date?.toString()!),
+            }),
             method,
             status: "pending",
           },
@@ -1346,7 +1350,7 @@ async function walkNotifyPayments(query: Record<string, unknown>) {
     .select(
       "actorId amount desc status createdAt year eventId number type transactionId rejectionReason",
     )
-    .populate("actorId", "fullName idNo")
+    .populate("actorId", "fullName idNo email")
     .lean()
     .maxTimeMS(60_000)
     .sort({ createdAt: 1 })
@@ -1414,7 +1418,7 @@ interface IGenerateMemberShipBillingPayload {
   years: number[];
   method: "bkash" | "nagad" | "cash" | "bank";
   bankName?: string;
-  accountName?: string;
+  accountNo?: string;
   onlineBakNumber?: string;
   transactionId?: string;
   fee?: string;
@@ -1429,13 +1433,14 @@ const generateMemberShipBilling = async (
     years,
     method,
     bankName,
-    accountName,
+    accountNo,
     onlineBakNumber,
     transactionId,
     fee,
     note,
   } = payload;
-
+  if (!Types.ObjectId.isValid(actorId))
+    throw new AppError(400, "Invalid actor id");
   const sanitizeMethod = method.toLowerCase().trim() as
     | "bkash"
     | "nagad"
@@ -1443,36 +1448,38 @@ const generateMemberShipBilling = async (
     | "bank";
   const sanitizeTransactionId = transactionId?.trim();
   const sanitizeOnlineBakNumber = onlineBakNumber?.trim();
-  const sanitizeAccountName = accountName?.trim();
+  const sanitizeAccountNo = accountNo?.trim();
   const sanitizeBankName = bankName?.trim();
-  const isBank = method === "bank";
-  const isBkash = method === "bkash";
-  if (!years) throw new AppError(400, "Years is required");
+  const isBank = sanitizeMethod === "bank";
+  const isBkash = sanitizeMethod === "bkash";
 
-  const numYears = years.map((year) => Number(year));
+  const extraFiveYear = new Date().getFullYear() + 5;
 
+  if (!years?.length) throw new AppError(400, "Years is required");
+
+  let numYears = [...new Set(years.map((year) => Number(year)))];
+  if (numYears.some((y) => Number.isNaN(y) || y < 2017 || y > extraFiveYear))
+    throw new AppError(400, "Years must be valid");
   if (!["bkash", "nagad", "cash", "bank"].includes(sanitizeMethod)) {
     throw new AppError(400, "Invalid method");
   }
 
-  if (sanitizeMethod === "bank" && (!sanitizeAccountName || !sanitizeBankName))
+  if (isBank && (!sanitizeAccountNo || !sanitizeBankName))
     throw new AppError(
       400,
       "For Method Bank. Bank Name and account number is required",
     );
-  if (
-    sanitizeMethod === "bkash" &&
-    (!sanitizeOnlineBakNumber || !sanitizeTransactionId)
-  )
+  if (isBkash && (!sanitizeOnlineBakNumber || !sanitizeTransactionId))
     throw new AppError(
       400,
       "For Method Bksah. Bkash number and transactionId is required",
     );
+
   if (
     sanitizeOnlineBakNumber &&
     !/^01[3-9]\d{8}$/.test(sanitizeOnlineBakNumber)
   )
-    throw new AppError(400, "Invalid bashNumber");
+    throw new AppError(400, "Invalid Bkash Number");
 
   const recordCollect: Omit<IActorPayment, "notifyPayment">[] = numYears.map(
     (year) => ({
@@ -1482,10 +1489,16 @@ const generateMemberShipBilling = async (
       amount: fee ? Number(fee) : 2000,
       desc: note ?? "",
       method: sanitizeMethod,
-      transactionId: isBkash ? sanitizeTransactionId : "",
-      number: isBkash ? sanitizeOnlineBakNumber : "",
-      bankName: isBank ? sanitizeBankName : "",
-      accountNo: isBank ? sanitizeAccountName : "",
+      ...(isBkash && {
+        number: sanitizeOnlineBakNumber,
+        transactionId: sanitizeTransactionId,
+      }),
+      ...(isBank && {
+        bankName: sanitizeBankName,
+        accountNo: sanitizeAccountNo,
+        date: new Date(),
+      }),
+
       status: "verified",
       recordedVia: "direct",
       verifiedAt: new Date(),
@@ -1495,43 +1508,112 @@ const generateMemberShipBilling = async (
   const session = await startSession();
   try {
     session.startTransaction();
+
+    // actor must exist — check first, before any writes
+    const actorInfo = await Actor.findOne({ _id: new Types.ObjectId(actorId) })
+      .select("-_id fullName idNo")
+      .session(session)
+      .lean();
+    if (!actorInfo) throw new AppError(404, "Actor not found");
+    if (!actorInfo.idNo)
+      throw new AppError(400, "Actor is missing a member ID");
+
     const actualUnpaid = await NotifyPayment.find(
       {
         actorId: new Types.ObjectId(actorId),
         type: "membership",
         status: "request",
       },
-      { year: 1, _id: 0 },
+      { year: 1, _id: 1 },
       { session },
     ).lean();
+
+    // if (!actualUnpaid) {
+    //   throw new AppError(400, "This actor paid all ");
+    // }
     const actualUnpaidYears = new Set(actualUnpaid.map((d) => d.year));
-    // const invalidYears = numYears.filter((y)=>)
-    const notifyPaymentResult = await NotifyPayment.deleteMany(
-      {
-        actorId: new Types.ObjectId(actorId),
-        type: "membership",
-        status: { $in: ["request", "paid"] },
-        year: { $in: numYears },
-      },
-      { session },
-    );
-    const actorPaymentResult = await ActorPayment.deleteMany(
+
+    const conflicting = await ActorPayment.find(
       {
         actor: new Types.ObjectId(actorId),
         type: "membership",
-        status: { $in: ["pending"] },
+        year: { $in: numYears },
+        status: { $in: ["pending", "verified"] },
+      },
+      { year: 1, status: 1, _id: 0 },
+      { session },
+    ).lean();
+
+    const pendingYears = conflicting
+      .filter((p) => p.status === "pending")
+      .map((p) => p.year);
+    const verifiedYears = conflicting
+      .filter((p) => p.status === "verified")
+      .map((p) => p.year);
+
+    if (pendingYears.length > 0)
+      throw new AppError(
+        409,
+        `These years have already been paid and are awaiting verification: ${pendingYears.join(", ")}. Please check the payment notifications.`,
+      );
+    if (verifiedYears.length > 0)
+      throw new AppError(
+        409,
+        `These years are already paid and verified: ${verifiedYears.join(", ")}.`,
+      );
+
+    const matchedIds = actualUnpaid
+      .filter((payment) => numYears.includes(payment.year!))
+      .map((payment) => payment._id);
+
+    await Notification.deleteMany(
+      {
+        recipient: new Types.ObjectId(actorId),
+        notifyPayment: { $in: matchedIds },
+      },
+      { session },
+    );
+
+    await NotifyPayment.deleteMany(
+      {
+        actorId: new Types.ObjectId(actorId),
+        type: "membership",
+        status: "request",
         year: { $in: numYears },
       },
       { session },
     );
-    // create
+
     const result = await ActorPayment.create(recordCollect, {
       session,
       ordered: true,
     });
-    console.log(result);
+
+    const totalAmount = result.reduce((sum, curr) => sum + curr.amount, 0);
+    const amountInWord = `${toWords(totalAmount)} taka only`;
+    const allYear = result.map((payment) => payment.year).join(",");
+
+    const receiptData = {
+      totalAmount,
+      amountInWord,
+      allYear,
+      title: "Membership fee",
+      name: actorInfo.fullName,
+      idNo: actorInfo.idNo,
+    };
+
     // sent mail
-    // await session.commitTransaction()
+    if (actorInfo.email) {
+      sendMail({
+        to: actorInfo.email,
+        subject: "Membership Fee Payment Receipt — Actors Equity Bangladesh",
+        text: `Dear ${actorInfo.fullName}, we have received your membership fee payment of ৳${totalAmount} for year(s) ${allYear}.`,
+        html: buildReceiptEmailHtml(receiptData),
+      }).catch((err) => console.error("Receipt email failed:", err));
+    }
+
+    await session.commitTransaction();
+    return receiptData;
   } catch (error) {
     await session.abortTransaction();
     throw error;

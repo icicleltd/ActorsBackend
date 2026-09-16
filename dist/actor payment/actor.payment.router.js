@@ -14,10 +14,12 @@ router.post("/notify-actor", verifyLogin_1.VerifyLogin, verifyAdmin_1.VerifyAdmi
 router.post("/save-payment/:id", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.paymentSubmitted);
 router.post("/verify-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.verifyActorPayment);
 router.post("/record-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.recordActorPayment);
+router.post("/collect", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.generateMemberShipBilling);
 // Get all (Public/Admin)
 router.get("/notify-actor", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.fetchNotifyPayments);
 router.get("/actor-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.fetchActorPayments);
 router.get("/payments-stats", actor_payment_controller_1.ActorPaymentController.getPaymentDashboardStats);
+router.get("/actor-unpaid-years", actor_payment_controller_1.ActorPaymentController.actorUnpaidYearList);
 router.get("/marge-payment-stats", actor_payment_controller_1.ActorPaymentController.getMergedPayments);
 router.get("/yearly-payment-stats", actor_payment_controller_1.ActorPaymentController.yearlyActorPaymentStats);
 router.get("/yearly-payment-report", actor_payment_controller_1.ActorPaymentController.getPaymentReportCursor);

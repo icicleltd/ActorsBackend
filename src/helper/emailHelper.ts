@@ -36,7 +36,8 @@ export const sendMail = async ({
       text,
       html,
     };
-    await mailTransporter.sendMail(mailOptions);
+   const res = await mailTransporter.sendMail(mailOptions);
+   console.log("res mail",res)
   } catch (error) {
     console.error("Email failed:", error);
   }

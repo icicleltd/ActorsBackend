@@ -125,7 +125,10 @@ actorPaymentSchema.index(
   { actor: 1, type: 1, eventId: 1 },
   { unique: true, partialFilterExpression: { type: "event" } },
 );
-actorPaymentSchema.index({ transactionId: 1 }, { unique: true, sparse: true });
+// actorPaymentSchema.index(
+//   { transactionId: 1, year: 1 },
+//   { unique: true, sparse: true },
+// );
 
 const ActorPayment = model<IActorPayment>("ActorPayment", actorPaymentSchema);
 

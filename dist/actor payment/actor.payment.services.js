@@ -1217,7 +1217,8 @@ const generateMemberShipBilling = async (userId, payload) => {
         actor: new mongoose_1.Types.ObjectId(actorId),
         type: "membership",
         year,
-        amount: fee ? Number(fee) : 2000,
+        // amount: fee ? Number(fee) : 2000,
+        amount: 2000,
         desc: note ?? "",
         method: sanitizeMethod,
         ...(isBkash && {

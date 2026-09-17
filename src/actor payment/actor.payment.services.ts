@@ -1486,7 +1486,8 @@ const generateMemberShipBilling = async (
       actor: new Types.ObjectId(actorId),
       type: "membership",
       year,
-      amount: fee ? Number(fee) : 2000,
+      // amount: fee ? Number(fee) : 2000,
+      amount: 2000,
       desc: note ?? "",
       method: sanitizeMethod,
       ...(isBkash && {

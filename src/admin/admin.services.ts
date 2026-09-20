@@ -475,6 +475,7 @@ const fetchPaymentHistory = async (
   const actorPayments = await ActorPayment.find(filter)
     .sort({ createdAt: -1 })
     .populate("actor", "fullName")
+    .limit(50)
     .lean();
   return actorPayments;
 };
@@ -563,13 +564,14 @@ const getBecomeMemberChartData = async (query: {
         join: { $sum: 1 },
       },
     },
-    { $sort: { _id: -1 } },{
-      $project:{
-        year:"$_id",
-        join:1,
-        _id:0
-      }
-    }
+    { $sort: { _id: -1 } },
+    {
+      $project: {
+        year: "$_id",
+        join: 1,
+        _id: 0,
+      },
+    },
   ]);
   return data;
 };

@@ -24,6 +24,7 @@ router.get("/marge-payment-stats", actor_payment_controller_1.ActorPaymentContro
 router.get("/yearly-payment-stats", actor_payment_controller_1.ActorPaymentController.yearlyActorPaymentStats);
 router.get("/yearly-payment-report", actor_payment_controller_1.ActorPaymentController.getPaymentReportCursor);
 router.get("/payment-history", actor_payment_controller_1.ActorPaymentController.actorPaymentHistory);
+router.get("/yearly-status", actor_payment_controller_1.ActorPaymentController.getYearlyActorPaymentStatus);
 router.get("/", actor_payment_controller_1.ActorPaymentController.actorPaymentInfo);
 // Delete (Admin)
 // router.delete(

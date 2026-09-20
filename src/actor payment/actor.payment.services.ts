@@ -15,6 +15,7 @@ import { PipelineStage } from "mongoose";
 import { syncActorJoinYear, syncActorJoinYearBulk } from "../helper/actorJoin";
 import { sendMail } from "../helper/emailHelper";
 import { buildReceiptEmailHtml } from "../helper/mailTempate/receiptEmail";
+import { pipeline } from "stream";
 
 type PaymentStatus = "paid" | "pending";
 
@@ -603,6 +604,18 @@ interface ActorPaymentStatusQuery {
   sortOrder: 1 | -1;
   skip: number;
   year?: number;
+}
+interface YearlyActorPaymentStatusQuery {
+  search?: string;
+  filter?: "paid" | "unpaid" | "all";
+  page?: number;
+  limit?: number;
+  sortBy: string;
+  sortOrder: 1 | -1;
+  skip: number;
+  year?: number;
+  lifeTime: boolean;
+  passedAway: boolean;
 }
 
 const getMergedPaymentsFromDB = async (query: QueryParams) => {
@@ -1196,6 +1209,212 @@ const actorPaymentHistory = async (query: ActorPaymentStatusQuery) => {
     },
   };
 };
+const getYearlyActorPaymentStatus = async (
+  query: YearlyActorPaymentStatusQuery,
+) => {
+  const {
+    search,
+    filter,
+    page = 1,
+    limit = 10,
+    sortBy = "idNo",
+    sortOrder = -1,
+    skip = 0,
+    year,
+    lifeTime,
+    passedAway,
+  } = query;
+
+  if (
+    filter &&
+    !["unpaid", "needVerified", "paid", "all", "requested"].includes(filter)
+  ) {
+    throw new AppError(
+      400,
+      "Invalid filter value. Must be 'unpaid', 'needVerified', 'all', or 'paid'.",
+    );
+  }
+  if (lifeTime && typeof lifeTime !== "boolean")
+    throw new AppError(400, "Only allow boolean");
+  if (passedAway && typeof passedAway !== "boolean")
+    throw new AppError(400, "Only allow boolean");
+  if ((filter === "paid" || filter === "unpaid") && !year) {
+    throw new AppError(400, `Year is required for '${filter}' filter.`);
+  }
+
+  const excludeRanks: string[] = [];
+  if (!lifeTime) excludeRanks.push("lifeTime");
+  if (!passedAway) excludeRanks.push("pastWay");
+
+  const baseMatch: Record<string, unknown> = { isActive: true };
+  if (excludeRanks.length > 0) {
+    baseMatch["rankHistory.rank"] = { $nin: excludeRanks };
+  }
+  const pipeline: any[] = [
+    // 1. Only active actors (adjust if you want all)
+    { $match: baseMatch },
+
+    // 2. Search by fullName or idNo
+    ...(search
+      ? [
+          {
+            $match: {
+              $or: [
+                { fullName: { $regex: search, $options: "i" } },
+                { idNo: { $regex: search, $options: "i" } },
+              ],
+            },
+          },
+        ]
+      : []),
+
+    // 3. Look up this actor's membership payment for the given year
+    {
+      $lookup: {
+        from: "actorpayments",
+        let: { actorId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$actor", "$$actorId"] },
+                  { $eq: ["$type", "membership"] },
+                  { $eq: ["$year", year] },
+                ],
+              },
+            },
+          },
+          { $limit: 1 }, // unique index guarantees at most 1 anyway
+        ],
+        as: "paymentInfo",
+      },
+    },
+    {
+      $lookup: {
+        from: "notifypayments",
+        let: { actorId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$actorId", "$$actorId"] },
+                  { $eq: ["$type", "membership"] },
+                  { $eq: ["$year", year] },
+                ],
+              },
+            },
+          },
+          { $limit: 1 },
+        ],
+        as: "notifyPaymentInfo",
+      },
+    },
+    {
+      $addFields: {
+        notifyPayment: { $arrayElemAt: ["$notifyPaymentInfo", 0] },
+        actorPayment: { $arrayElemAt: ["$paymentInfo", 0] },
+      },
+    },
+
+    // 4. Derive paid/unpaid status
+    {
+      $addFields: {
+        paymentStatus: {
+          $switch: {
+            branches: [
+              {
+                case: { $eq: ["$notifyPayment.status", "request"] },
+                then: "requested",
+              },
+              {
+                case: {
+                  $or: [
+                    { $eq: ["$notifyPayment.status", "paid"] },
+                    { $eq: ["$actorPayment.status", "pending"] },
+                  ],
+                },
+                then: "needVerified",
+              },
+              {
+                case: {
+                  $eq: ["$actorPayment.status", "verified"],
+                },
+                then: "paid",
+              },
+              {
+                case: {
+                  $eq: ["$actorPayment.status", "rejected"],
+                },
+                then: "rejected",
+              },
+            ],
+            default: "unpaid",
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        payment: {
+          $cond: [
+            { $eq: ["paymentStatus", "requested"] },
+            "notifyPayment",
+            { $ifNull: ["$actorPayment", "notifyPayment"] },
+          ],
+        },
+      },
+    },
+
+    // 5. Apply filter
+    ...(filter !== "all" ? [{ $match: { paymentStatus: filter } }] : []),
+
+    // 6. Shape output + paginate
+    {
+      $project: {
+        _id: 1,
+        fullName: 1,
+        idNo: 1,
+        photo: 1,
+        dob: 1,
+        phoneNumber: 1,
+        paymentStatus: 1,
+        actorPayment: 1,
+        notifyPayment: 1,
+        payment: {
+          _id: 1,
+          amount: 1,
+          method: 1,
+          transactionId: 1,
+          verifiedAt: 1,
+          status: 1,
+        },
+      },
+    },
+    { $sort: { idNo: 1 } },
+    {
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ];
+
+  const result = await Actor.aggregate(pipeline);
+  const data = result[0]?.data ?? [];
+  const total = result[0]?.totalCount?.[0]?.count ?? 0;
+
+  return {
+    data,
+    meta: {
+      page: page,
+      limit: limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
 
 export interface ReportFilter {
   year: number;
@@ -1638,4 +1857,5 @@ export const ActorPaymentService = {
   getPaymentReportCursor,
   actorUnpaidYearList,
   generateMemberShipBilling,
+  getYearlyActorPaymentStatus,
 };

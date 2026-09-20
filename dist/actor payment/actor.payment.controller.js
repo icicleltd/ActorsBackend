@@ -214,6 +214,37 @@ const actorPaymentHistory = (0, catchAsync_1.default)(async (req, res) => {
         data: result,
     });
 });
+const getYearlyActorPaymentStatus = (0, catchAsync_1.default)(async (req, res) => {
+    const id = req.query.id;
+    const search = req.query.search;
+    const limit = parseInt(req.query.limit) || 20;
+    const page = parseInt(req.query.page) || 1;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortWith === "asc" ? 1 : -1;
+    const year = req.query.year ? Number(req.query.year) : undefined;
+    const lifeTime = req.query.lifeTime === "true" ? true : false;
+    const passedAway = req.query.passedAway === "true" ? true : false;
+    const filter = req.query.filter;
+    const skip = (page - 1) * limit;
+    const result = await actor_payment_services_1.ActorPaymentService.getYearlyActorPaymentStatus({
+        search,
+        limit,
+        page,
+        skip,
+        sortBy,
+        sortOrder,
+        filter,
+        year,
+        lifeTime,
+        passedAway,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payments stats successfully",
+        data: result,
+    });
+});
 const getPaymentReportCursor = (0, catchAsync_1.default)(async (req, res) => {
     const year = req.query.year;
     const status = req.query.status;
@@ -267,4 +298,5 @@ exports.ActorPaymentController = {
     getPaymentReportCursor,
     actorUnpaidYearList,
     generateMemberShipBilling,
+    getYearlyActorPaymentStatus,
 };

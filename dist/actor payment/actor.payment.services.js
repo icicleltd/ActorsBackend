@@ -1009,6 +1009,186 @@ const actorPaymentHistory = async (query) => {
         },
     };
 };
+const getYearlyActorPaymentStatus = async (query) => {
+    const { search, filter, page = 1, limit = 10, sortBy = "idNo", sortOrder = -1, skip = 0, year, lifeTime, passedAway, } = query;
+    if (filter &&
+        !["unpaid", "needVerified", "paid", "all", "requested"].includes(filter)) {
+        throw new error_1.AppError(400, "Invalid filter value. Must be 'unpaid', 'needVerified', 'all', or 'paid'.");
+    }
+    if (lifeTime && typeof lifeTime !== "boolean")
+        throw new error_1.AppError(400, "Only allow boolean");
+    if (passedAway && typeof passedAway !== "boolean")
+        throw new error_1.AppError(400, "Only allow boolean");
+    if ((filter === "paid" || filter === "unpaid") && !year) {
+        throw new error_1.AppError(400, `Year is required for '${filter}' filter.`);
+    }
+    const excludeRanks = [];
+    if (!lifeTime)
+        excludeRanks.push("lifeTime");
+    if (!passedAway)
+        excludeRanks.push("pastWay");
+    const baseMatch = { isActive: true };
+    if (excludeRanks.length > 0) {
+        baseMatch["rankHistory.rank"] = { $nin: excludeRanks };
+    }
+    const pipeline = [
+        // 1. Only active actors (adjust if you want all)
+        { $match: baseMatch },
+        // 2. Search by fullName or idNo
+        ...(search
+            ? [
+                {
+                    $match: {
+                        $or: [
+                            { fullName: { $regex: search, $options: "i" } },
+                            { idNo: { $regex: search, $options: "i" } },
+                        ],
+                    },
+                },
+            ]
+            : []),
+        // 3. Look up this actor's membership payment for the given year
+        {
+            $lookup: {
+                from: "actorpayments",
+                let: { actorId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$actor", "$$actorId"] },
+                                    { $eq: ["$type", "membership"] },
+                                    { $eq: ["$year", year] },
+                                ],
+                            },
+                        },
+                    },
+                    { $limit: 1 }, // unique index guarantees at most 1 anyway
+                ],
+                as: "paymentInfo",
+            },
+        },
+        {
+            $lookup: {
+                from: "notifypayments",
+                let: { actorId: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    { $eq: ["$actorId", "$$actorId"] },
+                                    { $eq: ["$type", "membership"] },
+                                    { $eq: ["$year", year] },
+                                ],
+                            },
+                        },
+                    },
+                    { $limit: 1 },
+                ],
+                as: "notifyPaymentInfo",
+            },
+        },
+        {
+            $addFields: {
+                notifyPayment: { $arrayElemAt: ["$notifyPaymentInfo", 0] },
+                actorPayment: { $arrayElemAt: ["$paymentInfo", 0] },
+            },
+        },
+        // 4. Derive paid/unpaid status
+        {
+            $addFields: {
+                paymentStatus: {
+                    $switch: {
+                        branches: [
+                            {
+                                case: { $eq: ["$notifyPayment.status", "request"] },
+                                then: "requested",
+                            },
+                            {
+                                case: {
+                                    $or: [
+                                        { $eq: ["$notifyPayment.status", "paid"] },
+                                        { $eq: ["$actorPayment.status", "pending"] },
+                                    ],
+                                },
+                                then: "needVerified",
+                            },
+                            {
+                                case: {
+                                    $eq: ["$actorPayment.status", "verified"],
+                                },
+                                then: "paid",
+                            },
+                            {
+                                case: {
+                                    $eq: ["$actorPayment.status", "rejected"],
+                                },
+                                then: "rejected",
+                            },
+                        ],
+                        default: "unpaid",
+                    },
+                },
+            },
+        },
+        {
+            $addFields: {
+                payment: {
+                    $cond: [
+                        { $eq: ["paymentStatus", "requested"] },
+                        "notifyPayment",
+                        { $ifNull: ["$actorPayment", "notifyPayment"] },
+                    ],
+                },
+            },
+        },
+        // 5. Apply filter
+        ...(filter !== "all" ? [{ $match: { paymentStatus: filter } }] : []),
+        // 6. Shape output + paginate
+        {
+            $project: {
+                _id: 1,
+                fullName: 1,
+                idNo: 1,
+                photo: 1,
+                dob: 1,
+                phoneNumber: 1,
+                paymentStatus: 1,
+                actorPayment: 1,
+                notifyPayment: 1,
+                payment: {
+                    _id: 1,
+                    amount: 1,
+                    method: 1,
+                    transactionId: 1,
+                    verifiedAt: 1,
+                    status: 1,
+                },
+            },
+        },
+        { $sort: { idNo: 1 } },
+        {
+            $facet: {
+                data: [{ $skip: skip }, { $limit: limit }],
+                totalCount: [{ $count: "count" }],
+            },
+        },
+    ];
+    const result = await actor_schema_1.default.aggregate(pipeline);
+    const data = result[0]?.data ?? [];
+    const total = result[0]?.totalCount?.[0]?.count ?? 0;
+    return {
+        data,
+        meta: {
+            page: page,
+            limit: limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+};
 const MAX_CLIENT_ROWS = 5000;
 const ACTOR_STATUS_MAP = {
     needVerified: "pending",
@@ -1335,4 +1515,5 @@ exports.ActorPaymentService = {
     getPaymentReportCursor,
     actorUnpaidYearList,
     generateMemberShipBilling,
+    getYearlyActorPaymentStatus,
 };

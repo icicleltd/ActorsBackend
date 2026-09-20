@@ -265,6 +265,42 @@ const actorPaymentHistory = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const getYearlyActorPaymentStatus = catchAsync(
+  async (req: Request, res: Response) => {
+    const id = req.query.id as string;
+    const search = req.query.search as string;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const page = parseInt(req.query.page as string) || 1;
+    const sortBy = (req.query.sortBy as string) || "createdAt";
+    const sortOrder: 1 | -1 = req.query.sortWith === "asc" ? 1 : -1;
+    const year = req.query.year ? Number(req.query.year) : undefined;
+    const lifeTime = req.query.lifeTime === "true" ? true : false;
+    const passedAway = req.query.passedAway === "true" ? true : false;
+
+    const filter = req.query.filter as "unpaid" | "all" | "paid";
+
+    const skip = (page - 1) * limit;
+
+    const result = await ActorPaymentService.getYearlyActorPaymentStatus({
+      search,
+      limit,
+      page,
+      skip,
+      sortBy,
+      sortOrder,
+      filter,
+      year,
+      lifeTime,
+      passedAway,
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Payments stats successfully",
+      data: result,
+    });
+  },
+);
 
 const getPaymentReportCursor = catchAsync(
   async (req: Request, res: Response) => {
@@ -304,7 +340,8 @@ const generateMemberShipBilling = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
     const userId = req.user.data?._id;
     if (!userId) throw new AppError(403, "Unauthorized.Admin id not found");
-    const result = await ActorPaymentService.generateMemberShipBilling(userId,
+    const result = await ActorPaymentService.generateMemberShipBilling(
+      userId,
       req.body,
     );
     sendResponse(res, {
@@ -331,4 +368,5 @@ export const ActorPaymentController = {
   getPaymentReportCursor,
   actorUnpaidYearList,
   generateMemberShipBilling,
+  getYearlyActorPaymentStatus,
 };

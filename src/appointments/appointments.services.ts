@@ -94,7 +94,6 @@ const createSchedule = async (payload: any, files: any) => {
     }
 
     const pdfLinks = uploaded?.map((pdf: any) => pdf.url);
-    console.log("pdlinks",pdfLinks)
     const { dates, phone, email, message, name } = appointmentInfo;
     // ✅ Validate actor availability before creating
     await validateActorAvailability(member.memberId, dates, session);

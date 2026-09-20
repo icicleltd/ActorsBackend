@@ -459,7 +459,6 @@ const fetchPaymentHistory = async (
   }
 
   // if (status === "alllll") {
-  //   console.log(" in  all block");
   //   const [paidPayments, pendingPayments] = await Promise.all([
   //     NotifyPayment.find({ status: "request" })
   //       .sort({ createdAt: -1 })

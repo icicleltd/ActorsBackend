@@ -143,8 +143,6 @@ const getActorForModal = catchAsync(
 );
 const updateProfilePhoto = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log("in updateProfilePhoto ");
-    console.log("body", req.body);
     const { url, idNo } = req.body;
     const result = await ActorService.updateProfilePhoto(url, idNo);
     sendResponse(res, {
@@ -161,7 +159,6 @@ const myPaymentHistory = catchAsync(
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
     const uid = req.query.uid as string;
-    console.log("query",req.query)
     if (!actorId) {
       throw new AppError(400, "Actor id not found, Unauthorized");
     }

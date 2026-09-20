@@ -108,7 +108,6 @@ const createSchedule = async (payload, files) => {
             uploaded = await fileUpload_1.fileUploader.UploadThingUploadMultiplePDF(files);
         }
         const pdfLinks = uploaded?.map((pdf) => pdf.url);
-        console.log("pdlinks", pdfLinks);
         const { dates, phone, email, message, name } = appointmentInfo;
         // ✅ Validate actor availability before creating
         await validateActorAvailability(member.memberId, dates, session);

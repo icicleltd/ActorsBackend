@@ -692,7 +692,6 @@ const updateProfilePhoto = async (url, idNo) => {
     return null;
 };
 const myPaymentHistory = async (actorId, page, limit, uid) => {
-    console.log("first actorId", actorId);
     if (uid) {
         console.log(uid);
         const actor = await actor_schema_1.default.findOne({ idNo: uid }).select("id").lean();
@@ -700,7 +699,6 @@ const myPaymentHistory = async (actorId, page, limit, uid) => {
             actorId = actor._id;
         }
     }
-    console.log("last actorId", actorId);
     const actorPaymentMatch = {
         actor: actorId,
         status: { $in: ["pending", "verified", "rejected"] },

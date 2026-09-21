@@ -1359,7 +1359,7 @@ const getYearlyActorPaymentStatus = async (
       $addFields: {
         payment: {
           $cond: [
-            { $eq: ["paymentStatus", "requested"] },
+            { $eq: ["$paymentStatus", "requested"] },
             "notifyPayment",
             { $ifNull: ["$actorPayment", "notifyPayment"] },
           ],

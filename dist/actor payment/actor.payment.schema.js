@@ -96,12 +96,12 @@ const actorPaymentSchema = new mongoose_1.Schema({
     },
     verifiedBy: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Admin",
+        ref: "User",
         required: function () {
             return this.status === "verified" || this.status === "rejected";
         },
     },
-    verifiedAt: { type: Date, required: true, default: Date.now },
+    verifiedAt: { type: Date },
     note: String,
 }, { timestamps: true });
 // Prevent duplicate yearly membership payment

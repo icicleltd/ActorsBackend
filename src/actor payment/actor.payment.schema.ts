@@ -103,13 +103,13 @@ const actorPaymentSchema = new Schema<IActorPayment>(
 
     verifiedBy: {
       type: Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
       required: function (this: any) {
         return this.status === "verified" || this.status === "rejected";
       },
     },
 
-    verifiedAt: { type: Date, required: true, default: Date.now },
+    verifiedAt: { type: Date },
 
     note: String,
   },
@@ -177,7 +177,7 @@ const NotifyPaymentSchema = new Schema<INotifyPayment>(
     },
     method: {
       type: String,
-      enum: ["bkash", "nagad", "cash","bank"],
+      enum: ["bkash", "nagad", "cash", "bank"],
       required: function (this: any) {
         return this.status === "paid";
       },

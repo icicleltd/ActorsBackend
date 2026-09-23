@@ -22,6 +22,11 @@ router.post(
   VerifyLogin,
   ActorPaymentController.verifyActorPayment,
 );
+router.post(
+  "/reject/:id",
+  VerifyLogin,
+  ActorPaymentController.rejectActorPayment,
+);
 router.post("/record-payment",VerifyLogin, ActorPaymentController.recordActorPayment);
 router.post("/collect",VerifyLogin, ActorPaymentController.generateMemberShipBilling);
 

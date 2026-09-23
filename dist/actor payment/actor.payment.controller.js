@@ -8,6 +8,7 @@ const catchAsync_1 = __importDefault(require("../shared/catchAsync"));
 const actor_payment_services_1 = require("./actor.payment.services");
 const sendResponse_1 = __importDefault(require("../shared/sendResponse"));
 const error_1 = require("../middleware/error");
+const mongoose_1 = require("mongoose");
 const actorPaymentInfo = (0, catchAsync_1.default)(async (req, res, next) => {
     const id = req.query.id;
     const search = req.query.search;
@@ -283,6 +284,25 @@ const generateMemberShipBilling = (0, catchAsync_1.default)(async (req, res) => 
         data: result,
     });
 });
+const rejectActorPayment = (0, catchAsync_1.default)(async (req, res) => {
+    const userId = req.user.data?._id;
+    if (!userId)
+        throw new error_1.AppError(403, "Unauthorized.Admin id not found");
+    const notifyPaymentId = req.params.id;
+    if (!notifyPaymentId)
+        throw new error_1.AppError(400, "Notify actor id is required");
+    const result = await actor_payment_services_1.ActorPaymentService.rejectActorPayment({
+        userId: new mongoose_1.Types.ObjectId(userId),
+        notifyPaymentId: new mongoose_1.Types.ObjectId(notifyPaymentId),
+        message: req.body?.message,
+    });
+    (0, sendResponse_1.default)(res, {
+        statusCode: 200,
+        success: true,
+        message: "Payment reject successfully",
+        data: result,
+    });
+});
 exports.ActorPaymentController = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -299,4 +319,5 @@ exports.ActorPaymentController = {
     actorUnpaidYearList,
     generateMemberShipBilling,
     getYearlyActorPaymentStatus,
+    rejectActorPayment,
 };

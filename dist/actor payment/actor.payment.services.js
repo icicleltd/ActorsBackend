@@ -47,6 +47,7 @@ const payment_schema_1 = require("../payment/payment.schema");
 const actorJoin_1 = require("../helper/actorJoin");
 const emailHelper_1 = require("../helper/emailHelper");
 const receiptEmail_1 = require("../helper/mailTempate/receiptEmail");
+const paymentRejectedTemplate_1 = require("../helper/mailTempate/paymentRejectedTemplate");
 const actorPaymentInfo = async (id, search, limit, sortBy, sortWith, alive, year, status, page = 1) => {
     if (!year) {
         throw new error_1.AppError(400, "Year is required");
@@ -295,6 +296,10 @@ const paymentSubmitted = async (payload) => {
             if (!updateNotifyPayment) {
                 throw new error_1.AppError(400, "Updated failed");
             }
+            await actor_payment_schema_1.default.findOneAndDelete({
+                notifyPayment: updateNotifyPayment._id,
+                status: "rejected",
+            }, { session });
             await actor_payment_schema_1.default.create([
                 {
                     actor: actorId,
@@ -311,6 +316,7 @@ const paymentSubmitted = async (payload) => {
                     }),
                     method,
                     status: "pending",
+                    recordedVia: "notify"
                 },
             ], { session });
             await notification_schema_1.Notification.findOneAndDelete({
@@ -1137,7 +1143,7 @@ const getYearlyActorPaymentStatus = async (query) => {
             $addFields: {
                 payment: {
                     $cond: [
-                        { $eq: ["paymentStatus", "requested"] },
+                        { $eq: ["$paymentStatus", "requested"] },
                         "notifyPayment",
                         { $ifNull: ["$actorPayment", "notifyPayment"] },
                     ],
@@ -1500,6 +1506,80 @@ const generateMemberShipBilling = async (userId, payload) => {
         await session.endSession();
     }
 };
+const rejectActorPayment = async (payload) => {
+    const { userId, notifyPaymentId, message } = payload;
+    const existing = await actor_payment_schema_1.NotifyPayment.findById(notifyPaymentId)
+        .select("_id actorId year")
+        .populate("actorId", "_id email fullName idNo")
+        .lean();
+    if (!existing) {
+        throw new error_1.AppError(400, "Notify payment not found");
+    }
+    const session = await mongoose_1.default.startSession();
+    try {
+        session.startTransaction();
+        // change status in notify payment status paid to request
+        const notifyPayment = await actor_payment_schema_1.NotifyPayment.findOneAndUpdate({
+            _id: notifyPaymentId,
+            type: "membership",
+            status: "paid",
+        }, { $set: { status: "request" } }, {
+            runValidators: true,
+            returnDocument: "after",
+            session,
+        });
+        if (!notifyPayment)
+            throw new error_1.AppError(400, "Not found Notify Payment");
+        // change status in notify payment  status pending to rejected
+        const actorPayment = await actor_payment_schema_1.default.findOneAndUpdate({
+            notifyPayment: notifyPaymentId,
+            type: "membership",
+            status: "pending",
+        }, {
+            $set: {
+                status: "rejected",
+                verifiedBy: userId,
+                verifiedAt: new Date(),
+            },
+        }, {
+            runValidators: true,
+            returnDocument: "after",
+            session,
+        });
+        if (!actorPayment)
+            throw new error_1.AppError(400, "Not found Actor Payment");
+        // make notifications for reject
+        await notification_schema_1.Notification.create([
+            {
+                notifyPayment: notifyPaymentId,
+                recipientRole: ["member"],
+                recipient: existing.actorId._id,
+                type: "NOTIFY_PAYMENT",
+                title: "Payment Rejected",
+                message: "Your payment request has been rejected.",
+            },
+        ], { session });
+        if (existing.actorId.email && existing.year) {
+            const { subject, html, text } = (0, paymentRejectedTemplate_1.paymentRejectedTemplate)(existing.actorId?.fullName, existing.year, message);
+            (0, emailHelper_1.sendMail)({ to: existing.actorId.email, subject, html, text });
+        }
+        // sent email to notify
+        await session.commitTransaction();
+        return {
+            _id: notifyPayment._id,
+            year: notifyPayment.year,
+            notifyPaymentStatus: notifyPayment.status,
+            actorPaymentStatus: actorPayment.status,
+        };
+    }
+    catch (error) {
+        await session.abortTransaction();
+        throw error;
+    }
+    finally {
+        await session.endSession();
+    }
+};
 exports.ActorPaymentService = {
     actorPaymentInfo,
     notifyActorForPayment,
@@ -1516,4 +1596,5 @@ exports.ActorPaymentService = {
     actorUnpaidYearList,
     generateMemberShipBilling,
     getYearlyActorPaymentStatus,
+    rejectActorPayment,
 };

@@ -13,6 +13,7 @@ const router = express_1.default.Router();
 router.post("/notify-actor", verifyLogin_1.VerifyLogin, verifyAdmin_1.VerifyAdmin, actor_payment_controller_1.ActorPaymentController.notifyActorForPayment);
 router.post("/save-payment/:id", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.paymentSubmitted);
 router.post("/verify-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.verifyActorPayment);
+router.post("/reject/:id", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.rejectActorPayment);
 router.post("/record-payment", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.recordActorPayment);
 router.post("/collect", verifyLogin_1.VerifyLogin, actor_payment_controller_1.ActorPaymentController.generateMemberShipBilling);
 // Get all (Public/Admin)

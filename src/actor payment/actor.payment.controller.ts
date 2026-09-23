@@ -3,6 +3,7 @@ import catchAsync from "../shared/catchAsync";
 import { ActorPaymentService } from "./actor.payment.services";
 import sendResponse from "../shared/sendResponse";
 import { AppError } from "../middleware/error";
+import { Types } from "mongoose";
 
 const actorPaymentInfo = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -352,6 +353,28 @@ const generateMemberShipBilling = catchAsync(
     });
   },
 );
+const rejectActorPayment = catchAsync(
+  async (req: Request & { user?: any }, res: Response) => {
+    const userId = req.user.data?._id;
+    if (!userId) throw new AppError(403, "Unauthorized.Admin id not found");
+
+    const notifyPaymentId = req.params.id as string;
+    if (!notifyPaymentId)
+      throw new AppError(400, "Notify actor id is required");
+
+    const result = await ActorPaymentService.rejectActorPayment({
+      userId: new Types.ObjectId(userId),
+      notifyPaymentId: new Types.ObjectId(notifyPaymentId),
+      message: req.body?.message,
+    });
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: "Payment reject successfully",
+      data: result,
+    });
+  },
+);
 
 export const ActorPaymentController = {
   actorPaymentInfo,
@@ -369,4 +392,5 @@ export const ActorPaymentController = {
   actorUnpaidYearList,
   generateMemberShipBilling,
   getYearlyActorPaymentStatus,
+  rejectActorPayment,
 };

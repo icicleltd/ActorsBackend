@@ -4,8 +4,11 @@ import Actor from "../actor/actor.schema";
 import { AppError } from "../middleware/error";
 import {
   IActorPayment,
+  IActorPopulated,
   INotifyActorPayload,
   INotifyPayment,
+  INotifyPaymentPopulated,
+  IRejectPaymentPayload,
 } from "./actor.payment.interface";
 import { Notification } from "../notification/notification.schema";
 import ActorPayment, { NotifyPayment } from "./actor.payment.schema";
@@ -16,6 +19,7 @@ import { syncActorJoinYear, syncActorJoinYearBulk } from "../helper/actorJoin";
 import { sendMail } from "../helper/emailHelper";
 import { buildReceiptEmailHtml } from "../helper/mailTempate/receiptEmail";
 import { pipeline } from "stream";
+import { paymentRejectedTemplate } from "../helper/mailTempate/paymentRejectedTemplate";
 
 type PaymentStatus = "paid" | "pending";
 
@@ -333,6 +337,15 @@ const paymentSubmitted = async (payload: IPaymentSubmittedPayload) => {
       if (!updateNotifyPayment) {
         throw new AppError(400, "Updated failed");
       }
+      await ActorPayment.findOneAndDelete(
+        {
+          notifyPayment: updateNotifyPayment._id,
+          status: "rejected",
+        },
+
+        { session },
+      );
+
       await ActorPayment.create(
         [
           {
@@ -350,6 +363,7 @@ const paymentSubmitted = async (payload: IPaymentSubmittedPayload) => {
             }),
             method,
             status: "pending",
+            recordedVia:"notify"
           },
         ],
         { session },
@@ -1842,6 +1856,99 @@ const generateMemberShipBilling = async (
   }
 };
 
+const rejectActorPayment = async (payload: IRejectPaymentPayload) => {
+  const { userId, notifyPaymentId, message } = payload;
+
+  const existing = await NotifyPayment.findById(notifyPaymentId)
+    .select("_id actorId year")
+    .populate<{
+      actorId: IActorPopulated;
+    }>("actorId", "_id email fullName idNo")
+    .lean<INotifyPaymentPopulated>();
+
+  if (!existing) {
+    throw new AppError(400, "Notify payment not found");
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+    // change status in notify payment status paid to request
+    const notifyPayment = await NotifyPayment.findOneAndUpdate(
+      {
+        _id: notifyPaymentId,
+        type: "membership",
+        status: "paid",
+      },
+      { $set: { status: "request" } },
+      {
+        runValidators: true,
+        returnDocument: "after",
+        session,
+      },
+    );
+    if (!notifyPayment) throw new AppError(400, "Not found Notify Payment");
+
+    // change status in notify payment  status pending to rejected
+    const actorPayment = await ActorPayment.findOneAndUpdate(
+      {
+        notifyPayment: notifyPaymentId,
+        type: "membership",
+        status: "pending",
+      },
+      {
+        $set: {
+          status: "rejected",
+          verifiedBy: userId,
+          verifiedAt: new Date(),
+        },
+      },
+      {
+        runValidators: true,
+        returnDocument: "after",
+        session,
+      },
+    );
+    if (!actorPayment) throw new AppError(400, "Not found Actor Payment");
+
+    // make notifications for reject
+    await Notification.create(
+      [
+        {
+          notifyPayment: notifyPaymentId,
+          recipientRole: ["member"],
+          recipient: existing.actorId._id,
+          type: "NOTIFY_PAYMENT",
+          title: "Payment Rejected",
+          message: "Your payment request has been rejected.",
+        },
+      ],
+      { session },
+    );
+    if (existing.actorId.email && existing.year) {
+      const { subject, html, text } = paymentRejectedTemplate(
+        existing.actorId?.fullName,
+        existing.year,
+        message,
+      );
+      sendMail({ to: existing.actorId.email, subject, html, text });
+    }
+    // sent email to notify
+    await session.commitTransaction();
+    return {
+      _id: notifyPayment._id,
+      year: notifyPayment.year,
+      notifyPaymentStatus: notifyPayment.status,
+      actorPaymentStatus: actorPayment.status,
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+};
+
 export const ActorPaymentService = {
   actorPaymentInfo,
   notifyActorForPayment,
@@ -1858,4 +1965,5 @@ export const ActorPaymentService = {
   actorUnpaidYearList,
   generateMemberShipBilling,
   getYearlyActorPaymentStatus,
+  rejectActorPayment,
 };

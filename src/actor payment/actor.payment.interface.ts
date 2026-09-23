@@ -18,8 +18,8 @@ export interface IActorPayment {
   accountNo?: string;
   bankName?: string;
 
-  verifiedBy: mongoose.Types.ObjectId;
-  verifiedAt: Date;
+  verifiedBy?: mongoose.Types.ObjectId;
+  verifiedAt?: Date;
 
   note?: string;
 }
@@ -50,4 +50,23 @@ export interface INotifyActorPayload {
   desc: string;
   number: string;
   actorId: string[];
+}
+
+export interface IRejectPaymentPayload {
+  userId: Types.ObjectId;
+  notifyPaymentId: Types.ObjectId;
+  message?: string;
+}
+
+export interface IActorPopulated {
+  _id: Types.ObjectId;
+  email: string;
+  fullName: string;
+  idNo: string;
+}
+
+export interface INotifyPaymentPopulated {
+  _id: Types.ObjectId;
+  actorId: IActorPopulated;
+  year: number;
 }
